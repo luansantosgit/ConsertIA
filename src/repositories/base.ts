@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { PostgrestSingleResponse, PostgrestManyResponse } from '@supabase/supabase-js';
+import type { PostgrestSingleResponse, PostgrestResponse } from '@supabase/supabase-js';
 
 export interface BaseRepository<T> {
   getById(id: string): Promise<T | null>;
@@ -24,7 +24,7 @@ export abstract class BaseSupabaseRepository<T> implements BaseRepository<T> {
     return data as R;
   }
 
-  protected async fetchMany<R>(promise: Promise<PostgrestManyResponse<R>>): Promise<R[]> {
+  protected async fetchMany<R>(promise: Promise<PostgrestResponse<R>>): Promise<R[]> {
     const { data, error } = await promise;
     if (error || !data) return [];
     return data as R[];
