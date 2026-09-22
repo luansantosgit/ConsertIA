@@ -89,6 +89,14 @@ async function handleClaim(ctx: AgentContext, userId: string): Promise<Response>
   return json({ ok: true, claimed: true });
 }
 
+async function handleRelease(ctx: AgentContext): Promise<Response> {
+  await ctx.supabase
+    .from("conversations")
+    .update({ ai_state: "attending", assigned_to: null })
+    .eq("id", ctx.conversation.id);
+  return json({ ok: true, released: true });
+}
+
 function json(body: Record<string, any>, status = 200): Response {
   return new Response(JSON.stringify(body), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status });
 }
@@ -206,8 +214,8 @@ serve(async (req) => {
     const ctx = await loadAgentContext(supabase, conversationId);
     if (!ctx) return json({ error: "Conversa ou configuração do agente não encontrada" }, 404);
 
-    if (body?.action === "claim") {
-      if (!userId) return json({ error: "claim requer JWT de usuário" }, 401);
+    if (body?.action === "claim" || body?.action === "release") {
+      if (!userId) return json({ error: "claim/release requer JWT de usuário" }, 401);
       const { data: userProfile } = await supabase
         .from("users")
         .select("tenant_id")
@@ -215,7 +223,9 @@ serve(async (req) => {
         .limit(1)
         .maybeSingle();
       if (userProfile?.tenant_id !== ctx.tenantId) return json({ error: "Forbidden" }, 403);
-      return await handleClaim(ctx, userId);
+      return body.action === "claim"
+        ? await handleClaim(ctx, userId)
+        : await handleRelease(ctx);
     }
 
     if (userId) {

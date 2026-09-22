@@ -61,6 +61,7 @@ export const Attendance: React.FC = () => {
     handleMarkUnread,
     handleTogglePin,
     handleClaimAi,
+    handleReleaseAi,
     handleReactToMessage,
     handleEditMessage,
     handleDeleteMessage,
@@ -83,8 +84,8 @@ export const Attendance: React.FC = () => {
     isOpen: false, convId: '', convName: '',
   });
   const [pendingFiles, setPendingFiles] = React.useState<File[] | null>(null);
-  const [confirmClaimAi, setConfirmClaimAi] = React.useState<{ isOpen: boolean; convId: string; convName: string }>({
-    isOpen: false, convId: '', convName: '',
+  const [confirmClaimAi, setConfirmClaimAi] = React.useState<{ isOpen: boolean; convId: string; convName: string; aiState?: string }>({
+    isOpen: false, convId: '', convName: '', aiState: undefined,
   });
 
   if (error) {
@@ -115,7 +116,7 @@ export const Attendance: React.FC = () => {
           onSelectConversation={handleSelectConv}
           onMarkUnread={handleMarkUnread}
           onTogglePin={handleTogglePin}
-          onAiClick={conv => setConfirmClaimAi({ isOpen: true, convId: conv.id, convName: conv.contactName })}
+          onAiClick={conv => setConfirmClaimAi({ isOpen: true, convId: conv.id, convName: conv.contactName, aiState: conv.ai_state })}
         />
         <ChatArea
           selected={selected}
@@ -255,18 +256,25 @@ export const Attendance: React.FC = () => {
 
       <ConfirmModal
         isOpen={confirmClaimAi.isOpen}
-        onClose={() => setConfirmClaimAi({ isOpen: false, convId: '', convName: '' })}
+        onClose={() => setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined })}
         onConfirm={async () => {
+          const { convId, aiState } = confirmClaimAi;
           try {
-            await handleClaimAi(confirmClaimAi.convId);
+            if (aiState === 'paused') {
+              await handleReleaseAi(convId);
+            } else {
+              await handleClaimAi(convId);
+            }
           } catch {
             /* erro já logado no hook */
           }
-          setConfirmClaimAi({ isOpen: false, convId: '', convName: '' });
+          setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined });
         }}
-        title="Assumir atendimento"
-        message={`Você vai assumir a conversa com "${confirmClaimAi.convName}". O agente de IA vai avisar o cliente que um atendente humano entrará em contato e ficará pausado até a conversa ser encerrada.`}
-        confirmLabel="Assumir atendimento"
+        title={confirmClaimAi.aiState === 'paused' ? 'Devolver ao agente de IA' : 'Assumir atendimento'}
+        message={confirmClaimAi.aiState === 'paused'
+          ? `Você vai devolver a conversa com "${confirmClaimAi.convName}" para o agente de IA, que volta a atender automaticamente.`
+          : `Você vai assumir a conversa com "${confirmClaimAi.convName}". O agente de IA vai avisar o cliente que um atendente humano entrará em contato e ficará pausado até a conversa ser encerrada.`}
+        confirmLabel={confirmClaimAi.aiState === 'paused' ? 'Devolver ao agente de IA' : 'Assumir atendimento'}
         variant="info"
       />
     </div>

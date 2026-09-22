@@ -773,6 +773,21 @@ export function useAttendance() {
     }
   }, []);
 
+  const handleReleaseAi = useCallback(async (convId: string) => {
+    try {
+      const { error: fnError } = await supabase.functions.invoke('ai-agent', {
+        body: { conversation_id: convId, action: 'release' },
+      });
+      if (fnError) throw fnError;
+      setConversations(prev => prev.map(c =>
+        c.id === convId ? { ...c, ai_state: 'attending' as const, assigned_to: undefined } : c
+      ));
+    } catch (err) {
+      console.error('Failed to release AI conversation:', err);
+      throw err;
+    }
+  }, []);
+
   const handleConfirmNewConversation = useCallback(async () => {
     const name = newConvName.trim();
     const phone = newConvPhone.replace(/\D/g, '');
@@ -1302,6 +1317,7 @@ export function useAttendance() {
     handleMarkUnread,
     handleTogglePin,
     handleClaimAi,
+    handleReleaseAi,
     handleReactToMessage,
     handleEditMessage,
     handleDeleteMessage,
