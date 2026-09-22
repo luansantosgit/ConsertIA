@@ -107,18 +107,23 @@ export const ConversationCard = React.memo(function ConversationCard({
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.contactName}</span>
             {conv.pinned && <Pin size={11} color="var(--primary)" fill="var(--primary)" style={{ flexShrink: 0 }} />}
             {conv.ai_state === 'attending' && (
-              <Bot
-                size={13} color="#8b5cf6" fill="#ede9fe" style={{ flexShrink: 0, cursor: 'pointer' }}
+              <span
+                title="IA atendendo — clique para assumir o atendimento"
+                style={{ display: 'flex', flexShrink: 0, cursor: 'pointer' }}
                 onClick={e => { e.stopPropagation(); onAiClick(conv); }}
-              />
+              >
+                <Bot size={13} color="#8b5cf6" fill="#ede9fe" />
+              </span>
             )}
             {(conv.ai_state === 'handed_off' || conv.ai_state === 'paused') && (
-              <UserCheck
-                size={13} color="#10b981" style={{ flexShrink: 0, cursor: 'pointer' }}
+              <span
+                title={conv.ai_state === 'paused' ? 'Com atendente — clique para devolver ao agente de IA' : 'Transferida para atendente — clique para assumir'}
+                style={{ display: 'flex', flexShrink: 0, cursor: 'pointer' }}
                 onClick={e => { e.stopPropagation(); onAiClick(conv); }}
-              />
-            )}
-          </span>
+              >
+                <UserCheck size={13} color="#10b981" />
+              </span>
+            )}          </span>
           <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', flexShrink: 0 }}>{timeAgo(conv.last_message_at!)}</span>
         </div>
         <p style={{
