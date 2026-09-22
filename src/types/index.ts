@@ -433,6 +433,9 @@ export interface Connection {
   flow_id?: string;
   ai_agent_project_id?: string;
 
+  // IA
+  ai_enabled?: boolean;
+
   // Historico
   import_history?: boolean;
   history_days?: number;
