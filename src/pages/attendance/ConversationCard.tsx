@@ -106,24 +106,7 @@ export const ConversationCard = React.memo(function ConversationCard({
             {conv.is_group && <Users size={11} color="var(--primary)" style={{ flexShrink: 0 }} />}
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.contactName}</span>
             {conv.pinned && <Pin size={11} color="var(--primary)" fill="var(--primary)" style={{ flexShrink: 0 }} />}
-            {conv.ai_state === 'attending' && (
-              <span
-                title="IA atendendo — clique para assumir o atendimento"
-                style={{ display: 'flex', flexShrink: 0, cursor: 'pointer' }}
-                onClick={e => { e.stopPropagation(); onAiClick(conv); }}
-              >
-                <Bot size={13} color="#8b5cf6" fill="#ede9fe" />
-              </span>
-            )}
-            {(conv.ai_state === 'handed_off' || conv.ai_state === 'paused') && (
-              <span
-                title={conv.ai_state === 'paused' ? 'Com atendente — clique para devolver ao agente de IA' : 'Transferida para atendente — clique para assumir'}
-                style={{ display: 'flex', flexShrink: 0, cursor: 'pointer' }}
-                onClick={e => { e.stopPropagation(); onAiClick(conv); }}
-              >
-                <UserCheck size={13} color="#10b981" />
-              </span>
-            )}          </span>
+          </span>
           <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', flexShrink: 0 }}>{timeAgo(conv.last_message_at!)}</span>
         </div>
         <p style={{
@@ -159,21 +142,22 @@ export const ConversationCard = React.memo(function ConversationCard({
         </div>
       )}
 
-      <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-        <button
-          onClick={() => setMenuOpen(v => !v)}
-          title="Opções da conversa"
-          aria-label="Opções da conversa"
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 2,
-            borderRadius: 6, color: 'var(--text-muted)', opacity: menuOpen ? 1 : 0.35,
-            transition: 'opacity 0.15s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={e => (e.currentTarget.style.opacity = menuOpen ? '1' : '0.35')}
-        >
-          <Settings size={14} />
-        </button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            title="Opções da conversa"
+            aria-label="Opções da conversa"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+              borderRadius: 6, color: 'var(--text-muted)', opacity: menuOpen ? 1 : 0.35,
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = menuOpen ? '1' : '0.35')}
+          >
+            <Settings size={14} />
+          </button>
 
         {menuOpen && (
           <div style={{
@@ -210,6 +194,33 @@ export const ConversationCard = React.memo(function ConversationCard({
                 : <><Pin size={13} /> Fixar no topo</>}
             </button>
           </div>
+        )}
+        </div>
+
+        {conv.ai_state && conv.ai_state !== 'off' && (
+          <button
+            title={conv.ai_state === 'paused'
+              ? 'Com atendente — clique para devolver ao agente de IA'
+              : conv.ai_state === 'attending'
+                ? 'IA atendendo — clique para assumir o atendimento'
+                : 'Transferida para atendente — clique para assumir'}
+            onClick={e => { e.stopPropagation(); onAiClick(conv); }}
+            style={{
+              width: 26, height: 26, padding: 0, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 7, cursor: 'pointer',
+              border: '1px solid',
+              borderColor: conv.ai_state === 'attending' ? '#c4b5fd' : '#6ee7b7',
+              background: conv.ai_state === 'attending' ? '#ede9fe' : '#d1fae5',
+              transition: 'transform 0.12s, filter 0.12s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(0.95)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}
+          >
+            {conv.ai_state === 'attending'
+              ? <Bot size={14} color="#8b5cf6" />
+              : <UserCheck size={14} color="#059669" />}
+          </button>
         )}
       </div>
     </div>
