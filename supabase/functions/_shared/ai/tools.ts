@@ -97,6 +97,20 @@ export const toolDefinitions = [
       parameters: { type: "object", properties: {} },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "update_customer_name",
+      description: "Salva o nome informado pelo cliente no sistema. Chame imediatamente quando o cliente disser o nome dele (se a pergunta de nome estiver ativa).",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Nome do cliente, apenas o nome (ex: Maria, João Silva)" },
+        },
+        required: ["name"],
+      },
+    },
+  },
 ];
 
 function normalizeMoney(value: number): number {
@@ -250,8 +264,7 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
   return { ok: true, event_id: event.id, date };
 }
 
-async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {
-  if (ctx.templates.length === 0) return { ok: true, sent: 0, message: "Nenhum template configurado." };
+async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {  if (ctx.templates.length === 0) return { ok: true, sent: 0, message: "Nenhum template configurado." };
   const { sendText, sendMedia } = await import("./uazapi.ts");
   let sent = 0;
   for (const tpl of ctx.templates) {
@@ -267,6 +280,28 @@ async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {
     }
   }
   return { ok: true, sent, titles: ctx.templates.map((t) => t.title) };
+}
+
+async function updateCustomerName(ctx: AgentContext, args: any): Promise<ToolResult> {
+  const name = (args?.name ?? "").toString().trim().slice(0, 120);
+  if (name.length < 2) return { ok: false, error: "Nome inválido ou muito curto." };
+
+  if (ctx.customer) {
+    const { error } = await ctx.supabase
+      .from("customers")
+      .update({ name })
+      .eq("id", ctx.customer.id)
+      .eq("tenant_id", ctx.tenantId);
+    if (error) return { ok: false, error: error.message };
+  }
+  await ctx.supabase
+    .from("conversations")
+    .update({ contact_name: name })
+    .eq("id", ctx.conversation.id);
+
+  ctx.customer = ctx.customer ? { ...ctx.customer, name } : null;
+  ctx.contactName = name;
+  return { ok: true, saved_name: name };
 }
 
 export async function executeTool(ctx: AgentContext, name: string, args: any): Promise<ToolResult> {
@@ -286,6 +321,8 @@ export async function executeTool(ctx: AgentContext, name: string, args: any): P
       return createServiceOrder(ctx, args);
     case "schedule_event":
       return scheduleEvent(ctx, args);
+    case "update_customer_name":
+      return updateCustomerName(ctx, args);
     case "handoff_to_human":
       ctx.handoffRequested = true;
       return { ok: true, message: `Handoff solicitado. Encerre o atendimento com uma mensagem simpática (ex: "${ctx.agent.transfer_message}") e finalize.` };

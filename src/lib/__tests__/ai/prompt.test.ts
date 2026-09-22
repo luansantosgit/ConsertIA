@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { buildSystemPrompt } from '../../../../supabase/functions/_shared/ai/prompt';
 import { currentPeriod } from '../../../../supabase/functions/_shared/ai/settings';
-import type { AgentContext } from '../../../../supabase/functions/_shared/ai/types';
+import type { AgentContext, AgentSettings } from '../../../../supabase/functions/_shared/ai/types';
+
+function mockAgent(overrides: Partial<AgentSettings> = {}): AgentSettings {
+  return {
+    id: 'a1', tenant_id: 't1', agent_name: 'Ana', greeting_enabled: true, ask_name_enabled: false,
+    typing_simulation: true, active: true, post_handoff_behavior: 'continue',
+    handoff_message: 'msg', transfer_message: 'msg', uncovered_transfer: true,
+    auto_os_enabled: true, auto_schedule_enabled: true,
+    openrouter_model: 'openai/gpt-4o-mini', own_api_key: null,
+    ...overrides,
+  };
+}
 
 function mockCtx(overrides: Partial<AgentContext> = {}): AgentContext {
   return {
@@ -9,12 +20,7 @@ function mockCtx(overrides: Partial<AgentContext> = {}): AgentContext {
     conversation: { id: 'c1', contact_phone: '5511', ai_state: 'attending' },
     tenantId: 't1',
     companyName: 'TechFix',
-    agent: {
-      id: 'a1', tenant_id: 't1', agent_name: 'Ana', greeting_enabled: true, typing_simulation: true,
-      active: true, post_handoff_behavior: 'continue', handoff_message: 'msg', transfer_message: 'msg',
-      uncovered_transfer: true, auto_os_enabled: true, auto_schedule_enabled: true,
-      openrouter_model: 'openai/gpt-4o-mini', own_api_key: null,
-    },
+    agent: mockAgent(),
     quote: { labor_enabled: false, labor_mode: 'included', labor_type: 'fixed', labor_value: 0, quote_template: '' },
     diagnosis: { repair_mode: 'screen_only', glass_rules: null },
     coverage: [{ device_type: 'smartphone', brands: ['Apple', 'Samsung'], active: true }],
@@ -42,13 +48,35 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     const prompt = buildSystemPrompt(mockCtx());
     expect(prompt).toContain('Ana');
     expect(prompt).toContain('TechFix');
-    expect(prompt).toContain('Bom dia');
+    expect(prompt).toContain('Agora é manhã');
   });
 
   it('primeiro contato exige recepção calorosa mesmo com problema na 1ª msg', () => {
     const prompt = buildSystemPrompt(mockCtx({ isFirstContact: true }));
-    expect(prompt).toContain('PRIMEIRA mensagem');
+    expect(prompt).toContain('PRIMEIRO contato');
     expect(prompt).toContain('NÃO pule a recepção');
+  });
+
+  it('cliente retornado (histórico) também recebe a saudação com nome e empresa', () => {
+    const prompt = buildSystemPrompt(mockCtx({ isFirstContact: false }));
+    expect(prompt).toContain('assistente de suporte da TechFix');
+    expect(prompt).toContain('Ana');
+    expect(prompt).toContain('bem-vindo(a) novamente');
+  });
+
+  it('pergunta de nome ativa instrui o agente a perguntar e salvar via tool no primeiro contato', () => {
+    const prompt = buildSystemPrompt(mockCtx({ isFirstContact: true, agent: { ...mockAgent(), ask_name_enabled: true } }));
+    expect(prompt).toContain('Pergunta de nome ATIVA');
+    expect(prompt).toContain('update_customer_name');
+  });
+
+  it('pergunta de nome ativa usa o nome do lead nos contatos seguintes', () => {
+    const prompt = buildSystemPrompt(mockCtx({
+      isFirstContact: false,
+      contactName: 'Maria',
+      agent: { ...mockAgent(), ask_name_enabled: true },
+    }));
+    expect(prompt).toContain('Trate-o pelo nome "Maria"');
   });
 
   it('injeta a cobertura de aparelhos', () => {

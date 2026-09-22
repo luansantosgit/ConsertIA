@@ -3,6 +3,7 @@ export interface AgentSettings {
   tenant_id: string;
   agent_name: string;
   greeting_enabled: boolean;
+  ask_name_enabled: boolean;
   typing_simulation: boolean;
   active: boolean;
   post_handoff_behavior: "continue" | "pause";
