@@ -1,5 +1,8 @@
 # Plano — Agente de IA Especialista em Assistência Técnica
 
+> **Status (22/09/2026): IMPLEMENTADO — Fases 0 a 6 concluídas** (PRs #6, #8, #10 / Issues #5, #7, #9).
+> Pendências externas: (1) cadastrar token OpenRouter no Superadmin > Provedor de IA; (2) ativar toggle "IA" na conexão WhatsApp; (3) integração de cobrança Asaas para recompra de cota (futura).
+
 ## Goal
 Transformar a IA (hoje 100% mockada) em um motor real via **OpenRouter multimodal** (texto, áudio, imagem, vídeo, documentos), **recurso distinto e agnóstico de canal**, consumido por conexões WhatsApp que optarem por ela, com roteiro especialista: saudação → triagem → diagnóstico (tela/vidro) → template diferencial → orçamento (peça do catálogo + mão de obra) → agendamento + OS → transferência com consciência de contexto.
 
