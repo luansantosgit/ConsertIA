@@ -11,6 +11,7 @@ interface ChatAreaProps {
   selected: ConvRow | undefined;
   currentMessages: ChatMessage[];
   currentClientOSList: OSRow[];
+  agentName?: string;
   inputText: string;
   quotedMessage: ChatMessage | null;
   suggestionDismissed: boolean;
@@ -38,6 +39,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   selected,
   currentMessages,
   currentClientOSList,
+  agentName,
   inputText,
   quotedMessage,
   suggestionDismissed,
@@ -136,6 +138,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       <MessageList
         messages={currentMessages}
         currentClientOSList={currentClientOSList}
+        agentName={agentName}
         loadingMessages={loadingMessages}
         selectedId={selected?.id || ''}
         contactAvatar={selected?.contactAvatar}

@@ -14,6 +14,7 @@ interface MessageBubbleProps {
   quoted?: ChatMessage;
   contactAvatar?: string;
   osList: OSRow[];
+  agentName?: string;
   onReact: (messageId: string, emoji: string) => void;
   onMention: (msg: ChatMessage) => void;
   onEdit: (messageId: string, newText: string) => void;
@@ -29,6 +30,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   quoted,
   contactAvatar,
   osList,
+  agentName,
   onReact,
   onMention,
   onEdit,
@@ -119,7 +121,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {msg.from === 'bot' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
               <Bot size={12} color="#7c3aed" />
-              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#7c3aed' }}>IA ConsertIA</span>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#7c3aed' }}>{agentName || 'IA'}</span>
             </div>
           )}
 

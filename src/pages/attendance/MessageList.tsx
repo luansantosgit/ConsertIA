@@ -11,6 +11,7 @@ interface MessageListProps {
   loadingMessages: boolean;
   selectedId: string;
   contactAvatar?: string;
+  agentName?: string;
   onViewPdfOS: (os: OSRow) => void;
   onReact: (messageId: string, emoji: string) => void;
   onMention: (msg: ChatMessage) => void;
@@ -26,6 +27,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   loadingMessages,
   selectedId,
   contactAvatar,
+  agentName,
   onViewPdfOS,
   onReact,
   onMention,
@@ -85,6 +87,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             quoted={msg.replyTo ? quoteMap.get(msg.replyTo) : undefined}
             contactAvatar={contactAvatar}
             osList={currentClientOSList}
+            agentName={agentName}
             onReact={onReact}
             onMention={onMention}
             onEdit={onEdit}
