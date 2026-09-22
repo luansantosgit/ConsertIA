@@ -62,6 +62,7 @@ export const Attendance: React.FC = () => {
     handleTogglePin,
     handleClaimAi,
     handleReleaseAi,
+    agentName,
     handleReactToMessage,
     handleEditMessage,
     handleDeleteMessage,
@@ -122,6 +123,7 @@ export const Attendance: React.FC = () => {
           selected={selected}
           currentMessages={currentMessages}
           currentClientOSList={currentClientOSList}
+          agentName={agentName}
           inputText={inputText}
           quotedMessage={quotedMessage}
           suggestionDismissed={suggestionDismissed}
@@ -257,18 +259,16 @@ export const Attendance: React.FC = () => {
       <ConfirmModal
         isOpen={confirmClaimAi.isOpen}
         onClose={() => setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined })}
-        onConfirm={async () => {
+        onConfirm={() => {
           const { convId, aiState } = confirmClaimAi;
-          try {
-            if (aiState === 'paused') {
-              await handleReleaseAi(convId);
-            } else {
-              await handleClaimAi(convId);
-            }
-          } catch {
-            /* erro já logado no hook */
-          }
           setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined });
+          if (aiState === 'paused') {
+            void handleReleaseAi(convId);
+          } else {
+            const conv = conversations.find(c => c.id === convId);
+            if (conv) handleSelectConv(conv);
+            void handleClaimAi(convId).catch(() => {});
+          }
         }}
         title={confirmClaimAi.aiState === 'paused' ? 'Devolver ao agente de IA' : 'Assumir atendimento'}
         message={confirmClaimAi.aiState === 'paused'

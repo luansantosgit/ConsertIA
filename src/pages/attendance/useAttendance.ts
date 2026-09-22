@@ -4,6 +4,7 @@ import type { OSRow } from '@/components/OSModal';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { CustomerRepository } from '@/repositories/customer.repository';
+import { AiAgentSettingsRepository } from '@/repositories/ai-agent-settings.repository';
 import { useAuthStore } from '@/stores/auth.store';
 import { supabase } from '@/lib/supabase';
 import type { Message, Conversation } from '@/types';
@@ -12,6 +13,7 @@ import { toChatMessage } from './types';
 
 const conversationRepo = new ConversationRepository();
 const messageRepo = new MessageRepository();
+const aiAgentRepo = new AiAgentSettingsRepository();
 const customerRepo = new CustomerRepository();
 
 /** Pagina da sidebar de atendimento: conversas por fetch (load more on scroll) */
@@ -97,6 +99,13 @@ export function useAttendance() {
   const [error, setError] = useState<string | null>(null);
   const [showNewConvModal, setShowNewConvModal] = useState(false);
   const [newConvName, setNewConvName] = useState('');
+  const [agentName, setAgentName] = useState('IA');
+
+  useEffect(() => {
+    aiAgentRepo.get()
+      .then(settings => setAgentName(settings.agent_name || 'IA'))
+      .catch(() => {});
+  }, []);
   const [newConvPhone, setNewConvPhone] = useState('');
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [quotedMessage, setQuotedMessage] = useState<ChatMessage | null>(null);
@@ -341,16 +350,21 @@ export function useAttendance() {
         },
           (payload) => {
             const msg = payload.new as Message;
-            if (msg.direction === 'outbound') return;
+            const isAiMessage = msg.direction === 'outbound' && msg.sender_type === 'ai';
+            if (msg.direction === 'outbound' && !isAiMessage) return;
           const chatMsg = toChatMessage(msg);
           const activeId = selectedIdRef.current;
 
-          if (msg.conversation_id === activeId) {
+          if (msg.conversation_id === activeId || isAiMessage) {
             setChatMessages(prev => {
-              const existing = prev[activeId] || [];
-              if (existing.some(m => m.id === chatMsg.id)) return prev;
-              return { ...prev, [activeId]: [...existing, chatMsg] };
+              const list = (prev[msg.conversation_id] || []).filter(m =>
+                !(isAiMessage && m.id === `optimistic-claim-${msg.conversation_id}`)
+              );
+              if (list.some(m => m.id === chatMsg.id)) return prev;
+              return { ...prev, [msg.conversation_id]: [...list, chatMsg] };
             });
+          }
+          if (msg.conversation_id === activeId) {
             messageRepo.markAllAsRead(activeId).catch(() => {});
             // Guard anti-stale: o bump do webhook pode chegar em um fetch em voo
             recentlyReadRef.current.set(activeId, Date.now());
@@ -375,7 +389,7 @@ export function useAttendance() {
                   lastMessage: isNewer ? chatMsg.text : c.lastMessage,
                   last_message: isNewer ? chatMsg.text : c.last_message,
                   last_message_at: isNewer ? msg.created_at : c.last_message_at,
-                  unread_count: isCurrent ? 0 : (c.unread_count || 0) + 1,
+                  unread_count: isCurrent ? 0 : msg.direction === 'inbound' ? (c.unread_count || 0) + 1 : c.unread_count,
                 };
               }
               return c;
@@ -759,16 +773,44 @@ export function useAttendance() {
   }, [conversations]);
 
   const handleClaimAi = useCallback(async (convId: string) => {
+    const optimisticId = `optimistic-claim-${convId}`;
+    let handoffText = 'Um instante, nossos atendentes vão te chamar em breve!';
+    try {
+      const settings = await aiAgentRepo.get();
+      if (settings.handoff_message) handoffText = settings.handoff_message;
+    } catch { /* mantém default */ }
+
+    const now = new Date();
+    const optimistic: ChatMessage = {
+      id: optimisticId,
+      from: 'bot',
+      text: handoffText,
+      time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      createdAt: now.toISOString(),
+      status: 'pending',
+    };
+    setChatMessages(prev => ({
+      ...prev,
+      [convId]: [...(prev[convId] || []).filter(m => m.id !== optimisticId), optimistic],
+    }));
+    setConversations(prev => prev.map(c =>
+      c.id === convId ? { ...c, ai_state: 'paused' as const, assigned_to: useAuthStore.getState().user?.id ?? c.assigned_to } : c
+    ));
+
     try {
       const { error: fnError } = await supabase.functions.invoke('ai-agent', {
         body: { conversation_id: convId, action: 'claim' },
       });
       if (fnError) throw fnError;
-      setConversations(prev => prev.map(c =>
-        c.id === convId ? { ...c, ai_state: 'paused' as const, assigned_to: useAuthStore.getState().user?.id ?? c.assigned_to } : c
-      ));
     } catch (err) {
       console.error('Failed to claim AI conversation:', err);
+      setChatMessages(prev => ({
+        ...prev,
+        [convId]: (prev[convId] || []).filter(m => m.id !== optimisticId),
+      }));
+      setConversations(prev => prev.map(c =>
+        c.id === convId ? { ...c, ai_state: 'attending' as const } : c
+      ));
       throw err;
     }
   }, []);
@@ -1318,6 +1360,7 @@ export function useAttendance() {
     handleTogglePin,
     handleClaimAi,
     handleReleaseAi,
+    agentName,
     handleReactToMessage,
     handleEditMessage,
     handleDeleteMessage,

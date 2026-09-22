@@ -64,6 +64,12 @@ export const BehaviorSection: React.FC<BehaviorSectionProps> = ({ agent, saving,
           onChange={v => set('greeting_enabled', v)}
         />
         <Toggle
+          label={t('Perguntar nome do lead')}
+          description={t('Na primeira interação o agente pergunta o nome do cliente, salva no sistema e o chama pelo nome nos próximos atendimentos.')}
+          checked={agent.ask_name_enabled}
+          onChange={v => set('ask_name_enabled', v)}
+        />
+        <Toggle
           label={t('Simular digitação')}
           description={t('Exibe "digitando..." no WhatsApp antes de cada mensagem, como um humano.')}
           checked={agent.typing_simulation}

@@ -38,6 +38,7 @@ serve(async (req) => {
       let connectionTenantId: string | null = null;
       let connectionId: string | null = null;
       let aiEnabled = false;
+      let uazapiSubdomain = "api";
       const connectionColumns = "id, instance_token, tenant_id, ai_enabled";
       if (instanceName) {
         const { data: conn } = await supabase
@@ -318,6 +319,7 @@ serve(async (req) => {
           contact_phone: phone,
           content: content,
           direction: "inbound",
+          sender_type: "customer",
           read: false,
           status: "delivered",
           wa_message_id: waMessageId,

@@ -75,6 +75,12 @@ async function logAi(ctx: AgentContext, payload: Record<string, any>): Promise<v
 
 async function handleClaim(ctx: AgentContext, userId: string): Promise<Response> {
   const state = ctx.conversation.ai_state;
+  // Pausa a IA ANTES de enviar a mensagem: elimina a janela de race em que
+  // uma msg do lead durante o "digitando..." ainda disparava resposta da IA.
+  await ctx.supabase
+    .from("conversations")
+    .update({ ai_state: "paused", assigned_to: userId })
+    .eq("id", ctx.conversation.id);
   if (state === "attending" || state === "handed_off") {
     try {
       await sendText(ctx, ctx.agent.handoff_message);
@@ -82,10 +88,6 @@ async function handleClaim(ctx: AgentContext, userId: string): Promise<Response>
       console.warn("[ai-agent] claim handoff msg failed:", (err as Error).message);
     }
   }
-  await ctx.supabase
-    .from("conversations")
-    .update({ ai_state: "paused", assigned_to: userId })
-    .eq("id", ctx.conversation.id);
   return json({ ok: true, claimed: true });
 }
 

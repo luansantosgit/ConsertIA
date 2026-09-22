@@ -7,6 +7,7 @@ const DEFAULTS: AiAgentSettings = {
   tenant_id: '',
   agent_name: 'Assistente',
   greeting_enabled: true,
+  ask_name_enabled: false,
   typing_simulation: true,
   active: false,
   post_handoff_behavior: 'continue',
