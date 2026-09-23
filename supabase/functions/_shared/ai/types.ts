@@ -88,6 +88,7 @@ export interface AgentContext {
   apiKey: string | null;
   tokenLimit: number;
   period: string;
+  timezone: string;
   uazapiBase: string;
   connectionToken: string;
   allowedValues: Set<number>;

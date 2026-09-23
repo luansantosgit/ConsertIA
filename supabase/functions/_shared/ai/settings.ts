@@ -193,6 +193,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     appointments,
     isFirstContact,
     period: currentPeriod(settingsRes.data?.timezone || "America/Sao_Paulo"),
+    timezone: settingsRes.data?.timezone || "America/Sao_Paulo",
     uazapiBase,
     connectionToken,
     allowedValues: new Set<number>(),

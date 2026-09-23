@@ -19,6 +19,25 @@ function greetingPhrase(ctx: AgentContext): string {
   return "Boa noite";
 }
 
+function isoPlusDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+export function dateContext(timezone: string): string {
+  const now = new Date();
+  const weekday = new Intl.DateTimeFormat("pt-BR", { timeZone: timezone, weekday: "long" }).format(now);
+  const todayIso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(now);
+  const [y, m, d] = todayIso.split("-").map(Number);
+  const tomorrowIso = isoPlusDays(todayIso, 1);
+  const afterTomorrowIso = isoPlusDays(todayIso, 2);
+  const brDate = `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
+  return `- Hoje é ${weekday}, ${brDate} (${todayIso}). Amanhã: ${tomorrowIso}. Depois de amanhã: ${afterTomorrowIso}.
+- Datas relativas ("hoje", "amanhã", "depois de amanhã") você mesmo converte para a data concreta (YYYY-MM-DD) antes de chamar schedule_event. Confirme com o cliente e agende.`;
+}
+
 function contextText(ctx: AgentContext): string {
   const parts: string[] = [];
   if (ctx.openOrders.length > 0) {
@@ -91,6 +110,9 @@ ${nameRule}`;
 - DIVIDA a resposta em várias mensagens curtas, separando cada uma com uma linha contendo apenas ---
 - Tom simpático e profissional, emojis com moderação (😊 🔧 ✅). Nunca use linguagem robótica tipo "Como posso auxiliá-lo hoje?".
 
+# Data e hora
+${dateContext(ctx.timezone)}
+
 ${greetingBase}
 
 # Roteiro de atendimento
@@ -107,6 +129,7 @@ ${contextText(ctx)}
 Se já existir OS ou agendamento, referencie-os naturalmente.
 
 # Regras invioláveis
+- ETAPAS ÚNICAS: busca de peça (find_part), templates diferenciais e orçamento (build_quote) executam UMA única vez por conversa. Se o histórico mostrar que já foram feitos/enviados, NÃO reenvie templates nem orçamento — siga direto para a próxima etapa (agendamento ou handoff).
 - NUNCA invente preços, prazos ou disponibilidade: valores SOMENTE de find_part/build_quote, exatamente como retornados.
 - NUNCA responda apenas "vou verificar", "um momento", "aguarde" — execute a tool NA MESMA resposta e só finalize com o resultado em mãos (o cliente vê "digitando..." enquanto isso).
 - Peça NÃO encontrada: NUNCA diga ao cliente que não existe ou está em falta. Diga com naturalidade "Vou te passar para o nosso time técnico e eles vão analisar de perto o caso do seu aparelho." e chame handoff_to_human.

@@ -33,6 +33,7 @@ function mockCtx(overrides: Partial<AgentContext> = {}): AgentContext {
     apiKey: 'key',
     tokenLimit: 0,
     period: 'manhã',
+    timezone: 'America/Sao_Paulo',
     uazapiBase: 'https://api.uazapi.com',
     connectionToken: 'tok',
     allowedValues: new Set<number>(),
@@ -155,6 +156,20 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     }));
     expect(prompt).toContain('transferida para um atendente humano');
     expect(prompt).toContain('NÃO faça novos orçamentos');
+  });
+
+  it('injeta a data atual e orienta conversao de datas relativas', () => {
+    const prompt = buildSystemPrompt(mockCtx());
+    expect(prompt).toContain('# Data e hora');
+    expect(prompt).toContain('Hoje é');
+    expect(prompt).toContain('Amanhã:');
+    expect(prompt).toContain('Depois de amanhã');
+  });
+
+  it('exige etapas unicas por conversa (sem reenviar orcamento/templates)', () => {
+    const prompt = buildSystemPrompt(mockCtx());
+    expect(prompt).toContain('ETAPAS ÚNICAS');
+    expect(prompt).toContain('UMA única vez por conversa');
   });
 
   it('exige divisão de mensagens com separador humano', () => {

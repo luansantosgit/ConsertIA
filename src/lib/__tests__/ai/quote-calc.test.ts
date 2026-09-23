@@ -40,6 +40,7 @@ function mockCtx(overrides: Partial<AgentContext> = {}): AgentContext {
     apiKey: 'key',
     tokenLimit: 0,
     period: 'manhã',
+    timezone: 'America/Sao_Paulo',
     uazapiBase: 'https://api.uazapi.com',
     connectionToken: 'tok',
     allowedValues: new Set<number>(),

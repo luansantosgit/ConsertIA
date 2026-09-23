@@ -328,11 +328,27 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
   ctx.appointments.push({ id: event.id, title: `Manutenção - ${ctx.contactName}`, date, start_time: (args.start_time ?? "09:00").toString().slice(0, 5), os_id: args.os_id ?? null });
   return { ok: true, event_id: event.id, date };
 }
+async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {
+  if (ctx.templates.length === 0) return { ok: true, sent: 0, message: "Nenhum template configurado." };
 
-async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {  if (ctx.templates.length === 0) return { ok: true, sent: 0, message: "Nenhum template configurado." };
+  const { data: recentOut } = await ctx.supabase
+    .from("messages")
+    .select("content")
+    .eq("conversation_id", ctx.conversation.id)
+    .eq("direction", "outbound")
+    .order("created_at", { ascending: false })
+    .limit(60);
+  const alreadySent = new Set((recentOut ?? []).map((row: any) => (row.content ?? "").toString().trim()));
+
   const { sendText, sendMedia } = await import("./uazapi.ts");
   let sent = 0;
+  let skipped = 0;
   for (const tpl of ctx.templates) {
+    const content = (tpl.content ?? "").trim();
+    if (content && alreadySent.has(content)) {
+      skipped++;
+      continue;
+    }
     try {
       if (tpl.type === "media" && tpl.media_url) {
         await sendMedia(ctx, tpl.media_url, tpl.content);
@@ -344,7 +360,10 @@ async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {  if (ctx.
       console.warn("[ai-agent] template send failed:", (err as Error).message);
     }
   }
-  return { ok: true, sent, titles: ctx.templates.map((t) => t.title) };
+  if (skipped > 0 && sent === 0) {
+    return { ok: true, sent, skipped, message: "Templates já haviam sido enviados nesta conversa — reenvio ignorado (regra de etapa única)." };
+  }
+  return { ok: true, sent, skipped, titles: ctx.templates.map((t) => t.title) };
 }
 
 async function updateCustomerName(ctx: AgentContext, args: any): Promise<ToolResult> {
