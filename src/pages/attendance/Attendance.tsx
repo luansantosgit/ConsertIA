@@ -4,6 +4,7 @@ import { OSDocumentModal } from '@/components/OSDocumentModal';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useAttendance } from './useAttendance';
+import type { ConvRow } from './types';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ChatArea } from './ChatArea';
 import { ClientDetailsPanel } from './ClientDetailsPanel';
@@ -88,6 +89,26 @@ export const Attendance: React.FC = () => {
   const [confirmClaimAi, setConfirmClaimAi] = React.useState<{ isOpen: boolean; convId: string; convName: string; aiState?: string }>({
     isOpen: false, convId: '', convName: '', aiState: undefined,
   });
+  const [dontShowAgain, setDontShowAgain] = React.useState(false);
+
+  const executeAiToggle = (convId: string, aiState?: string) => {
+    if (aiState === 'paused') {
+      void handleReleaseAi(convId);
+    } else {
+      const conv = conversations.find(c => c.id === convId);
+      if (conv) handleSelectConv(conv);
+      void handleClaimAi(convId).catch(() => {});
+    }
+  };
+
+  const handleAiIconClick = (conv: ConvRow) => {
+    if (window.localStorage.getItem('consertia:skip-ai-takeover-modal') === '1') {
+      executeAiToggle(conv.id, conv.ai_state);
+      return;
+    }
+    setDontShowAgain(false);
+    setConfirmClaimAi({ isOpen: true, convId: conv.id, convName: conv.contactName, aiState: conv.ai_state });
+  };
 
   if (error) {
     return (
@@ -117,7 +138,7 @@ export const Attendance: React.FC = () => {
           onSelectConversation={handleSelectConv}
           onMarkUnread={handleMarkUnread}
           onTogglePin={handleTogglePin}
-          onAiClick={conv => setConfirmClaimAi({ isOpen: true, convId: conv.id, convName: conv.contactName, aiState: conv.ai_state })}
+          onAiClick={handleAiIconClick}
         />
         <ChatArea
           selected={selected}
@@ -261,15 +282,15 @@ export const Attendance: React.FC = () => {
         onClose={() => setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined })}
         onConfirm={() => {
           const { convId, aiState } = confirmClaimAi;
-          setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined });
-          if (aiState === 'paused') {
-            void handleReleaseAi(convId);
-          } else {
-            const conv = conversations.find(c => c.id === convId);
-            if (conv) handleSelectConv(conv);
-            void handleClaimAi(convId).catch(() => {});
+          if (dontShowAgain) {
+            window.localStorage.setItem('consertia:skip-ai-takeover-modal', '1');
           }
+          setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined });
+          executeAiToggle(convId, aiState);
         }}
+        checkboxLabel="Não mostrar novamente"
+        checkboxChecked={dontShowAgain}
+        onCheckboxChange={setDontShowAgain}
         title={confirmClaimAi.aiState === 'paused' ? 'Devolver ao agente de IA' : 'Assumir atendimento'}
         message={confirmClaimAi.aiState === 'paused'
           ? `Você vai devolver a conversa com "${confirmClaimAi.convName}" para o agente de IA, que volta a atender automaticamente.`
