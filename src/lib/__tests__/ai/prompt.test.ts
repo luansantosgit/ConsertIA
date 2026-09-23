@@ -115,13 +115,23 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     expect(prompt).toContain('Troca de tela');
   });
 
-  it('conversa devolvida a IA reinicia o atendimento e ignora transferencias passadas', () => {
+  it('conversa devolvida ha menos de 1h: follow-up com conhecimento do que foi resolvido', () => {
     const prompt = buildSystemPrompt(mockCtx({
-      conversation: { id: 'c1', contact_phone: '5511', ai_state: 'attending', ai_released_at: '2026-09-23T15:00:00Z' },
+      conversation: { id: 'c1', contact_phone: '5511', ai_state: 'attending', ai_released_at: new Date(Date.now() - 30 * 60_000).toISOString() },
+    }));
+    expect(prompt).toContain('Pós-atendimento humano');
+    expect(prompt).toContain('Vi que você acabou de ser atendido');
+    expect(prompt).toContain('apenas AGRADECER');
+    expect(prompt).toContain('RETOMAR o mesmo assunto');
+  });
+
+  it('conversa devolvida ha mais de 1h: reinicio com saudacao de retomada', () => {
+    const prompt = buildSystemPrompt(mockCtx({
+      conversation: { id: 'c1', contact_phone: '5511', ai_state: 'attending', ai_released_at: new Date(Date.now() - 2 * 3_600_000).toISOString() },
     }));
     expect(prompt).toContain('REINÍCIO');
-    expect(prompt).toContain('DEVOLVIDA para você');
     expect(prompt).toContain('que bom ter você de volta');
+    expect(prompt).not.toContain('Vi que você acabou de ser atendido');
   });
 
   it('conversa transferida restringe o comportamento da IA', () => {
