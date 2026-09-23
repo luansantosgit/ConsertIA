@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Printer, Send, ExternalLink } from 'lucide-react';
 import type { OSRow } from '@/components/OSModal';
-import { formatOSCode } from '@/lib/format';
+import { formatOSCode, formatCurrency } from '@/lib/format';
 import { STATUS_BADGE } from './types';
 
 interface OSListProps {
@@ -73,7 +73,7 @@ export const OSList: React.FC<OSListProps> = ({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   <span>{os.equipmentLabel}</span>
                   {os.budget_amount && (
-                    <strong style={{ color: 'var(--text-primary)' }}>R$ {os.budget_amount.toFixed(2)}</strong>
+                    <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(os.budget_amount)}</strong>
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 4, paddingTop: 6, borderTop: '1px solid #e2e8f0' }}>

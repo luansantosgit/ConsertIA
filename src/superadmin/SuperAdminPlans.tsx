@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Plus, Check, Edit2, Trash2, Users, Zap, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { formatCurrency } from '@/lib/format';
 import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface DbPlan {
@@ -190,7 +191,7 @@ export const SuperAdminPlans: React.FC = () => {
               )}
             </div>
             <div>
-              <p className="stat-card-value">R${p.price}</p>
+              <p className="stat-card-value">{formatCurrency(p.price)}</p>
               <p className="stat-card-label">{p.name} · {p.companies} empresas</p>
             </div>
           </div>
@@ -202,7 +203,7 @@ export const SuperAdminPlans: React.FC = () => {
             </div>
           </div>
           <div>
-            <p className="stat-card-value">R${plans.reduce((a, p) => a + p.price * p.companies, 0).toLocaleString('pt-BR')}</p>
+            <p className="stat-card-value">{formatCurrency(plans.reduce((a, p) => a + p.price * p.companies, 0))}</p>
             <p className="stat-card-label">MRR Total</p>
           </div>
         </div>
@@ -234,7 +235,7 @@ export const SuperAdminPlans: React.FC = () => {
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-                <span className="plan-price">R${plan.price}</span>
+                <span className="plan-price">{formatCurrency(plan.price)}</span>
                 <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>/mês</span>
               </div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>

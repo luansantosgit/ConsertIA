@@ -171,7 +171,7 @@ async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
 }
 
 function formatMoney(value: number): string {
-  return `R$ ${value.toFixed(2).replace(".", ",")}`;
+  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 async function buildQuote(ctx: AgentContext, args: any): Promise<ToolResult> {

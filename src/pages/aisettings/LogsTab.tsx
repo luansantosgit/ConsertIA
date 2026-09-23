@@ -1,6 +1,7 @@
 import React from 'react';
 import { ThumbsUp, ThumbsDown, Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import type { AiLog } from './types';
+import { formatCurrency } from '@/lib/format';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface LogsTabProps {
@@ -28,7 +29,7 @@ export const LogsTab: React.FC<LogsTabProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
             {[
               { label: 'Total de logs', value: String(totalLogsCount), color: 'var(--primary)' },
-              { label: 'Custo total', value: `R$ ${totalCost.toFixed(2)}`, color: '#16a34a' },
+              { label: 'Custo total', value: formatCurrency(totalCost), color: '#16a34a' },
               { label: 'Requisições', value: String(aiLogs.length), color: '#7c3aed' },
               { label: 'Erros', value: String(aiLogs.filter(l => !l.success).length), color: '#ea580c' },
             ].map((m, i) => (
@@ -60,7 +61,7 @@ export const LogsTab: React.FC<LogsTabProps> = ({
                           {log.success ? t('Sucesso') : t('Erro')}
                         </span>
                         {log.cost > 0 && (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>R$ {log.cost.toFixed(4)}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>R$ {log.cost.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}</span>
                         )}
                     </div>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>

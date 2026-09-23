@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 import type { OSRow } from '@/components/OSModal';
-import { formatOSCode } from '@/lib/format';
+import { formatOSCode, formatCurrency } from '@/lib/format';
 import type { ChatMessage } from './types';
 
 interface MessageOSCardProps {
@@ -44,7 +44,7 @@ export const MessageOSCard: React.FC<MessageOSCardProps> = ({
       </p>
       {osCard.budget !== undefined && (
         <p style={{ fontSize: '0.9375rem', fontWeight: 800, margin: '4px 0 8px 0' }}>
-          Valor Total: R$ {osCard.budget.toFixed(2)}
+          Valor Total: {formatCurrency(osCard.budget)}
         </p>
       )}
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
