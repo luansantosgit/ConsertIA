@@ -5,6 +5,7 @@ import { buildSystemPrompt } from "../_shared/ai/prompt.ts";
 import { runAgentLoop } from "../_shared/ai/openrouter.ts";
 import { hasInvalidMoney, splitMessageParts } from "../_shared/ai/validate.ts";
 import { sendText } from "../_shared/ai/uazapi.ts";
+import { tryCaptureName } from "../_shared/ai/name-capture.ts";
 import type { AgentContext, ChatMessagePayload } from "../_shared/ai/types.ts";
 
 const STALL_PATTERN = /(vou verificar|um momento|aguarde|já verifico|deixa eu conferir|verificar a disponibilidade|já vejo|conferir o valor)/i;
@@ -147,6 +148,7 @@ async function handleRespond(ctx: AgentContext): Promise<Response> {
   }
 
   const startedAt = Date.now();
+  await tryCaptureName(ctx);
   const systemPrompt = buildSystemPrompt(ctx);
   const history = await buildHistory(ctx);
   let result = await runWithStallRecovery(ctx, systemPrompt, history, await runAgentLoop(ctx, systemPrompt, history));

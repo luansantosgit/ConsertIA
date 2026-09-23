@@ -78,15 +78,15 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "schedule_event",
-      description: "Agenda a manutenção no calendário. Chame depois de create_service_order.",
+      description: "Agenda a manutenção no calendário. Só chame DEPOIS de create_service_order e de o cliente ter confirmado data E horário. start_time é o horário exato dito pelo cliente (NUNCA inventado).",
       parameters: {
         type: "object",
         properties: {
           date: { type: "string", description: "Data futura (YYYY-MM-DD)" },
-          start_time: { type: "string", description: "HH:MM (padrão 09:00)" },
+          start_time: { type: "string", description: "Horário dito pelo cliente (HH:MM). Obrigatório." },
           os_id: { type: "string", description: "ID da OS criada" },
         },
-        required: ["date", "os_id"],
+        required: ["date", "start_time", "os_id"],
       },
     },
   },
@@ -302,11 +302,28 @@ async function createServiceOrder(ctx: AgentContext, args: any): Promise<ToolRes
   return { ok: true, os_id: order.id };
 }
 
+function normalizeTime(value: string): string {
+  return value.toString().slice(0, 5);
+}
+
+function addHour(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = (h * 60 + m + 60) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> {
   if (!ctx.agent.auto_schedule_enabled) return { ok: false, error: "Agendamento automático desativado pelo administrador." };
   const date = (args.date ?? "").toString();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "Data inválida. Use YYYY-MM-DD." };
   if (date < new Date().toISOString().slice(0, 10)) return { ok: false, error: "Data no passado não é permitida." };
+
+  const rawTime = (args.start_time ?? "").toString().trim();
+  if (!/^\d{1,2}:\d{2}$/.test(rawTime)) {
+    return { ok: false, error: "Horário ausente ou inválido. NÃO invente horário: pergunte ao cliente qual horário ele prefere e aguarde a resposta antes de agendar." };
+  }
+  const startTime = normalizeTime(rawTime);
+  const endTime = addHour(startTime);
 
   const { data: event, error } = await ctx.supabase
     .from("calendar_events")
@@ -315,8 +332,8 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
       title: `Manutenção - ${ctx.contactName}`,
       customer: ctx.customer?.name ?? ctx.contactName,
       date,
-      start_time: (args.start_time ?? "09:00").toString().slice(0, 5),
-      end_time: (args.start_time ?? "10:00").toString().slice(0, 5),
+      start_time: startTime,
+      end_time: endTime,
       type: "os",
       os_id: args.os_id ?? null,
       color: "#4f46e5",
@@ -325,8 +342,17 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
     .single();
   if (error || !event) return { ok: false, error: error?.message ?? "Falha ao agendar" };
 
-  ctx.appointments.push({ id: event.id, title: `Manutenção - ${ctx.contactName}`, date, start_time: (args.start_time ?? "09:00").toString().slice(0, 5), os_id: args.os_id ?? null });
-  return { ok: true, event_id: event.id, date };
+  ctx.appointments.unshift({ id: event.id, title: `Manutenção - ${ctx.contactName}`, date, start_time: startTime, os_id: args.os_id ?? null });
+  const [y, m, d] = date.split("-");
+  const brDate = `${d}/${m}/${y}`;
+  return {
+    ok: true,
+    event_id: event.id,
+    date,
+    start_time: startTime,
+    os_id: args.os_id ?? null,
+    message: `Agendamento criado para ${brDate} às ${startTime}. Confirme verbalmente ao cliente com data e hora exatas (ex: "Agendado para ${brDate} às ${startTime} ✅") e avise que um atendente vai finalizar os detalhes.`,
+  };
 }
 async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {
   if (ctx.templates.length === 0) return { ok: true, sent: 0, message: "Nenhum template configurado." };
