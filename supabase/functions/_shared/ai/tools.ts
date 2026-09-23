@@ -102,11 +102,11 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "update_customer_name",
-      description: "Salva o nome informado pelo cliente no sistema. Chame quando ele disser o nome (se a pergunta de nome estiver ativa).",
+      description: "Salva o nome que o cliente ACABOU DE DIZER na última mensagem. Use a fala exata do cliente — NUNCA o nome atual do sistema/histórico.",
       parameters: {
         type: "object",
         properties: {
-          name: { type: "string", description: "Nome do cliente (ex: Maria)" },
+          name: { type: "string", description: "Nome exato dito pelo cliente (ex: Maria)" },
         },
         required: ["name"],
       },
@@ -118,36 +118,72 @@ function normalizeMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
-  const part = (args.part_type ?? "").toString();
-  const brand = (args.brand ?? "").toString();
-  const model = (args.model ?? "").toString();
-  const supabase = ctx.supabase;
+const POPULAR_BRAND_WORDS = [
+  "galaxy", "iphone", "ipad", "samsung", "apple", "xiaomi", "redmi", "note",
+  "motorola", "moto", "huawei", "honor", "lg", "asus", "lenovo", "google",
+  "pixel", "realme", "oneplus", "pocophone", "poco",
+];
 
-  let query = supabase
+function stripAccents(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/** Nome popular -> termo central do modelo: "Galaxy S22" -> "s22", "iPhone 14 Pro Max" -> "14 pro max" */
+export function coreModelTerm(model: string): string {
+  return stripAccents(model.toLowerCase())
+    .split(/\s+/)
+    .filter((token) => token.length > 0 && !POPULAR_BRAND_WORDS.includes(token))
+    .join(" ")
+    .trim();
+}
+
+interface SearchTerms {
+  brand?: string;
+  model?: string;
+  part?: string;
+}
+
+const PART_COLUMNS = "id, name, price, stock_quantity, part_type, device_brand, device_model";
+
+async function searchProducts(ctx: AgentContext, terms: SearchTerms): Promise<PartRow[]> {
+  let query = ctx.supabase
     .from("products")
-    .select("id, name, price, stock_quantity, part_type, device_brand, device_model")
+    .select(PART_COLUMNS)
     .eq("tenant_id", ctx.tenantId)
     .eq("active", true);
-
-  if (brand) query = query.ilike("device_brand", `%${brand}%`);
-  if (model) query = query.or(`device_model.ilike.%${model}%,name.ilike.%${model}%`);
-  if (part) query = query.or(`part_type.ilike.%${part}%,name.ilike.%${part}%`);
-
+  if (terms.brand) query = query.ilike("device_brand", `%${terms.brand}%`);
+  if (terms.model) query = query.or(`device_model.ilike.%${terms.model}%,name.ilike.%${terms.model}%`);
+  if (terms.part) query = query.or(`part_type.ilike.%${terms.part}%,name.ilike.%${terms.part}%`);
   const { data, error } = await query.limit(5);
-  if (error) return { ok: false, error: error.message };
+  if (error) throw new Error(error.message);
+  return (data ?? []) as PartRow[];
+}
 
-  let rows: PartRow[] = data ?? [];
-  if (rows.length === 0) {
-    const fb = await supabase
-      .from("products")
-      .select("id, name, price, stock_quantity, part_type, device_brand, device_model")
-      .eq("tenant_id", ctx.tenantId)
-      .eq("active", true)
-      .ilike("name", `%${part}%${brand}%`)
-      .limit(5);
-    rows = fb.data ?? [];
+async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
+  const part = stripAccents((args.part_type ?? "").toString().toLowerCase());
+  const brand = stripAccents((args.brand ?? "").toString().toLowerCase());
+  const model = stripAccents((args.model ?? "").toString().toLowerCase());
+  const core = coreModelTerm((args.model ?? "").toString());
+
+  const strategies: SearchTerms[] = [
+    { brand, model, part },
+    { brand, model: core, part },
+    { brand, part },
+    { model: core, part },
+    { part },
+  ];
+
+  let rows: PartRow[] = [];
+  for (const terms of strategies) {
+    if (!terms.brand && !terms.model && !terms.part) continue;
+    try {
+      rows = await searchProducts(ctx, terms);
+    } catch {
+      rows = [];
+    }
+    if (rows.length > 0) break;
   }
+
   if (rows.length === 0) {
     return {
       ok: true,
@@ -326,7 +362,7 @@ async function updateCustomerName(ctx: AgentContext, args: any): Promise<ToolRes
   }
   const { error: convError } = await ctx.supabase
     .from("conversations")
-    .update({ contact_name: name })
+    .update({ contact_name: name, customer_name_confirmed: true })
     .eq("id", ctx.conversation.id);
   if (convError) return { ok: false, error: `Falha ao atualizar conversa: ${convError.message}` };
 

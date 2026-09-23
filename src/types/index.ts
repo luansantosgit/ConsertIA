@@ -168,6 +168,7 @@ export interface Conversation {
   archived_at?: string;
   ai_state?: ConversationAiState;
   ai_released_at?: string;
+  customer_name_confirmed?: boolean;
   created_at: string;
   updated_at: string;
 }

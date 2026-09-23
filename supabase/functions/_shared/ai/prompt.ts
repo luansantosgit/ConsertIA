@@ -65,11 +65,12 @@ Esta conversa esteve com um atendente humano e foi devolvida para você há mais
 }
 
 export function buildSystemPrompt(ctx: AgentContext): string {
-  const nameRule = ctx.agent.ask_name_enabled
-    ? ctx.isFirstContact
-      ? `- Pergunta de nome ATIVA: na primeira interação, logo após a saudação, pergunte com naturalidade como pode chamar o cliente (ex: "E como posso te chamar?"). Ao receber o nome, chame update_customer_name imediatamente para salvá-lo no sistema e trate o cliente pelo nome dali em diante.`
-      : `- Este cliente já informou o nome. Trate-o pelo nome "${ctx.contactName}" durante toda a conversa.`
-    : "";
+  const nameConfirmed = ctx.conversation.customer_name_confirmed === true;
+  const nameRule = !ctx.agent.ask_name_enabled
+    ? ""
+    : nameConfirmed
+      ? `- O nome confirmado deste cliente é "${ctx.contactName}". Trate-o por esse nome. Se ele corrigir o nome, atualize com update_customer_name usando exatamente a fala dele.`
+      : `- Pergunta de nome ATIVA e o nome deste cliente AINDA NÃO foi confirmado: pergunte com naturalidade como pode chamar o cliente (ex: "E como posso te chamar?"). Quando ele responder, chame update_customer_name imediatamente passando EXATAMENTE o nome que o cliente disse na última mensagem — NUNCA o nome atual do sistema/histórico.`;
 
   const greetingBase = ctx.agent.greeting_enabled
     ? `# Recepção e saudação (regra permanente)

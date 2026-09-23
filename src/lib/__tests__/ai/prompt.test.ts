@@ -78,15 +78,29 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     const prompt = buildSystemPrompt(mockCtx({ isFirstContact: true, agent: { ...mockAgent(), ask_name_enabled: true } }));
     expect(prompt).toContain('Pergunta de nome ATIVA');
     expect(prompt).toContain('update_customer_name');
+    expect(prompt).toContain('NUNCA o nome atual do sistema');
   });
 
-  it('pergunta de nome ativa usa o nome do lead nos contatos seguintes', () => {
+  it('pergunta de nome ativa usa o nome confirmado do lead nos contatos seguintes', () => {
     const prompt = buildSystemPrompt(mockCtx({
       isFirstContact: false,
       contactName: 'Maria',
+      conversation: { id: 'c1', contact_phone: '5511', ai_state: 'attending', customer_name_confirmed: true },
       agent: { ...mockAgent(), ask_name_enabled: true },
     }));
-    expect(prompt).toContain('Trate-o pelo nome "Maria"');
+    expect(prompt).toContain('O nome confirmado deste cliente é "Maria"');
+    expect(prompt).not.toContain('Pergunta de nome ATIVA');
+  });
+
+  it('nome nao confirmado: pergunta mesmo em retomada (nao usa o nome do whatsapp)', () => {
+    const prompt = buildSystemPrompt(mockCtx({
+      isFirstContact: false,
+      contactName: 'Grupo LS Tecnologia',
+      conversation: { id: 'c1', contact_phone: '5511', ai_state: 'attending', customer_name_confirmed: false },
+      agent: { ...mockAgent(), ask_name_enabled: true },
+    }));
+    expect(prompt).toContain('AINDA NÃO foi confirmado');
+    expect(prompt).not.toContain('Trate-o pelo nome');
   });
 
   it('injeta a cobertura de aparelhos', () => {
