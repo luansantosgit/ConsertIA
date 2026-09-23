@@ -74,6 +74,15 @@ describe('splitMessageParts (mensagens humanizadas)', () => {
     expect(splitMessageParts('Só uma mensagem')).toEqual(['Só uma mensagem']);
   });
 
+  it('divide por paragrafos quando nao ha separador ---', () => {
+    const parts = splitMessageParts('Bom dia! 😊\n\nEu sou a Ana, da TechFix\n\nComo posso te ajudar?');
+    expect(parts).toEqual(['Bom dia! 😊', 'Eu sou a Ana, da TechFix', 'Como posso te ajudar?']);
+  });
+
+  it('paragrafo unico com quebras simples permanece uma bolha', () => {
+    expect(splitMessageParts('Serviço: troca de tela\nValor: R$ 400,00')).toEqual(['Serviço: troca de tela\nValor: R$ 400,00']);
+  });
+
   it('limita a 6 partes', () => {
     const text = Array.from({ length: 10 }, (_, i) => `parte${i}`).join('---');
     expect(splitMessageParts(text)).toHaveLength(6);

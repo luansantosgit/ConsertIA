@@ -30,10 +30,18 @@ export function hasInvalidMoney(text: string, allowedValues: Set<number>): boole
 }
 
 export function splitMessageParts(text: string): string[] {
-  const parts = text
+  const bySeparator = text
     .split(/\n?\s*-{3,}\s*\n?/g)
     .map((part) => part.trim())
     .filter((part) => part.length > 0);
-  if (parts.length > 0) return parts.slice(0, 6);
-  return [text.trim()];
+  if (bySeparator.length > 1) return bySeparator.slice(0, 6);
+
+  const byParagraph = text
+    .split(/\n{2,}/g)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  if (byParagraph.length > 1) return byParagraph.slice(0, 6);
+
+  const single = text.trim();
+  return single ? [single] : [];
 }

@@ -7,6 +7,34 @@ import { hasInvalidMoney, splitMessageParts } from "../_shared/ai/validate.ts";
 import { sendText } from "../_shared/ai/uazapi.ts";
 import type { AgentContext, ChatMessagePayload } from "../_shared/ai/types.ts";
 
+const STALL_PATTERN = /(vou verificar|um momento|aguarde|já verifico|deixa eu conferir|verificar a disponibilidade|já vejo|conferir o valor)/i;
+
+async function runWithStallRecovery(
+  ctx: AgentContext,
+  systemPrompt: string,
+  history: ChatMessagePayload[],
+  first: Awaited<ReturnType<typeof runAgentLoop>>
+): Promise<Awaited<ReturnType<typeof runAgentLoop>>> {
+  if (first.error || !first.content) return first;
+  if (ctx.toolsUsed.length > 0 || !STALL_PATTERN.test(first.content)) return first;
+
+  const nudge: ChatMessagePayload = {
+    role: "user",
+    content: "Você anunciou que ia verificar mas NÃO executou nenhuma tool. Chame agora a tool necessária (ex: find_part) na mesma resposta e só finalize o turno depois de ter o resultado real em mãos. Nunca anuncie uma verificação futura sem executá-la.",
+  };
+  const retry = await runAgentLoop(ctx, systemPrompt, [
+    ...history,
+    { role: "assistant", content: first.content },
+    nudge,
+  ]);
+  return {
+    content: retry.error ? first.content : retry.content,
+    inputTokens: first.inputTokens + retry.inputTokens,
+    outputTokens: first.outputTokens + retry.outputTokens,
+    error: first.error,
+  };
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -118,7 +146,7 @@ async function handleRespond(ctx: AgentContext): Promise<Response> {
   const startedAt = Date.now();
   const systemPrompt = buildSystemPrompt(ctx);
   const history = await buildHistory(ctx);
-  let result = await runAgentLoop(ctx, systemPrompt, history);
+  let result = await runWithStallRecovery(ctx, systemPrompt, history, await runAgentLoop(ctx, systemPrompt, history));
 
   if (result.error) {
     await logAi(ctx, {
