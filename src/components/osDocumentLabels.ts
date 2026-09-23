@@ -141,3 +141,53 @@ export function osDocLabels(language: string | undefined): OSDocLabels {
   if (language === 'es') return es;
   return ptBR;
 }
+
+const STATUS_PT: Record<string, string> = {
+  pending: 'Pendente',
+  diagnosis: 'Em diagnóstico',
+  awaiting_approval: 'Aguardando aprovação',
+  approved: 'Aprovada',
+  awaiting_part: 'Aguardando peça',
+  in_progress: 'Em andamento',
+  completed: 'Concluída',
+  ready: 'Pronta',
+  cancelled: 'Cancelada',
+};
+
+const STATUS_EN: Record<string, string> = {
+  pending: 'Pending',
+  diagnosis: 'In diagnosis',
+  awaiting_approval: 'Awaiting approval',
+  approved: 'Approved',
+  awaiting_part: 'Awaiting part',
+  in_progress: 'In progress',
+  completed: 'Completed',
+  ready: 'Ready',
+  cancelled: 'Cancelled',
+};
+
+const STATUS_ES: Record<string, string> = {
+  pending: 'Pendiente',
+  diagnosis: 'En diagnóstico',
+  awaiting_approval: 'En espera de aprobación',
+  approved: 'Aprobada',
+  awaiting_part: 'En espera de pieza',
+  in_progress: 'En curso',
+  completed: 'Completada',
+  ready: 'Lista',
+  cancelled: 'Cancelada',
+};
+
+const PRIORITY_PT: Record<string, string> = { low: 'Baixa', medium: 'Média', high: 'Alta', urgent: 'Urgente' };
+const PRIORITY_EN: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' };
+const PRIORITY_ES: Record<string, string> = { low: 'Baja', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
+
+export function osStatusLabel(language: string | undefined, status: string): string {
+  const map = language === 'en' ? STATUS_EN : language === 'es' ? STATUS_ES : STATUS_PT;
+  return map[status] ?? status;
+}
+
+export function osPriorityLabel(language: string | undefined, priority: string): string {
+  const map = language === 'en' ? PRIORITY_EN : language === 'es' ? PRIORITY_ES : PRIORITY_PT;
+  return map[priority] ?? priority;
+}

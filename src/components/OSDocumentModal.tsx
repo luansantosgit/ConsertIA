@@ -4,7 +4,7 @@ import type { OSRow } from '@/components/OSModal';
 import { useThemeStore } from '@/stores/theme.store';
 import { supabase } from '@/lib/supabase';
 import { formatOSCode, formatCurrency } from '@/lib/format';
-import { osDocLabels } from '@/components/osDocumentLabels';
+import { osDocLabels, osStatusLabel, osPriorityLabel } from '@/components/osDocumentLabels';
 import type { OSDocLabels } from '@/components/osDocumentLabels';
 
 interface OSDocumentModalProps {
@@ -150,7 +150,7 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
                 {labels.emissionDate}: {new Date(os.created_at || Date.now()).toLocaleDateString(locale)}
               </p>
               <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '2px 0 0 0' }}>
-                {labels.status}: <strong>{os.status.toUpperCase()}</strong>
+                {labels.status}: <strong>{osStatusLabel(company.language ?? undefined, os.status)}</strong>
               </p>
             </div>
           </div>
@@ -180,7 +180,7 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
                 {labels.technician}: {os.technicianName || '—'}
               </p>
               <p style={{ fontSize: '0.8125rem', color: '#475569', margin: 0 }}>
-                {labels.priority}: <strong style={{ textTransform: 'capitalize' }}>{os.priority}</strong>
+                {labels.priority}: <strong>{osPriorityLabel(company.language ?? undefined, os.priority)}</strong>
               </p>
             </div>
           </div>
