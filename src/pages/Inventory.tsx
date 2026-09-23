@@ -30,6 +30,7 @@ export const Inventory: React.FC = () => {
   const [movQty, setMovQty] = useState('1');
   const [movRef, setMovRef] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [newForm, setNewForm] = useState({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '', partType: '', deviceBrand: '', deviceModel: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +104,8 @@ export const Inventory: React.FC = () => {
   };
 
   const handleAdd = async () => {
-    if (!newForm.name) return;
+    if (adding || !newForm.name) return;
+    setAdding(true);
 
     try {
       const created = await productRepo.create({
@@ -132,6 +134,8 @@ export const Inventory: React.FC = () => {
       setNewForm({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '', partType: '', deviceBrand: '', deviceModel: '' });
     } catch (error) {
       console.error('Failed to create product:', error);
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -424,8 +428,10 @@ export const Inventory: React.FC = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowAddModal(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={handleAdd}><Plus size={15} />Adicionar item</button>
+              <button className="btn btn-secondary" onClick={() => setShowAddModal(false)} disabled={adding}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleAdd} disabled={adding || !newForm.name.trim()}>
+                {adding ? 'Adicionando...' : <><Plus size={15} />Adicionar item</>}
+              </button>
             </div>
           </div>
         </div>
