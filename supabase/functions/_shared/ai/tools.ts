@@ -312,8 +312,9 @@ async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {  if (ctx.
 }
 
 async function updateCustomerName(ctx: AgentContext, args: any): Promise<ToolResult> {
-  const name = (args?.name ?? "").toString().trim().slice(0, 120);
-  if (name.length < 2) return { ok: false, error: "Nome inválido ou muito curto." };
+  const raw = args?.name ?? args?.nome ?? args?.customer_name ?? args?.full_name ?? "";
+  const name = raw.toString().trim().slice(0, 120);
+  if (name.length < 2) return { ok: false, error: `Nome inválido ou muito curto (recebido: ${JSON.stringify(args)}).` };
 
   if (ctx.customer) {
     const { error } = await ctx.supabase
@@ -321,12 +322,13 @@ async function updateCustomerName(ctx: AgentContext, args: any): Promise<ToolRes
       .update({ name })
       .eq("id", ctx.customer.id)
       .eq("tenant_id", ctx.tenantId);
-    if (error) return { ok: false, error: error.message };
+    if (error) return { ok: false, error: `Falha ao atualizar cliente: ${error.message}` };
   }
-  await ctx.supabase
+  const { error: convError } = await ctx.supabase
     .from("conversations")
     .update({ contact_name: name })
     .eq("id", ctx.conversation.id);
+  if (convError) return { ok: false, error: `Falha ao atualizar conversa: ${convError.message}` };
 
   ctx.customer = ctx.customer ? { ...ctx.customer, name } : null;
   ctx.contactName = name;
@@ -335,6 +337,12 @@ async function updateCustomerName(ctx: AgentContext, args: any): Promise<ToolRes
 
 export async function executeTool(ctx: AgentContext, name: string, args: any): Promise<ToolResult> {
   ctx.toolsUsed.push(name);
+  const result = await executeToolInner(ctx, name, args);
+  ctx.toolResults.push({ tool: name, ...result });
+  return result;
+}
+
+async function executeToolInner(ctx: AgentContext, name: string, args: any): Promise<ToolResult> {
   switch (name) {
     case "find_part":
       return findPart(ctx, args);

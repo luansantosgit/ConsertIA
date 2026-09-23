@@ -46,6 +46,7 @@ function mockCtx(overrides: Partial<AgentContext> = {}): AgentContext {
     handoffRequested: false,
     canonicalQuote: null,
     toolsUsed: [],
+    toolResults: [],
     ...overrides,
   } as AgentContext;
 }

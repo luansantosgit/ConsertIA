@@ -30,7 +30,7 @@ export const Inventory: React.FC = () => {
   const [movQty, setMovQty] = useState('1');
   const [movRef, setMovRef] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newForm, setNewForm] = useState({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '' });
+  const [newForm, setNewForm] = useState({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '', partType: '', deviceBrand: '', deviceModel: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -113,6 +113,10 @@ export const Inventory: React.FC = () => {
         cost: parseFloat(newForm.cost) || 0,
         stock_quantity: 0,
         min_stock_quantity: parseInt(newForm.min_stock_quantity) || 2,
+        category: newForm.category,
+        part_type: newForm.partType || null,
+        device_brand: newForm.deviceBrand || null,
+        device_model: newForm.deviceModel || null,
         active: true,
       } as Partial<Product>);
 
@@ -125,7 +129,7 @@ export const Inventory: React.FC = () => {
 
       setItems(prev => [newItem, ...prev]);
       setShowAddModal(false);
-      setNewForm({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '' });
+      setNewForm({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '', partType: '', deviceBrand: '', deviceModel: '' });
     } catch (error) {
       console.error('Failed to create product:', error);
     }
@@ -383,6 +387,23 @@ export const Inventory: React.FC = () => {
                     value={Number(newForm.cost) || 0}
                     onChange={v => setNewForm(f => ({ ...f, cost: String(v) }))}
                   />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Tipo de peça</label>
+                  <input className="input" value={newForm.partType} onChange={e => setNewForm(f => ({ ...f, partType: e.target.value }))} placeholder="Ex: tela, vidro, bateria" />
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                    Usado pelo agente de IA para localizar a peça nos orçamentos.
+                  </p>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Marca do aparelho</label>
+                  <input className="input" value={newForm.deviceBrand} onChange={e => setNewForm(f => ({ ...f, deviceBrand: e.target.value }))} placeholder="Ex: Samsung" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Modelo do aparelho</label>
+                  <input className="input" value={newForm.deviceModel} onChange={e => setNewForm(f => ({ ...f, deviceModel: e.target.value }))} placeholder="Ex: Galaxy S22" />
                 </div>
               </div>
               <div className="form-row">

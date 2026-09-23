@@ -199,6 +199,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     handoffRequested: false,
     canonicalQuote: null,
     toolsUsed: [],
+    toolResults: [],
   };
 
   const entitlement = await loadEntitlement(supabase, partial);

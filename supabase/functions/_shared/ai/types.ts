@@ -94,6 +94,7 @@ export interface AgentContext {
   handoffRequested: boolean;
   canonicalQuote: string | null;
   toolsUsed: string[];
+  toolResults: Record<string, any>[];
 }
 
 export interface ChatMessagePayload {

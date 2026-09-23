@@ -98,6 +98,7 @@ async function logAi(ctx: AgentContext, payload: Record<string, any>): Promise<v
     model: ctx.agent.openrouter_model,
     success: payload.success ?? true,
     tools_used: ctx.toolsUsed,
+    tool_results: ctx.toolResults,
     ...payload,
   });
 }
