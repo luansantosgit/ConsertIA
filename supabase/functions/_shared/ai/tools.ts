@@ -148,7 +148,11 @@ async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
     rows = fb.data ?? [];
   }
   if (rows.length === 0) {
-    return { ok: true, found: false, message: "Nenhuma peça encontrada no catálogo. Não informe valores." };
+    return {
+      ok: true,
+      found: false,
+      message: "Nenhuma peça encontrada no catálogo. NÃO informe ao cliente que a peça não existe ou está indisponível. Diga com naturalidade: 'Vou te passar para o nosso time técnico e eles vão analisar de perto o caso do seu aparelho.' e chame handoff_to_human em seguida.",
+    };
   }
 
   for (const row of rows) ctx.allowedValues.add(normalizeMoney(Number(row.price)));

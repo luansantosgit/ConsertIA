@@ -48,7 +48,8 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     const prompt = buildSystemPrompt(mockCtx());
     expect(prompt).toContain('Ana');
     expect(prompt).toContain('TechFix');
-    expect(prompt).toContain('Agora é manhã');
+    expect(prompt).toContain('manhã');
+    expect(prompt).toContain('"Bom dia!"');
   });
 
   it('primeiro contato exige recepção calorosa mesmo com problema na 1ª msg', () => {
@@ -61,7 +62,15 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     const prompt = buildSystemPrompt(mockCtx({ isFirstContact: false }));
     expect(prompt).toContain('assistente de suporte da TechFix');
     expect(prompt).toContain('Ana');
-    expect(prompt).toContain('bem-vindo(a) novamente');
+    expect(prompt).toContain('novamente da TechFix');
+    expect(prompt).toContain('que bom ter você de volta');
+  });
+
+  it('saudação usa a frase exata do período atual', () => {
+    const prompt = buildSystemPrompt(mockCtx({ period: 'tarde' }));
+    expect(prompt).toContain('"Boa tarde!"');
+    const promptManha = buildSystemPrompt(mockCtx({ period: 'manhã' }));
+    expect(promptManha).toContain('"Bom dia!"');
   });
 
   it('pergunta de nome ativa instrui o agente a perguntar e salvar via tool no primeiro contato', () => {
@@ -84,9 +93,10 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     expect(prompt).toContain('smartphone: Apple, Samsung');
   });
 
-  it('modo somente tela proíbe orçamento de vidro', () => {
+  it('modo somente tela proíbe orçamento de vidro (sem generalizar para outros serviços)', () => {
     const prompt = buildSystemPrompt(mockCtx({ diagnosis: { repair_mode: 'screen_only', glass_rules: null } }));
-    expect(prompt).toContain('APENAS com troca de tela');
+    expect(prompt).toContain('apenas com troca de tela completa');
+    expect(prompt).toContain('NÃO significa que a empresa só trabalha com telas');
   });
 
   it('modo vidro injeta as regras de qualificação', () => {
