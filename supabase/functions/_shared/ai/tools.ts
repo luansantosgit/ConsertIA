@@ -61,13 +61,14 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "create_service_order",
-      description: "Cria uma ordem de serviço (OS) para a manutenção agendada. Chame após confirmar data com o cliente.",
+      description: "Cria uma ordem de serviço (OS) para a manutenção agendada. Chame após confirmar data com o cliente. Informe o part_id para registrar a peça e o valor de mão de obra na OS.",
       parameters: {
         type: "object",
         properties: {
           subject: { type: "string", description: "Título curto, ex: Troca de tela - iPhone 11" },
           description: { type: "string", description: "Descrição com o problema relatado" },
           budget_amount: { type: "number", description: "Valor total do orçamento aprovado" },
+          part_id: { type: "string", description: "ID da peça usada no orçamento (retornado pelo find_part)" },
         },
         required: ["subject", "budget_amount"],
       },
@@ -216,6 +217,27 @@ async function createServiceOrder(ctx: AgentContext, args: any): Promise<ToolRes
   if (!ctx.agent.auto_os_enabled) return { ok: false, error: "Criação automática de OS desativada pelo administrador." };
   if (!ctx.customer) return { ok: false, error: "Cliente não vinculado à conversa." };
 
+  let partName: string | null = null;
+  let partAmount: number | null = null;
+  let laborAmount: number | null = null;
+
+  if (args.part_id) {
+    const { data: part } = await ctx.supabase
+      .from("products")
+      .select("id, name, price")
+      .eq("id", args.part_id)
+      .eq("tenant_id", ctx.tenantId)
+      .limit(1)
+      .maybeSingle();
+    if (part) {
+      partName = part.name;
+      partAmount = normalizeMoney(Number(part.price));
+      laborAmount = ctx.quote.labor_enabled
+        ? normalizeMoney(ctx.quote.labor_type === "fixed" ? Number(ctx.quote.labor_value) : partAmount * Number(ctx.quote.labor_value) / 100)
+        : 0;
+    }
+  }
+
   const { data: order, error } = await ctx.supabase
     .from("service_orders")
     .insert({
@@ -224,6 +246,9 @@ async function createServiceOrder(ctx: AgentContext, args: any): Promise<ToolRes
       subject: args.subject,
       description: args.description ?? args.subject,
       budget_amount: Number(args.budget_amount) || null,
+      part_name: partName,
+      part_amount: partAmount,
+      labor_amount: laborAmount,
       status: "pending",
       priority: "medium",
     })

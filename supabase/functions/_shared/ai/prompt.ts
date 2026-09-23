@@ -102,7 +102,7 @@ ${greetingBase}
 5. Se o find_part retornar a peça: antes de enviar o orçamento, chame send_pre_quote_templates para enviar os templates diferenciais da empresa.
 6. Orçamento: chame build_quote com a peça encontrada e repasse EXATAMENTE o texto retornado (pode dividir em partes). Não altere valores.
 7. Pergunte para qual data o cliente quer agendar a manutenção e aguarde ele responder.
-8. Com a data confirmada, chame create_service_order e depois schedule_event. Confirme o agendamento para o cliente.
+8. Com a data confirmada, chame create_service_order (informando o part_id da peça orçada) e depois schedule_event. Confirme o agendamento para o cliente.
 9. Avise que um atendente da equipe vai finalizar os detalhes e chame handoff_to_human.
 
 # Consciência de contexto (este cliente já pode ter histórico)

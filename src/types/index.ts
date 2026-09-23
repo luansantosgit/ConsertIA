@@ -45,6 +45,9 @@ export interface ServiceOrder {
   description: string;
   diagnosis?: string;
   budget_amount?: number;
+  part_name?: string;
+  part_amount?: number;
+  labor_amount?: number;
   approved_at?: string;
   started_at?: string;
   completed_at?: string;
