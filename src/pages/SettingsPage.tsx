@@ -64,6 +64,7 @@ export const SettingsPage: React.FC = () => {
   const [companyAddress, setCompanyAddress] = useState('');
   const [companyLanguage, setCompanyLanguage] = useState('pt-BR');
   const [companyTimezone, setCompanyTimezone] = useState('America/Sao_Paulo');
+  const [companyOsTerms, setCompanyOsTerms] = useState('');
   const [notifications, setNotifications] = useState<Record<string, boolean>>({});
   const [connections, setConnections] = useState<Connection[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
@@ -113,6 +114,7 @@ export const SettingsPage: React.FC = () => {
           setCompanyAddress(settings.address ?? '');
           setCompanyLanguage(settings.language ?? 'pt-BR');
           setCompanyTimezone(settings.timezone ?? 'America/Sao_Paulo');
+          setCompanyOsTerms(settings.os_terms ?? '');
         }
 
         if (user?.tenantId) {
@@ -333,6 +335,7 @@ export const SettingsPage: React.FC = () => {
         address: companyAddress,
         language: companyLanguage,
         timezone: companyTimezone,
+        os_terms: companyOsTerms || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -543,6 +546,20 @@ export const SettingsPage: React.FC = () => {
                     <option value="America/Manaus">America/Manaus (GMT-4)</option>
                   </select>
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">{t('Termos de Serviço (OS)')}</label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  style={{ resize: 'vertical', fontFamily: 'inherit' }}
+                  value={companyOsTerms}
+                  onChange={e => setCompanyOsTerms(e.target.value)}
+                  placeholder={t('Texto simples que aparece no rodapé das Ordens de Serviço. Deixe vazio para usar o padrão.')}
+                />
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                  {t('Exibido no documento da OS enviado ao cliente.')}
+                </p>
               </div>
               <div>
                 <button className="btn btn-primary" onClick={handleSave}>
