@@ -193,18 +193,19 @@ export interface CalendarEvent {
   id: string;
   tenant_id: string;
   title: string;
-  description?: string;
+  customer?: string;
+  technician?: string;
+  date: string;
   start_time: string;
   end_time: string;
   all_day: boolean;
-  event_type: CalendarEventType;
-  related_id?: string;
+  type: CalendarEventType;
+  os_id?: string;
   color?: string;
   created_at: string;
-  updated_at: string;
 }
 
-export type CalendarEventType = 'service_order' | 'meeting' | 'reminder' | 'other';
+export type CalendarEventType = 'os' | 'delivery' | 'meeting' | 'reminder' | 'other';
 
 export interface StockMovement {
   id: string;
