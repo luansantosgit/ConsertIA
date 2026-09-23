@@ -207,6 +207,14 @@ export interface CalendarEvent {
 
 export type CalendarEventType = 'os' | 'delivery' | 'meeting' | 'reminder' | 'other';
 
+export interface BusinessHourDay {
+  open: boolean;
+  start: string;
+  end: string;
+}
+
+export type BusinessHours = Record<string, BusinessHourDay>;
+
 export interface StockMovement {
   id: string;
   tenant_id: string;

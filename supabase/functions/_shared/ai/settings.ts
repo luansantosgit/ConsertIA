@@ -1,4 +1,5 @@
 import type { AgentContext, AgentSettings, QuoteSettings, DiagnosisSettings, CoverageRow, TemplateRow, OpenOrderRow, AppointmentRow } from "./types.ts";
+import { normalizeBusinessHours } from "./business-hours.ts";
 
 function periodOfDay(hour: number): string {
   if (hour >= 5 && hour < 12) return "manhã";
@@ -95,7 +96,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     supabase.from("ai_diagnosis_settings").select("*").eq("tenant_id", tenantId).limit(1).maybeSingle(),
     supabase.from("ai_device_coverage").select("device_type, brands, active").eq("tenant_id", tenantId).eq("active", true),
     supabase.from("ai_pre_quote_templates").select("id, title, type, content, media_url, sort_order").eq("tenant_id", tenantId).eq("active", true).order("sort_order"),
-    supabase.from("tenant_settings").select("company_name, timezone, language").eq("tenant_id", tenantId).limit(1).maybeSingle(),
+    supabase.from("tenant_settings").select("company_name, timezone, language, business_hours").eq("tenant_id", tenantId).limit(1).maybeSingle(),
   ]);
 
   if (!agentRes.data) return null;
@@ -194,6 +195,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     isFirstContact,
     period: currentPeriod(settingsRes.data?.timezone || "America/Sao_Paulo"),
     timezone: settingsRes.data?.timezone || "America/Sao_Paulo",
+    businessHours: normalizeBusinessHours(settingsRes.data?.business_hours),
     uazapiBase,
     connectionToken,
     allowedValues: new Set<number>(),

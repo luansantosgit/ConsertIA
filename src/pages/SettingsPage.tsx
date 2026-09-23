@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Palette, Bell, Shield, Users, Wrench,
+  Palette, Bell, Shield, Users, Wrench, Clock,
   Check, ChevronRight, Smartphone, MessageSquare, MonitorSmartphone, Bot
 } from 'lucide-react';
 import { useThemeStore } from '@/stores/theme.store';
@@ -17,12 +17,14 @@ import { supabase } from '@/lib/supabase';
 import type { Connection, HybridMode } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 import { DeviceCoverageSection } from '@/pages/settings/DeviceCoverageSection';
+import { BusinessHoursSection } from '@/pages/settings/BusinessHoursSection';
 
-type Section = 'aparencia' | 'notificacoes' | 'empresa' | 'aparelhos' | 'usuarios' | 'seguranca' | 'integracao' | 'conexoes';
+type Section = 'aparencia' | 'empresa' | 'horario' | 'notificacoes' | 'aparelhos' | 'usuarios' | 'seguranca' | 'integracao' | 'conexoes';
 
 const NAV: { key: Section; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
   { key: 'aparencia', label: 'Aparência', icon: Palette },
   { key: 'empresa', label: 'Empresa', icon: Wrench },
+  { key: 'horario', label: 'Horário de Atendimento', icon: Clock },
   { key: 'aparelhos', label: 'Aparelhos Atendidos', icon: MonitorSmartphone },
   { key: 'usuarios', label: 'Usuários', icon: Users },
   { key: 'notificacoes', label: 'Notificações', icon: Bell },
@@ -606,6 +608,9 @@ export const SettingsPage: React.FC = () => {
           {/* ── APARELHOS ATENDIDOS ── */}
           {activeSection === 'aparelhos' && <DeviceCoverageSection />}
 
+          {/* ── HORÁRIO DE ATENDIMENTO ── */}
+          {activeSection === 'horario' && <BusinessHoursSection />}
+
           {/* ── CONEXÕES WHATSAPP ── */}
           {activeSection === 'conexoes' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -763,7 +768,7 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {/* ── Placeholder for other sections ── */}
-          {!['aparencia', 'empresa', 'notificacoes', 'conexoes'].includes(activeSection) && (
+          {!['aparencia', 'empresa', 'horario', 'notificacoes', 'conexoes', 'aparelhos'].includes(activeSection) && (
             <div className="card card-p">
               <div className="empty-state">
                 <div className="empty-state-icon">

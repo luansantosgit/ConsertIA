@@ -1,4 +1,5 @@
 import type { AgentContext, PartRow, ToolResult } from "./types.ts";
+import { isOpenAt, nextOpenDayText } from "./business-hours.ts";
 
 export const toolDefinitions = [
   {
@@ -323,6 +324,16 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
     return { ok: false, error: "Horário ausente ou inválido. NÃO invente horário: pergunte ao cliente qual horário ele prefere e aguarde a resposta antes de agendar." };
   }
   const startTime = normalizeTime(rawTime);
+
+  if (!isOpenAt(ctx.businessHours, date, startTime)) {
+    const [y, m, d] = date.split("-");
+    const brDate = `${d}/${m}/${y}`;
+    return {
+      ok: false,
+      error: `A empresa está FECHADA em ${brDate} às ${startTime} (fora do horário de atendimento). NÃO agende nesse horário. Diga com naturalidade que esse horário não está disponível e proponha o próximo horário válido dentro do expediente: ${nextOpenDayText(ctx.businessHours, ctx.timezone)}. Pergunte ao cliente se prefere essa opção.`,
+    };
+  }
+
   const endTime = addHour(startTime);
 
   const { data: event, error } = await ctx.supabase

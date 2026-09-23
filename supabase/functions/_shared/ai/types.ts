@@ -1,3 +1,5 @@
+import type { BusinessHoursConfig } from "./business-hours.ts";
+
 export interface AgentSettings {
   id: string;
   tenant_id: string;
@@ -89,6 +91,7 @@ export interface AgentContext {
   tokenLimit: number;
   period: string;
   timezone: string;
+  businessHours: BusinessHoursConfig;
   uazapiBase: string;
   connectionToken: string;
   allowedValues: Set<number>;
