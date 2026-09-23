@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase';
 import type { PostgrestSingleResponse, PostgrestResponse } from '@supabase/supabase-js';
 
 export interface BaseRepository<T> {
@@ -18,13 +17,13 @@ export abstract class BaseSupabaseRepository<T> implements BaseRepository<T> {
     this.tenantId = tenantId;
   }
 
-  protected async fetchSingle<R>(promise: Promise<PostgrestSingleResponse<R>>): Promise<R | null> {
+  protected async fetchSingle<R>(promise: PromiseLike<PostgrestSingleResponse<R>>): Promise<R | null> {
     const { data, error } = await promise;
     if (error || !data) return null;
     return data as R;
   }
 
-  protected async fetchMany<R>(promise: Promise<PostgrestResponse<R>>): Promise<R[]> {
+  protected async fetchMany<R>(promise: PromiseLike<PostgrestResponse<R>>): Promise<R[]> {
     const { data, error } = await promise;
     if (error || !data) return [];
     return data as R[];

@@ -1,0 +1,10 @@
+project_id = "consertia"
+
+# Uazapi chama webhooks sem header de Authorization (JWT)
+# conforme a propria spec deles — precisa desativar a verificacao
+[functions.uazapi-webhook]
+verify_jwt = false
+
+# Worker da fila de mensagens agendadas — chamado internamente pelo pg_cron
+[functions.process-scheduled-messages]
+verify_jwt = false

@@ -1,60 +1,171 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth.store';
+import { useLocation } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
-import { LanguageSelector } from './LanguageSelector';
-import { Menu, Bell, User, Search } from 'lucide-react';
 
 interface HeaderProps {
   onMenuClick: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-  const { t } = useTranslation();
+const pageMeta: Record<string, { title: string; addLabel: string }> = {
+  '/':              { title: 'Dashboard',         addLabel: 'Nova OS'           },
+  '/atendimento':   { title: 'Atendimento',        addLabel: 'Nova Conversa'     },
+  '/ordens':        { title: 'Ordens de Serviço',  addLabel: 'Nova OS'           },
+  '/clientes':      { title: 'Clientes',           addLabel: 'Novo Cliente'      },
+  '/estoque':       { title: 'Estoque',            addLabel: 'Novo Item'         },
+  '/financeiro':    { title: 'Financeiro',         addLabel: 'Novo Lançamento'   },
+  '/agenda':        { title: 'Agenda',             addLabel: 'Novo Evento'       },
+  '/relatorios':    { title: 'Relatórios',         addLabel: ''                  },
+  '/configuracoes': { title: 'Configurações',      addLabel: ''                  },
+  '/agente-ia':     { title: 'Agente de IA',       addLabel: ''                  },
+};
+
+const LANGS = [
+  { code: 'pt-BR', flag: '🇧🇷', label: 'PT' },
+  { code: 'en',    flag: '🇺🇸', label: 'EN' },
+  { code: 'es',    flag: '🇪🇸', label: 'ES' },
+] as const;
+
+export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggleCollapse }) => {
+  const { user } = useAuthStore();
+  const location = useLocation();
+  const { language, changeLanguage, t } = useTranslation();
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  const meta = pageMeta[location.pathname] ?? { title: location.pathname.replace('/', ''), addLabel: '' };
+  const initial = (user?.name || 'A').charAt(0).toUpperCase();
+  const currentLang = LANGS.find(l => l.code === language) ?? LANGS[0];
+
+  // Fecha dropdown ao clicar fora
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
-      <div className="flex items-center justify-between">
-        {/* Left side - Menu toggle + Search */}
-        <div className="flex items-center gap-4 flex-1">
-          <button 
-            onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+    <header className="header">
+      {/* Left — mobile menu toggle + page title */}
+      <div className="header-left">
+        <button
+          className="header-icon-btn"
+          id="mobile-menu-btn"
+          onClick={onToggleCollapse || onMenuClick}
+          aria-label="Toggle menu"
+        >
+          {collapsed ? <PanelLeftOpen size={22} /> : <PanelLeftClose size={22} />}
+        </button>
+        <h1 className="header-page-title">{t(meta.title)}</h1>
+      </div>
+
+      {/* Right — add button + language switcher + avatar */}
+      <div className="header-right">
+        {/* Add button — só se a página tiver ação */}
+        {meta.addLabel && (
+          <button
+            className="header-add-btn"
+            id={`header-add-${location.pathname.replace('/', '') || 'dashboard'}`}
+            onClick={() => window.dispatchEvent(new CustomEvent('header-action-click', { detail: { path: location.pathname } }))}
           >
-            <Menu className="w-5 h-5 text-gray-600" />
+            {t(meta.addLabel)}
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Plus size={13} />
+            </div>
           </button>
-          
-          {/* Search bar */}
-          <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 flex-1 max-w-md">
-            <Search className="w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar OS, cliente, equipamento..."
-              className="bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+        )}
+
+        {/* Language switcher */}
+        <div ref={langRef} style={{ position: 'relative' }}>
+          <button
+            className="header-icon-btn"
+            id="lang-switcher-btn"
+            onClick={() => setLangOpen(v => !v)}
+            aria-label="Trocar idioma"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '6px 10px', borderRadius: 8,
+              width: 'auto', fontSize: '0.8125rem', fontWeight: 600,
+              border: '1px solid var(--border)',
+              background: langOpen ? 'var(--input-bg)' : 'transparent',
+            }}
+          >
+            <span style={{ fontSize: '1rem', lineHeight: 1 }}>{currentLang.flag}</span>
+            <span>{currentLang.label}</span>
+            <ChevronDown
+              size={13}
+              style={{ transition: 'transform 0.15s', transform: langOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
             />
-          </div>
+          </button>
+
+          {/* Dropdown */}
+          {langOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+              background: '#fff', border: '1px solid var(--border)',
+              borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+              minWidth: 140, overflow: 'hidden', zIndex: 200,
+              animation: 'slideUp 0.15s ease',
+            }}>
+              {LANGS.map(lang => (
+                <button
+                  key={lang.code}
+                  id={`lang-${lang.code}`}
+                  onClick={() => { changeLanguage(lang.code); setLangOpen(false); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '10px 14px',
+                    border: 'none', background: language === lang.code ? 'var(--primary-light)' : 'transparent',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: '0.875rem', fontWeight: language === lang.code ? 600 : 400,
+                    color: language === lang.code ? 'var(--primary)' : 'var(--text-primary)',
+                    textAlign: 'left', transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                  onMouseLeave={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                >
+                  <span style={{ fontSize: '1.125rem' }}>{lang.flag}</span>
+                  <span>
+                    {lang.code === 'pt-BR' && 'Português (BR)'}
+                    {lang.code === 'en'    && 'English'}
+                    {lang.code === 'es'    && 'Español'}
+                  </span>
+                  {language === lang.code && (
+                    <span style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }} />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        
-        {/* Right side - Actions */}
-        <div className="flex items-center gap-2">
-          <LanguageSelector />
-          
-          {/* Notifications */}
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-            <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-          </button>
-          
-          {/* User profile */}
-          <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <User className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-gray-900">Admin</p>
-              <p className="text-xs text-gray-500">Gestor</p>
-            </div>
-          </button>
+
+        {/* User avatar */}
+        <div
+          className="header-avatar"
+          id="header-user-avatar"
+          title={`${user?.name} — ${user?.tenantName ?? 'Superadmin'}`}
+          style={{ cursor: 'default' }}
+        >
+          {initial}
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #mobile-menu-btn { display: flex !important; }
+        }
+      `}</style>
     </header>
   );
 };

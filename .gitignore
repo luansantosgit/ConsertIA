@@ -65,3 +65,15 @@ Thumbs.db
 *.tar.xz
 *.tar.zst
 ```
+# Scratch work and backups
+scratch/
+backup-agente-ia-20260923/
+
+# Local test scripts with tokens
+test-webhook.ps1
+
+# Supabase CLI temp
+supabase/.temp/
+
+# TypeScript build info
+*.tsbuildinfo

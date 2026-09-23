@@ -1,128 +1,341 @@
 import React from 'react';
+import { Users, FileText, ArrowRight, Edit2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { FileText, Users, Package, DollarSign, TrendingUp, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ServiceOrderRepository } from '@/repositories/service-order.repository';
+import { ConversationRepository } from '@/repositories/conversation.repository';
+import { TransactionRepository } from '@/repositories/transaction.repository';
+import { CustomerRepository } from '@/repositories/customer.repository';
+import type { ServiceOrder, ServiceOrderStatus, Customer } from '@/types';
+import { OSModal } from '@/components/OSModal';
+import { SkeletonStats, SkeletonCard } from '@/components/Skeleton';
+import EmptyState from '@/components/EmptyState';
+import ErrorMessage from '@/components/ErrorMessage';
 
-const stats = [
-  { icon: FileText, label: 'OS Abertas', value: '12', change: '+2', changeType: 'positive', color: 'blue' },
-  { icon: Users, label: 'Clientes Ativos', value: '48', change: '+5', changeType: 'positive', color: 'green' },
-  { icon: Package, label: 'Produtos em Estoque', value: '234', change: '-3', changeType: 'negative', color: 'yellow' },
-  { icon: DollarSign, label: 'Faturamento Mês', value: 'R$ 18.500', change: '+12%', changeType: 'positive', color: 'green' },
-];
+const statusLabels: Record<ServiceOrderStatus, string> = {
+  pending: 'Pendente',
+  diagnosis: 'Diagnóstico',
+  awaiting_approval: 'Ag. Aprovação',
+  approved: 'Aprovado',
+  awaiting_part: 'Ag. Peça',
+  in_progress: 'Em Andamento',
+  completed: 'Concluído',
+  ready: 'Pronto',
+  cancelled: 'Cancelado',
+};
 
-const osByStatus = [
-  { status: 'Em Andamento', count: 5, total: 20, color: 'blue' },
-  { status: 'Aguardando Aprovação', count: 3, total: 20, color: 'yellow' },
-  { status: 'Aguardando Peça', count: 2, total: 20, color: 'orange' },
-  { status: 'Pronto', count: 2, total: 20, color: 'green' },
-];
 
-const recentActivities = [
-  { icon: FileText, text: 'Nova OS criada', time: '5 min atrás', type: 'os' },
-  { icon: Users, text: 'Cliente cadastrado', time: '15 min atrás', type: 'customer' },
-  { icon: Clock, text: 'OS #123 atualizada', time: '1 hora atrás', type: 'os-update' },
-  { icon: TrendingUp, text: 'Orçamento aprovado', time: '2 horas atrás', type: 'budget' },
-];
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
+
+function formatCurrency(value: number): string {
+  return `R$${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function formatDate(dateStr: string): string {
+  try {
+    return new Date(dateStr).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+
+function getEquipmentEmoji(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('iphone') || lower.includes('celular') || lower.includes('phone')) return '📱';
+  if (lower.includes('notebook') || lower.includes('dell') || lower.includes('computador')) return '💻';
+  if (lower.includes('playstation') || lower.includes('ps5') || lower.includes('console')) return '🎮';
+  if (lower.includes('ipad') || lower.includes('tablet')) return '📱';
+  if (lower.includes('impressora')) return '🖨️';
+  return '🔧';
+}
 
 export const Dashboard: React.FC = () => {
   const { t } = useTranslation();
+  const [showOSModal, setShowOSModal] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const [customerCount, setCustomerCount] = React.useState(0);
+  const [serviceOrders, setServiceOrders] = React.useState<ServiceOrder[]>([]);
+  const [statusCounts, setStatusCounts] = React.useState<Record<ServiceOrderStatus, number>>({} as Record<ServiceOrderStatus, number>);
+  const [openConversations, setOpenConversations] = React.useState(0);
+  const [totalIncome, setTotalIncome] = React.useState(0);
+  const [totalExpenses, setTotalExpenses] = React.useState(0);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+
+  React.useEffect(() => {
+    const handler = () => setShowOSModal(true);
+    window.addEventListener('header-action-click', handler);
+    return () => window.removeEventListener('header-action-click', handler);
+  }, []);
+
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const customerRepo = new CustomerRepository();
+        const soRepo = new ServiceOrderRepository();
+        const convRepo = new ConversationRepository();
+        const txRepo = new TransactionRepository();
+
+        const [custCount, allSO, counts, convCount, income, expenses, recentCustomers] =
+          await Promise.all([
+            customerRepo.count(),
+            soRepo.getAll(),
+            soRepo.countByStatus(),
+            convRepo.getOpen().then((c) => c.length),
+            txRepo.getTotalIncome(),
+            txRepo.getTotalExpenses(),
+            customerRepo.getAll().then((list) => list.slice(0, 5)),
+          ]);
+
+        setCustomerCount(custCount);
+        setServiceOrders(allSO);
+        setStatusCounts(counts);
+        setOpenConversations(convCount);
+        setTotalIncome(income);
+        setTotalExpenses(expenses);
+        setCustomers(recentCustomers);
+      } catch (err) {
+        console.error('Dashboard fetch error:', err);
+        setError('Erro ao carregar dados do dashboard');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  const nextSO = serviceOrders.find((so) =>
+    ['pending', 'diagnosis', 'awaiting_approval'].includes(so.status)
+  );
+
+  const recentOrders = serviceOrders.slice(0, 7);
+
+  const openOrdersCount = (statusCounts.pending ?? 0) + (statusCounts.in_progress ?? 0) + (statusCounts.diagnosis ?? 0);
+
+  const incomeProgress = totalIncome + totalExpenses > 0
+    ? Math.round((totalIncome / (totalIncome + totalExpenses)) * 100)
+    : 0;
+
+  const MiniStatIcon = ({ type }: { type: 'customers' | 'orders' }) => (
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+      <circle cx="22" cy="22" r="22" fill={type === 'customers' ? '#eef2ff' : '#fef2f2'} />
+      {type === 'customers' ? (
+        <>
+          <circle cx="18" cy="18" r="5" fill="#4f46e5" opacity="0.7" />
+          <circle cx="26" cy="20" r="4" fill="#4f46e5" />
+          <path d="M10 34c0-5 4-8 8-8M26 32c0-4 3-6 6-6" stroke="#4f46e5" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      ) : (
+        <>
+          <rect x="14" y="13" width="16" height="20" rx="3" fill="#ef4444" opacity="0.8" />
+          <path d="M18 19h8M18 23h6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+
+  if (error) {
+    return (
+      <div className="page" style={{ padding: '24px 28px' }}>
+        <ErrorMessage message={error} onRetry={() => { setError(null); setLoading(true); }} />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="page" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <SkeletonStats />
+        <SkeletonCard />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 animate-fade-in">
-      {/* Header da página */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('Dashboard')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Visão geral do seu negócio</p>
-      </div>
-      
-      {/* Cards de estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {stats.map((stat) => (
-          <div key={stat.label} className="card p-6 card-hover">
-            <div className="flex items-start justify-between">
-              <div className={`p-3 rounded-lg bg-${stat.color}-100`}>
-                <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
-              </div>
-              <div className={`flex items-center gap-1 text-sm font-medium ${
-                stat.changeType === 'positive' ? 'text-success' : 'text-danger'
-              }`}>
-                {stat.changeType === 'positive' ? (
-                  <ArrowUpRight className="w-4 h-4" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4" />
-                )}
-                <span>{stat.change}</span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{t(stat.label)}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="page" style={{ padding: '24px 28px', gap: 20 }}>
+      {showOSModal && (
+        <OSModal
+          onClose={() => setShowOSModal(false)}
+          onSave={() => setShowOSModal(false)}
+        />
+      )}
+      <div className="dashboard-grid">
 
-      {/* Seção principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* OS por Status */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">{t('OS por Status')}</h3>
-            <button className="btn btn-secondary text-sm">
-              Ver todas
-            </button>
+        {/* ── Column 1: Left panel ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="appt-card">
+            <div className="appt-card-title">
+              {t('Próxima OS')}
+              {nextSO && <div className="appt-dot" />}
+            </div>
+            {nextSO ? (
+              <>
+                <p className="appt-address">{nextSO.subject}</p>
+                <p className="appt-city">{t(statusLabels[nextSO.status]) || nextSO.status}</p>
+
+                <div className="appt-meta">
+                  <div className="appt-meta-item">
+                    <label>{t('Criada em')}</label>
+                    <span>{formatDate(nextSO.created_at)}</span>
+                  </div>
+                  <div className="appt-meta-item">
+                    <label>{t('Prioridade')}</label>
+                    <span style={{ textTransform: 'uppercase' }}>{t(nextSO.priority)}</span>
+                  </div>
+                  <div className="appt-meta-item">
+                    <label>{t('Descrição')}</label>
+                    <span>{nextSO.description || '—'}</span>
+                  </div>
+                  <div className="appt-meta-item">
+                    <label>{t('Estimativa')}</label>
+                    <span>{nextSO.budget_amount ? formatCurrency(nextSO.budget_amount) : '—'}</span>
+                  </div>
+                </div>
+
+                <div className="appt-footer">
+                  <span className="appt-price">
+                    {nextSO.budget_amount ? formatCurrency(nextSO.budget_amount) : '—'}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{t('Nenhuma OS pendente')}</p>
+            )}
           </div>
-          <div className="space-y-4">
-            {osByStatus.map((item) => (
-              <div key={item.status} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full bg-${item.color}-500`} />
-                    <span className="text-sm text-gray-700">{t(item.status)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">{item.count}</span>
-                    <span className="text-xs text-gray-400">/ {item.total}</span>
-                  </div>
+
+          <div className="mini-stat">
+            <div className="mini-stat-left">
+              <p className="mini-stat-label">{t('Clientes')}</p>
+              <p className="mini-stat-value">{customerCount}</p>
+            </div>
+            <div className="mini-stat-icon"><MiniStatIcon type="customers" /></div>
+          </div>
+          <div className="mini-stat">
+            <div className="mini-stat-left">
+              <p className="mini-stat-label">{t('OS Abertas')}</p>
+              <p className="mini-stat-value">{openOrdersCount}</p>
+            </div>
+            <div className="mini-stat-icon"><MiniStatIcon type="orders" /></div>
+          </div>
+        </div>
+
+        {/* ── Column 2: Recent Orders ── */}
+        <div className="card card-p" style={{ height: 'fit-content' }}>
+          <div className="card-header">
+            <h3 className="card-title">{t('Ordens Recentes')}</h3>
+          </div>
+
+          <div className="deals-list">
+            {recentOrders.length === 0 && (
+              <EmptyState icon={FileText} title={t('Nenhuma ordem de serviço encontrada')} />
+            )}
+            {recentOrders.map((order) => (
+              <div key={order.id} className="deal-item">
+                <div className="deal-thumb" style={{ fontSize: '1.25rem' }}>
+                  {getEquipmentEmoji(order.subject)}
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div 
-                    className={`bg-${item.color}-500 h-2 rounded-full transition-all duration-300`}
-                    style={{ width: `${(item.count / item.total) * 100}%` }}
-                  />
+                <div className="deal-info">
+                  <p className="deal-name">{order.subject}</p>
+                  <p className="deal-location">
+                    {order.description?.slice(0, 50)}{order.description && order.description.length > 50 ? '...' : ''}
+                  </p>
                 </div>
+                {order.status === 'completed' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="deal-status-badge">{t(statusLabels[order.status])}</span>
+                    <ArrowRight size={14} color="var(--primary)" />
+                  </div>
+                ) : (
+                  <div className="deal-meta">
+                    {order.budget_amount != null && (
+                      <p className="deal-price">{formatCurrency(order.budget_amount)}</p>
+                    )}
+                    <p className="deal-date">{formatDate(order.created_at)}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Atividades Recentes */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">{t('Atividades Recentes')}</h3>
-            <button className="btn btn-secondary text-sm">
-              Ver histórico
-            </button>
+        {/* ── Column 3: Right panel ── */}
+        <div className="dashboard-col-right" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Customers */}
+          <div className="card card-p">
+            <div className="card-header">
+              <h3 className="card-title">{t('Clientes')}</h3>
+            </div>
+            <div>
+              {customers.length === 0 && (
+                <EmptyState icon={Users} title={t('Nenhum cliente cadastrado')} />
+              )}
+              {customers.map((c) => (
+                <div key={c.id} className="customer-item">
+                  <div className="customer-avatar">{getInitials(c.name)}</div>
+                  <div className="customer-info">
+                    <p className="customer-name">{c.name}</p>
+                    <p className="customer-email">{c.email || c.phone || '—'}</p>
+                  </div>
+                  <button className="customer-edit-btn">
+                    <Edit2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-4">
-            {recentActivities.map((activity, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className={`p-2 rounded-lg bg-${
-                  activity.type === 'os' ? 'blue' :
-                  activity.type === 'customer' ? 'green' :
-                  activity.type === 'os-update' ? 'yellow' : 'purple'
-                }-100`}>
-                  <activity.icon className={`w-5 h-5 text-${
-                    activity.type === 'os' ? 'blue' :
-                    activity.type === 'customer' ? 'green' :
-                    activity.type === 'os-update' ? 'yellow' : 'purple'
-                  }-600`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{t(activity.text)}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{activity.time}</p>
-                </div>
+
+          {/* Financial Summary */}
+          <div className="card card-p">
+            <div className="card-header">
+              <h3 className="card-title">{t('Financeiro')}</h3>
+            </div>
+            <div>
+              <div className="task-item" style={{ marginBottom: 12 }}>
+                <span className="task-date" style={{ color: '#22c55e', fontWeight: 600 }}>{t('Receitas')}</span>
+                <div className="task-dot" style={{ background: '#22c55e' }} />
+                <span className="task-text" style={{ fontWeight: 600 }}>{formatCurrency(totalIncome)}</span>
               </div>
-            ))}
+              <div className="task-item" style={{ marginBottom: 12 }}>
+                <span className="task-date" style={{ color: '#ef4444', fontWeight: 600 }}>{t('Despesas')}</span>
+                <div className="task-dot" style={{ background: '#ef4444' }} />
+                <span className="task-text" style={{ fontWeight: 600 }}>{formatCurrency(totalExpenses)}</span>
+              </div>
+              <div className="task-item">
+                <span className="task-date muted">Margem</span>
+                <div className="task-dot" style={{ background: 'var(--border)' }} />
+                <span className="task-text">{incomeProgress}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Conversations */}
+          <div className="card card-p">
+            <div className="card-header">
+              <h3 className="card-title">Conversas Abertas</h3>
+            </div>
+            <div style={{ padding: '16px', textAlign: 'center' }}>
+              <p style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)' }}>
+                {openConversations}
+              </p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                conversas ativas no WhatsApp
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -11,8 +11,13 @@ interface TenantState {
 
 export const useTenantStore = create<TenantState>((set) => ({
   currentTenant: null,
-  currentLanguage: 'pt-BR',
+  currentLanguage: (typeof window !== 'undefined' && (localStorage.getItem('i18nextLng') as Language)) || 'pt-BR',
   setTenant: (tenant) => set({ currentTenant: tenant }),
-  setLanguage: (language) => set({ currentLanguage: language }),
+  setLanguage: (language) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('i18nextLng', language);
+    }
+    set({ currentLanguage: language });
+  },
   clear: () => set({ currentTenant: null, currentLanguage: 'pt-BR' }),
 }));

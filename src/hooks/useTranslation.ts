@@ -7,13 +7,16 @@ export function useTranslation() {
 
   const changeLanguage = (language: typeof currentLanguage) => {
     i18n.changeLanguage(language);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('i18nextLng', language);
+    }
     setLanguage(language);
   };
 
   return {
     t,
     i18n,
-    language: currentLanguage,
+    language: (i18n.language as typeof currentLanguage) || currentLanguage,
     changeLanguage,
   };
 }
