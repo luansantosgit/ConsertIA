@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, User, Search, Printer, MessageCircle, Settings, Bell } from 'lucide-react';
+import { Plus, User, Search, Printer, MessageCircle, Settings, Bell, Trash2 } from 'lucide-react';
 import { SolidActionPrint, SolidActionSearch } from '@/components/SolidActionIcons';
 import type { ServiceOrderStatus } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -12,6 +12,7 @@ import { formatOSCode, formatCurrency } from '@/lib/format';
 import { loadKanbanAutoMessages, saveKanbanAutoMessages, scheduleStageAutoMessage, type KanbanAutoMessages, type StageAutoMessage } from '@/lib/os-auto-message.service';
 import { SkeletonStats, SkeletonTable } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import ErrorMessage from '@/components/ErrorMessage';
 import { OSAutoMessageModal } from '@/components/OSAutoMessageModal';
 
@@ -63,6 +64,21 @@ export const ServiceOrders: React.FC = () => {
   const [autoMessages, setAutoMessages] = useState<KanbanAutoMessages>({});
   const [configStage, setConfigStage] = useState<ServiceOrderStatus | null>(null);
   const [savingAutoMsg, setSavingAutoMsg] = useState(false);
+  const [confirmDeleteOS, setConfirmDeleteOS] = useState<OSRow | null>(null);
+
+  const handleDeleteOS = async () => {
+    if (!confirmDeleteOS) return;
+    try {
+      const repo = new ServiceOrderRepository();
+      await repo.delete(confirmDeleteOS.id);
+      setOS(prev => prev.filter(o => o.id !== confirmDeleteOS.id));
+    } catch (err) {
+      console.error('Failed to delete service order:', err);
+      setError('Erro ao excluir ordem de serviço');
+    } finally {
+      setConfirmDeleteOS(null);
+    }
+  };
 
   useEffect(() => {
     loadKanbanAutoMessages().then(setAutoMessages).catch(() => {});
@@ -331,6 +347,14 @@ export const ServiceOrders: React.FC = () => {
                       >
                         <SolidActionPrint size={14} /> PDF
                       </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ padding: '2px 6px', marginLeft: 6, color: 'var(--danger)' }}
+                        onClick={() => setConfirmDeleteOS(o)}
+                        title="Excluir OS"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </td>
                   </tr>
                 );
@@ -486,6 +510,16 @@ export const ServiceOrders: React.FC = () => {
           onClose={() => setViewingPdfOS(null)}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmDeleteOS !== null}
+        onClose={() => setConfirmDeleteOS(null)}
+        onConfirm={handleDeleteOS}
+        title="Excluir OS"
+        message={`Tem certeza que deseja excluir a OS de "${confirmDeleteOS?.customerName || 'cliente'}" (${confirmDeleteOS?.subject})? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        variant="danger"
+      />
       </>
       )}
     </div>
