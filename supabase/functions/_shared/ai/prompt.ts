@@ -42,6 +42,10 @@ function handedOffRules(ctx: AgentContext): string {
     return `# Estado especial
 Esta conversa já foi transferida para um atendente humano. Você responde apenas dúvidas simples sobre status da OS/agendamento com base no contexto acima, de forma breve e simpática. NÃO faça novos orçamentos, NÃO agende nada, NÃO use as tools de criação. Se for algo novo ou complexo, diga que o atendente responsável vai continuar o atendimento.`;
   }
+  if (ctx.conversation.ai_state === "attending" && ctx.conversation.ai_released_at) {
+    return `# Conversa devolvida a você (REINÍCIO)
+Esta conversa esteve com um atendente humano e foi DEVOLVIDA para você. Ignore qualquer mensagem anterior (sua ou de atendente) dizendo que o caso foi transferido ou que um atendente vai chamar — isso é passado. O cliente está falando com VOCÊ novamente: recepcione como retomada (período, seu nome, a empresa, "que bom ter você de volta") e conduza o atendimento normalmente pelo roteiro completo, como se a transferência não tivesse acontecido.`;
+  }
   return "";
 }
 

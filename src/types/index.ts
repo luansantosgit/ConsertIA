@@ -164,6 +164,7 @@ export interface Conversation {
   is_group?: boolean;
   archived_at?: string;
   ai_state?: ConversationAiState;
+  ai_released_at?: string;
   created_at: string;
   updated_at: string;
 }

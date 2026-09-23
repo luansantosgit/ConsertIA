@@ -115,6 +115,15 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     expect(prompt).toContain('Troca de tela');
   });
 
+  it('conversa devolvida a IA reinicia o atendimento e ignora transferencias passadas', () => {
+    const prompt = buildSystemPrompt(mockCtx({
+      conversation: { id: 'c1', contact_phone: '5511', ai_state: 'attending', ai_released_at: '2026-09-23T15:00:00Z' },
+    }));
+    expect(prompt).toContain('REINÍCIO');
+    expect(prompt).toContain('DEVOLVIDA para você');
+    expect(prompt).toContain('que bom ter você de volta');
+  });
+
   it('conversa transferida restringe o comportamento da IA', () => {
     const prompt = buildSystemPrompt(mockCtx({
       conversation: { id: 'c1', contact_phone: '5511', ai_state: 'handed_off' },

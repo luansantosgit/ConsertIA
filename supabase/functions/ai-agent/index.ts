@@ -122,8 +122,17 @@ async function handleClaim(ctx: AgentContext, userId: string): Promise<Response>
 async function handleRelease(ctx: AgentContext): Promise<Response> {
   await ctx.supabase
     .from("conversations")
-    .update({ ai_state: "attending", assigned_to: null })
+    .update({ ai_state: "attending", ai_released_at: new Date().toISOString(), assigned_to: null })
     .eq("id", ctx.conversation.id);
+
+  // Reinicio proativo: avisa o cliente que o assistente voltou, com o padrão de retomada
+  const phrase = ctx.period === "manhã" ? "Bom dia" : ctx.period === "tarde" ? "Boa tarde" : "Boa noite";
+  const restartMessage = `${phrase}! Aqui é a ${ctx.agent.agent_name}, novamente da ${ctx.companyName} — que bom ter você de volta! 😊 Posso continuar te ajudando por aqui.`;
+  try {
+    await sendText(ctx, restartMessage);
+  } catch (err) {
+    console.warn("[ai-agent] release restart msg failed:", (err as Error).message);
+  }
   return json({ ok: true, released: true });
 }
 
