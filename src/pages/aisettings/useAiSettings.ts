@@ -41,13 +41,14 @@ export function useAiSettings() {
     async function fetchData() {
       setLoading(true);
       try {
-        const [agentData, quoteData, diagnosisData, templateData, entitlement, usage, activeConfig, logs, count, cost] = await Promise.all([
+        const [agentData, quoteData, diagnosisData, templateData, entitlement, usage, planLimit, activeConfig, logs, count, cost] = await Promise.all([
           agentRepo.get(),
           quoteRepo.get(),
           diagnosisRepo.get(),
           templateRepo.getAll(),
           entitlementRepo.getEntitlement(),
           entitlementRepo.getUsage(),
+          entitlementRepo.getPlanLimit().catch(() => 0),
           aiConfigRepo.getActive().catch(() => null),
           aiLogRepo.getAll(),
           aiLogRepo.count(),
@@ -60,7 +61,7 @@ export function useAiSettings() {
         setTemplates(templateData);
         setUsesPlatformToken(entitlement?.use_platform_token !== false);
         setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
-        setTokenLimit(entitlement?.token_limit_override ?? null);
+        setTokenLimit(entitlement?.token_limit_override ?? planLimit);
         setAiLogs(logs);
         setTotalLogsCount(count);
         setTotalCost(cost);

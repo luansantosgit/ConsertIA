@@ -30,4 +30,22 @@ export class AiEntitlementRepository {
     if (error) throw error;
     return data as AiTokenUsage | null;
   }
+
+  async getPlanLimit(): Promise<number> {
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('plan_id')
+      .eq('id', this.tenantId)
+      .limit(1)
+      .maybeSingle();
+    if (tenantError || !tenant?.plan_id) return 0;
+    const { data: plan, error: planError } = await supabase
+      .from('plans')
+      .select('ai_token_limit')
+      .eq('id', tenant.plan_id)
+      .limit(1)
+      .maybeSingle();
+    if (planError) throw planError;
+    return plan?.ai_token_limit ?? 0;
+  }
 }
