@@ -5,13 +5,13 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "find_part",
-      description: "Busca uma peça/serviço no catálogo da empresa (produtos) e retorna preço e estoque reais. Use ANTES de falar qualquer valor.",
+      description: "Busca uma peça/serviço no catálogo (produtos) e retorna preço e estoque reais. Use ANTES de falar qualquer valor.",
       parameters: {
         type: "object",
         properties: {
-          brand: { type: "string", description: "Marca do aparelho, ex: Samsung" },
-          model: { type: "string", description: "Modelo do aparelho, ex: Galaxy S23" },
-          part_type: { type: "string", description: "Tipo de peça/serviço, ex: tela, vidro, bateria, conector de carga" },
+          brand: { type: "string", description: "Marca (ex: Samsung)" },
+          model: { type: "string", description: "Modelo (ex: Galaxy S23)" },
+          part_type: { type: "string", description: "Tipo de peça (ex: tela, vidro, bateria)" },
         },
         required: ["part_type"],
       },
@@ -21,13 +21,13 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "build_quote",
-      description: "Monta o orçamento final com o preço da peça + mão de obra conforme a configuração da empresa. Retorne o texto exato ao cliente.",
+      description: "Monta o orçamento com preço da peça + mão de obra conforme a config da empresa. Repasse o texto exato ao cliente.",
       parameters: {
         type: "object",
         properties: {
           part_id: { type: "string", description: "ID da peça retornada pelo find_part" },
-          service_type: { type: "string", description: "Descrição do serviço, ex: Troca de tela" },
-          device_model: { type: "string", description: "Modelo do aparelho do cliente" },
+          service_type: { type: "string", description: "Serviço (ex: Troca de tela)" },
+          device_model: { type: "string", description: "Modelo do aparelho" },
         },
         required: ["part_id", "service_type"],
       },
@@ -45,7 +45,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "get_os_status",
-      description: "Retorna as ordens de serviço em andamento deste cliente.",
+      description: "Retorna as OS em andamento deste cliente.",
       parameters: { type: "object", properties: {} },
     },
   },
@@ -61,14 +61,14 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "create_service_order",
-      description: "Cria uma ordem de serviço (OS) para a manutenção agendada. Chame após confirmar data com o cliente. Informe o part_id para registrar a peça e o valor de mão de obra na OS.",
+      description: "Cria a OS da manutenção agendada. Chame após confirmar a data. Informe part_id para registrar peça e mão de obra reais.",
       parameters: {
         type: "object",
         properties: {
-          subject: { type: "string", description: "Título curto, ex: Troca de tela - iPhone 11" },
-          description: { type: "string", description: "Descrição com o problema relatado" },
-          budget_amount: { type: "number", description: "Valor total do orçamento aprovado" },
-          part_id: { type: "string", description: "ID da peça usada no orçamento (retornado pelo find_part)" },
+          subject: { type: "string", description: "Título curto (ex: Troca de tela - iPhone 11)" },
+          description: { type: "string", description: "Problema relatado" },
+          budget_amount: { type: "number", description: "Valor total aprovado" },
+          part_id: { type: "string", description: "ID da peça orçada" },
         },
         required: ["subject", "budget_amount"],
       },
@@ -78,12 +78,12 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "schedule_event",
-      description: "Agenda a manutenção no calendário da empresa. Chame depois de create_service_order.",
+      description: "Agenda a manutenção no calendário. Chame depois de create_service_order.",
       parameters: {
         type: "object",
         properties: {
-          date: { type: "string", description: "Data no formato YYYY-MM-DD, futura" },
-          start_time: { type: "string", description: "Horário no formato HH:MM, padrão 09:00" },
+          date: { type: "string", description: "Data futura (YYYY-MM-DD)" },
+          start_time: { type: "string", description: "HH:MM (padrão 09:00)" },
           os_id: { type: "string", description: "ID da OS criada" },
         },
         required: ["date", "os_id"],
@@ -94,7 +94,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "handoff_to_human",
-      description: "Transfere a conversa para um atendente humano. Chame ao finalizar o atendimento ou quando não puder resolver.",
+      description: "Transfere a conversa para um atendente humano. Use ao finalizar ou quando não puder resolver.",
       parameters: { type: "object", properties: {} },
     },
   },
@@ -102,11 +102,11 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "update_customer_name",
-      description: "Salva o nome informado pelo cliente no sistema. Chame imediatamente quando o cliente disser o nome dele (se a pergunta de nome estiver ativa).",
+      description: "Salva o nome informado pelo cliente no sistema. Chame quando ele disser o nome (se a pergunta de nome estiver ativa).",
       parameters: {
         type: "object",
         properties: {
-          name: { type: "string", description: "Nome do cliente, apenas o nome (ex: Maria, João Silva)" },
+          name: { type: "string", description: "Nome do cliente (ex: Maria)" },
         },
         required: ["name"],
       },

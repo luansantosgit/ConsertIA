@@ -48,7 +48,7 @@ interface HistoryRow {
   media_url: string | null;
 }
 
-async function buildHistory(ctx: AgentContext, limit = 20): Promise<ChatMessagePayload[]> {
+async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessagePayload[]> {
   const { data: rows } = await ctx.supabase
     .from("messages")
     .select("content, direction, sender_type, media_type, media_url")
@@ -61,11 +61,12 @@ async function buildHistory(ctx: AgentContext, limit = 20): Promise<ChatMessageP
     const isAi = row.sender_type === "ai" || (row.sender_type === null && row.direction === "outbound");
     const role: "assistant" | "user" = isAi ? "assistant" : "user";
     const isLast = index === recent.length - 1;
+    const content = (row.content ?? "").substring(0, 400);
     if (isLast && role === "user" && row.media_url && row.media_type === "image") {
       return {
         role,
         content: [
-          { type: "text", text: row.content || "O cliente enviou uma imagem" },
+          { type: "text", text: content || "O cliente enviou uma imagem" },
           { type: "image_url", image_url: { url: row.media_url } },
         ],
       };
@@ -75,9 +76,9 @@ async function buildHistory(ctx: AgentContext, limit = 20): Promise<ChatMessageP
         : row.media_type === "image" ? "uma imagem"
         : row.media_type === "video" ? "um vídeo"
         : "um documento";
-      return { role, content: `[Cliente enviou ${label}: ${row.content ?? ""}]` };
+      return { role, content: `[Cliente enviou ${label}: ${content}]` };
     }
-    return { role, content: row.content };
+    return { role, content };
   });
 }
 
