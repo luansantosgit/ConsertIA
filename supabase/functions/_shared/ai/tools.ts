@@ -288,6 +288,7 @@ async function createServiceOrder(ctx: AgentContext, args: any): Promise<ToolRes
       labor_amount: laborAmount,
       status: "pending",
       priority: "medium",
+      origin: "ai",
     })
     .select("id")
     .single();
@@ -348,6 +349,7 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
       type: "os",
       os_id: args.os_id ?? null,
       color: "#4f46e5",
+      created_by: "ai",
     })
     .select("id")
     .single();

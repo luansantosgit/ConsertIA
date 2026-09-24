@@ -42,6 +42,21 @@ export class MessageRepository extends BaseSupabaseRepository<Message> {
     return this.fetchMany(query.order('created_at', { ascending: false }));
   }
 
+  async getAiConversationIds(dateFrom?: string, dateTo?: string): Promise<string[]> {
+    let query = supabase
+      .from(this.tableName)
+      .select('conversation_id')
+      .eq('tenant_id', this.tenantId)
+      .eq('sender_type', 'ai');
+
+    if (dateFrom) query = query.gte('created_at', dateFrom);
+    if (dateTo) query = query.lt('created_at', dateTo);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return [...new Set((data ?? []).map((r) => r.conversation_id).filter((id): id is string => !!id))];
+  }
+
   async create(data: Partial<Message>): Promise<Message> {
     const { data: created, error } = await supabase
       .from(this.tableName)

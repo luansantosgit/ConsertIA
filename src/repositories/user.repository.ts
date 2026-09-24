@@ -31,3 +31,22 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
     tenant_name: tenant?.name ?? '',
   };
 }
+
+export interface TenantUserBrief {
+  id: string;
+  name: string;
+}
+
+export async function fetchTenantUsers(tenantId: string): Promise<TenantUserBrief[]> {
+  if (!tenantId) return [];
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name')
+    .eq('tenant_id', tenantId);
+
+  if (error) {
+    console.warn('fetchTenantUsers failed:', error.message);
+    return [];
+  }
+  return (data ?? []) as TenantUserBrief[];
+}
