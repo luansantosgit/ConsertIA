@@ -45,22 +45,6 @@ export const toolDefinitions = [
   {
     type: "function",
     function: {
-      name: "get_os_status",
-      description: "Retorna as OS em andamento deste cliente.",
-      parameters: { type: "object", properties: {} },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_appointments",
-      description: "Retorna os agendamentos futuros deste cliente.",
-      parameters: { type: "object", properties: {} },
-    },
-  },
-  {
-    type: "function",
-    function: {
       name: "create_service_order",
       description: "Cria a OS da manutenção agendada. Chame após confirmar a data; informe part_id para registrar peça e mão de obra.",
       parameters: {
@@ -444,10 +428,6 @@ async function executeToolInner(ctx: AgentContext, name: string, args: any): Pro
       return buildQuote(ctx, args);
     case "send_pre_quote_templates":
       return sendTemplates(ctx);
-    case "get_os_status":
-      return { ok: true, orders: ctx.openOrders };
-    case "get_appointments":
-      return { ok: true, appointments: ctx.appointments };
     case "create_service_order":
       return createServiceOrder(ctx, args);
     case "schedule_event":
