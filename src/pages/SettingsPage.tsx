@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { useThemeStore } from '@/stores/theme.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { TenantThemeRepository } from '@/repositories/tenant-theme.repository';
 import { SkeletonCard } from '@/components/Skeleton';
 import ErrorMessage from '@/components/ErrorMessage';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -18,6 +17,7 @@ import type { Connection, HybridMode } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 import { DeviceCoverageSection } from '@/pages/settings/DeviceCoverageSection';
 import { BusinessHoursSection } from '@/pages/settings/BusinessHoursSection';
+import { AppearanceSection } from '@/pages/settings/AppearanceSection';
 
 type Section = 'aparencia' | 'empresa' | 'horario' | 'notificacoes' | 'aparelhos' | 'usuarios' | 'seguranca' | 'integracao' | 'conexoes';
 
@@ -31,11 +31,6 @@ const NAV: { key: Section; label: string; icon: React.ComponentType<{ size?: num
   { key: 'seguranca', label: 'Segurança', icon: Shield },
   { key: 'integracao', label: 'Integrações', icon: Smartphone },
   { key: 'conexoes', label: 'Conexões WhatsApp', icon: MessageSquare },
-];
-
-const PRESET_COLORS = [
-  '#4f46e5', '#7c3aed', '#db2777', '#dc2626',
-  '#ea580c', '#16a34a', '#0891b2', '#0f172a',
 ];
 
 const LANGS = [
@@ -95,7 +90,7 @@ export const SettingsPage: React.FC = () => {
     onConfirm: () => void | Promise<void>;
   }>({ isOpen: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
 
-  const { activeTheme, setTenantTheme, applyTheme, loadTenantTheme } = useThemeStore();
+  const { loadTenantTheme } = useThemeStore();
   const { user } = useAuthStore();
 
   useEffect(() => {
@@ -131,7 +126,7 @@ export const SettingsPage: React.FC = () => {
     };
 
     loadSettings();
-  }, [user?.tenantId, loadTenantTheme, applyTheme]);
+  }, [user?.tenantId, loadTenantTheme]);
 
   useEffect(() => {
     if (activeSection !== 'conexoes') return;
@@ -347,20 +342,6 @@ export const SettingsPage: React.FC = () => {
         await supabase.from('tenant_settings').insert({ ...settingsData, tenant_id: tenantId });
       }
 
-      if (user?.tenantId) {
-        const themeRepo = new TenantThemeRepository();
-        await themeRepo.upsert({
-          primary_color: activeTheme.primaryColor,
-          primary_dark: activeTheme.primaryDark,
-          logo_url: activeTheme.logoUrl || undefined,
-          logo_type: activeTheme.logoType || 'icon',
-          logo_text: activeTheme.logoText || 'ConsertIA',
-          favicon_url: activeTheme.faviconUrl || undefined,
-          sidebar_dark: activeTheme.sidebarDark || false,
-        });
-        applyTheme(user?.tenantId);
-      }
-
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
@@ -368,15 +349,6 @@ export const SettingsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const updateColor = (color: string) => {
-    if (!user?.tenantId) return;
-    setTenantTheme(user.tenantId, {
-      primaryColor: color,
-      primaryDark: color,
-    });
-    applyTheme(user.tenantId);
   };
 
   if (error) {
@@ -428,80 +400,7 @@ export const SettingsPage: React.FC = () => {
         {/* Content */}
         <div style={{ flex: 1 }}>
           {/* ── APARÊNCIA ── */}
-          {activeSection === 'aparencia' && (
-            <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <div>
-                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{t('Aparência')}</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{t('Personalize a cor de destaque do seu painel de atendimento.')}</p>
-              </div>
-
-              {/* Color presets */}
-              <div className="form-group">
-                <label className="form-label">{t('Cor primária')}</label>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-                  {PRESET_COLORS.map(c => (
-                    <div
-                      key={c}
-                      onClick={() => updateColor(c)}
-                      style={{
-                        width: 36, height: 36, borderRadius: '50%', background: c, cursor: 'pointer',
-                        border: activeTheme.primaryColor === c ? '3px solid var(--text-primary)' : '3px solid transparent',
-                        transition: 'transform 0.1s, border 0.1s', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transform: activeTheme.primaryColor === c ? 'scale(1.1)' : 'scale(1)',
-                      }}
-                    >
-                      {activeTheme.primaryColor === c && <Check size={14} color="#fff" />}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', maxWidth: 280 }}>
-                  <input
-                    type="color"
-                    value={activeTheme.primaryColor}
-                    onChange={e => updateColor(e.target.value)}
-                    style={{ width: 42, height: 38, border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: 2 }}
-                  />
-                  <input
-                    className="input"
-                    value={activeTheme.primaryColor}
-                    onChange={e => updateColor(e.target.value)}
-                    placeholder="#4f46e5"
-                  />
-                </div>
-              </div>
-
-              {/* Preview mini */}
-              <div style={{ padding: 16, background: '#f8fafc', borderRadius: 12, border: '1px solid var(--border)' }}>
-                <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>PREVIEW</p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {activeTheme.logoUrl && activeTheme.logoType === 'full' ? (
-                    <img src={activeTheme.logoUrl} style={{ maxHeight: 42, maxWidth: 180, objectFit: 'contain' }} alt={activeTheme.logoText} />
-                  ) : (
-                    <>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: activeTheme.logoUrl ? 'transparent' : activeTheme.primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, overflow: 'hidden' }}>
-                        {activeTheme.logoUrl ? <img src={activeTheme.logoUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : (activeTheme.logoText || 'C').charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p style={{ fontWeight: 700 }}>{activeTheme.logoText || 'ConsertIA'}</p>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('CRM + IA para Assistência Técnica')}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                  <button style={{ padding: '8px 16px', borderRadius: 8, background: activeTheme.primaryColor, color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.875rem' }}>{t('Botão primário')}</button>
-                  <span style={{ padding: '4px 12px', borderRadius: 99, background: activeTheme.primaryColor + '20', color: activeTheme.primaryColor, fontWeight: 600, fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>Badge</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn btn-secondary" onClick={() => updateColor('#4f46e5')}>{t('Restaurar cor padrão')}</button>
-                <button className="btn" onClick={handleSave} style={{ background: saved ? 'var(--success)' : 'var(--primary)', color: '#fff', border: 'none', gap: 6 }}>
-                  {saved ? <><Check size={15} />{t('Salvo!')}</> : t('Salvar cor')}
-                </button>
-              </div>
-            </div>
-          )}
+          {activeSection === 'aparencia' && <AppearanceSection />}
 
           {/* ── EMPRESA ── */}
           {activeSection === 'empresa' && (

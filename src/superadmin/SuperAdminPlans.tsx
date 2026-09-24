@@ -12,6 +12,7 @@ interface DbPlan {
   max_os?: number;
   max_whatsapp_channels?: number;
   ai_token_limit?: number;
+  custom_branding?: boolean;
   features?: string[];
   featured?: boolean;
   active?: boolean;
@@ -26,6 +27,7 @@ interface Plan {
   maxOS: number;
   maxWhatsAppChannels: number;
   aiTokenLimit: number;
+  customBranding: boolean;
   features: string[];
   featured: boolean;
   active: boolean;
@@ -73,6 +75,7 @@ export const SuperAdminPlans: React.FC = () => {
         maxOS: p.max_os || 100,
         maxWhatsAppChannels: p.max_whatsapp_channels ?? 1,
         aiTokenLimit: p.ai_token_limit ?? 0,
+        customBranding: p.custom_branding === true,
         features: p.features || FEATURES_DEFAULTS[p.id] || [],
         featured: p.featured || false,
         active: p.active !== false,
@@ -114,6 +117,7 @@ export const SuperAdminPlans: React.FC = () => {
             max_os: form.maxOS,
             max_whatsapp_channels: form.maxWhatsAppChannels ?? 1,
             ai_token_limit: form.aiTokenLimit ?? 0,
+            custom_branding: form.customBranding || false,
             features,
             featured: form.featured || false,
             active: form.active !== false,
@@ -128,6 +132,7 @@ export const SuperAdminPlans: React.FC = () => {
           max_os: form.maxOS || 100,
           max_whatsapp_channels: form.maxWhatsAppChannels ?? 1,
           ai_token_limit: form.aiTokenLimit ?? 0,
+          custom_branding: form.customBranding || false,
           features,
           featured: form.featured || false,
           active: form.active !== false,
@@ -383,7 +388,7 @@ export const SuperAdminPlans: React.FC = () => {
                   style={{ resize: 'vertical' }}
                 />
               </div>
-              <div style={{ display: 'flex', gap: 16 }}>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem' }}>
                   <input
                     type="checkbox"
@@ -399,6 +404,14 @@ export const SuperAdminPlans: React.FC = () => {
                     onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
                   />
                   Plano ativo
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.customBranding || false}
+                    onChange={(e) => setForm((f) => ({ ...f, customBranding: e.target.checked }))}
+                  />
+                  Personalização de marca (logo/cor próprios)
                 </label>
               </div>
             </div>

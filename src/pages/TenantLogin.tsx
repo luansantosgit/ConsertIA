@@ -1,24 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
+import { supabase } from '@/lib/supabase';
 import { Wrench, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+
+interface CompanyBranding {
+  primary_color: string | null;
+  logo_url: string | null;
+  logo_type: 'icon' | 'full' | null;
+  logo_text: string | null;
+}
 
 export const TenantLogin: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuthStore();
   // globalTheme = cor/logo definidos pelo superadmin (aparece no login e em telas públicas)
-  // activeTheme = tema do tenant atual (aplicado apenas dentro do painel após login)
-  const { activeTheme, globalTheme } = useThemeStore();
-  // No login, a cor primária SEMPRE vem do globalTheme (definida pelo superadmin)
-  const loginPrimary = globalTheme.primaryColor;
-  const loginPrimaryDark = globalTheme.primaryDark || globalTheme.primaryColor;
+  // companyBranding = tema próprio da empresa identificada pelo e-mail (whitelabel parcial)
+  const { globalTheme } = useThemeStore();
+  const [company, setCompany] = useState<CompanyBranding | null>(null);
+
+  // Cor efetiva do login: a da empresa (se definiu e o plano permite) ou a global
+  const loginPrimary = company?.primary_color || globalTheme.primaryColor;
+  // Painel da marca: ícone SEMPRE global; gradiente com a cor efetiva
+  const brandPrimaryDark = loginPrimary;
+  // Formulário: logo da empresa se ela tiver o próprio; senão o global
+  const formLogoUrl = company?.logo_url ?? globalTheme.logoUrl;
+  const formLogoType = company?.logo_url ? (company.logo_type || 'full') : globalTheme.logoType;
+  const formLogoText = company?.logo_text || globalTheme.logoText;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Identifica a empresa pelo e-mail para aplicar o branding dela no form
+  useEffect(() => {
+    const trimmed = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(trimmed)) {
+      setCompany(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await supabase.functions.invoke('login-branding', { body: { email: trimmed } });
+        setCompany(data?.theme ?? null);
+      } catch {
+        setCompany(null);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,14 +72,14 @@ export const TenantLogin: React.FC = () => {
       {/* Left - Form */}
       <div className="login-left">
         <div className="login-card">
-          {/* Logo */}
-          <div className="login-logo" style={{ marginBottom: activeTheme.logoUrl && activeTheme.logoType === 'full' ? 24 : 32 }}>
-            {activeTheme.logoUrl && activeTheme.logoType === 'full' ? (
+          {/* Logo (empresa identificada pelo e-mail, com fallback pro global) */}
+          <div className="login-logo" style={{ marginBottom: formLogoUrl && formLogoType === 'full' ? 24 : 32 }}>
+            {formLogoUrl && formLogoType === 'full' ? (
               /* Logo completo: mostra apenas a imagem grande, sem o nome e sem fundo */
               <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <img
-                  src={activeTheme.logoUrl}
-                  alt={activeTheme.logoText}
+                  src={formLogoUrl}
+                  alt={formLogoText}
                   style={{ maxHeight: 64, maxWidth: 280, width: 'auto', objectFit: 'contain', display: 'block' }}
                 />
               </div>
@@ -55,18 +88,18 @@ export const TenantLogin: React.FC = () => {
                 <div
                   className="login-logo-icon"
                   style={{
-                    background: activeTheme.logoUrl ? 'transparent' : 'var(--primary)',
-                    boxShadow: activeTheme.logoUrl ? 'none' : undefined,
+                    background: formLogoUrl ? 'transparent' : 'var(--primary)',
+                    boxShadow: formLogoUrl ? 'none' : undefined,
                   }}
                 >
-                  {activeTheme.logoUrl ? (
-                    <img src={activeTheme.logoUrl} alt={activeTheme.logoText} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  {formLogoUrl ? (
+                    <img src={formLogoUrl} alt={formLogoText} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   ) : (
                     <Wrench size={22} />
                   )}
                 </div>
                 <div>
-                  <div className="login-logo-name">{activeTheme.logoText}</div>
+                  <div className="login-logo-name">{formLogoText}</div>
                   <div className="login-logo-sub">CRM + IA para Assistência Técnica</div>
                 </div>
               </>
@@ -160,10 +193,10 @@ export const TenantLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Right - Visual — usa globalTheme para o gradiente */}
+      {/* Right - Visual — ícone da marca é SEMPRE o global; cor pode ser da empresa */}
       <div
         className="login-right"
-        style={{ background: `linear-gradient(145deg, ${loginPrimary} 0%, ${loginPrimaryDark} 100%)` }}
+        style={{ background: `linear-gradient(145deg, ${loginPrimary} 0%, ${brandPrimaryDark} 100%)` }}
       >
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 360 }}>
           <div style={{
@@ -180,10 +213,10 @@ export const TenantLogin: React.FC = () => {
             padding: 12,
             overflow: 'hidden',
           }}>
-            {(activeTheme.faviconUrl || (activeTheme.logoUrl && activeTheme.logoType !== 'full')) ? (
+            {(globalTheme.faviconUrl || (globalTheme.logoUrl && globalTheme.logoType !== 'full')) ? (
               <img
-                src={(activeTheme.faviconUrl || activeTheme.logoUrl)!}
-                alt={activeTheme.logoText}
+                src={(globalTheme.faviconUrl || globalTheme.logoUrl)!}
+                alt={globalTheme.logoText}
                 style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
               />
             ) : (
@@ -191,7 +224,7 @@ export const TenantLogin: React.FC = () => {
             )}
           </div>
           <div style={{ color: '#fff', fontWeight: 800, fontSize: '1.25rem', marginBottom: 12, letterSpacing: 0.3 }}>
-            {activeTheme.logoText}
+            {globalTheme.logoText}
           </div>
           <h2 style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 800, marginBottom: 12, lineHeight: 1.3 }}>
             Gerencie sua assistência técnica com inteligência
