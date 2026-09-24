@@ -180,11 +180,18 @@ export const TenantLogin: React.FC = () => {
             padding: 12,
             overflow: 'hidden',
           }}>
-            {activeTheme.logoUrl ? (
-              <img src={activeTheme.logoUrl} alt={activeTheme.logoText} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+            {(activeTheme.faviconUrl || (activeTheme.logoUrl && activeTheme.logoType !== 'full')) ? (
+              <img
+                src={(activeTheme.faviconUrl || activeTheme.logoUrl)!}
+                alt={activeTheme.logoText}
+                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+              />
             ) : (
               <Wrench size={38} color="#fff" />
             )}
+          </div>
+          <div style={{ color: '#fff', fontWeight: 800, fontSize: '1.25rem', marginBottom: 12, letterSpacing: 0.3 }}>
+            {activeTheme.logoText}
           </div>
           <h2 style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 800, marginBottom: 12, lineHeight: 1.3 }}>
             Gerencie sua assistência técnica com inteligência
