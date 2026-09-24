@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { processAppointmentConfirmations } from "../_shared/appointment-confirmations.ts";
 
 // Processa a fila de mensagens agendadas (chamada pelo pg_cron a cada 30s).
 // Nao requer JWT — e acionada internamente pelo cron do banco.
@@ -9,6 +10,16 @@ serve(async () => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    const { data: settings } = await supabase
+      .from("platform_settings")
+      .select("uazapi_subdomain")
+      .limit(1)
+      .maybeSingle();
+    const baseUrl = `https://${settings?.uazapi_subdomain || "api"}.uazapi.com`;
+
+    // Confirmações automáticas de agendamento (roda mesmo com fila vazia)
+    const confirmationsSent = await processAppointmentConfirmations(supabase, baseUrl);
 
     const now = new Date().toISOString();
     const stale = new Date(Date.now() - 120_000).toISOString();
@@ -31,17 +42,10 @@ serve(async () => {
     }
 
     if (!rows || rows.length === 0) {
-      return new Response(JSON.stringify({ ok: true, processed: 0 }), {
+      return new Response(JSON.stringify({ ok: true, processed: 0, confirmationsSent }), {
         headers: { "Content-Type": "application/json" },
       });
     }
-
-    const { data: settings } = await supabase
-      .from("platform_settings")
-      .select("uazapi_subdomain")
-      .limit(1)
-      .maybeSingle();
-    const baseUrl = `https://${settings?.uazapi_subdomain || "api"}.uazapi.com`;
 
     let processed = 0;
     for (const row of rows) {
@@ -146,7 +150,7 @@ serve(async () => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, processed }), {
+    return new Response(JSON.stringify({ ok: true, processed, confirmationsSent }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {

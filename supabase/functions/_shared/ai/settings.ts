@@ -134,12 +134,13 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
       .limit(5);
     openOrders = ordersRes.data ?? [];
     if (openOrders.length > 0) {
+      const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
       const apptRes = await supabase
         .from("calendar_events")
-        .select("id, title, date, start_time, os_id")
+        .select("id, title, date, start_time, os_id, status")
         .eq("tenant_id", tenantId)
         .in("os_id", openOrders.map((o) => o.id))
-        .gte("date", new Date().toISOString().slice(0, 10))
+        .gte("date", weekAgo)
         .order("date")
         .limit(10);
       appointments = apptRes.data ?? [];

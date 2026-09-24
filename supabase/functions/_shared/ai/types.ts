@@ -60,6 +60,7 @@ export interface AppointmentRow {
   date: string;
   start_time: string;
   os_id: string | null;
+  status: string;
 }
 
 export interface PartRow {
