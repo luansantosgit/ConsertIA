@@ -102,8 +102,15 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
       if (!conv) continue;
 
       const firstName = (conv.contact_name || ev.customer || "").split(" ")[0];
-      const [y, m, d] = ev.date.split("-");
-      const text = `Olá${firstName ? ` ${firstName}` : ""}! Passando para confirmar seu agendamento de "${ev.title}" em ${d}/${m} às ${String(ev.start_time).slice(0, 5)}. Você confirma que vai comparecer? 😊`;
+      const time = String(ev.start_time).slice(0, 5);
+      const tomorrowDate = new Date(nowDate.getTime() + 86_400_000).toISOString().slice(0, 10);
+      const [, m, d] = ev.date.split("-");
+      const whenText = ev.date === now.date
+        ? `hoje às ${time}`
+        : ev.date === tomorrowDate
+          ? `amanhã às ${time}`
+          : `${d}/${m} às ${time}`;
+      const text = `Olá${firstName ? ` ${firstName}` : ""}! Você tem um agendamento de "${ev.title}" para ${whenText}. Podemos confirmar seu comparecimento? 😊`;
 
       const resp = await fetch(`${baseUrl}/send/text`, {
         method: "POST",
