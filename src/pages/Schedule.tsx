@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Clock, User, Wrench } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, User, Wrench, Bell } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/auth.store';
 import { CalendarEventRepository } from '@/repositories/calendar-event.repository';
 import type { CalendarEvent, CalendarEventType, AppointmentStatus } from '@/types';
 import { SkeletonCard } from '@/components/Skeleton';
@@ -9,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { statusColor, STATUS_BADGES, STATUS_LABELS } from './schedule/eventStatus';
 import { EventFormModal, type EventFormState } from './schedule/EventFormModal';
 import { EventActionsModal, type AppointmentTarget } from './schedule/EventActionsModal';
+import { ReminderSettingsModal } from './schedule/ReminderSettingsModal';
 
 const EVENT_COLORS: Record<string, string> = {
   os: '#4f46e5',
@@ -69,9 +72,13 @@ function getWeekDays(base: Date) {
 
 export const Schedule: React.FC = () => {
   const { t, language } = useTranslation();
+  const { user } = useAuthStore();
   const repository = useMemo(() => new CalendarEventRepository(), []);
   const [currentWeek, setCurrentWeek] = useState(TODAY);
   const [showModal, setShowModal] = useState(false);
+  const [showReminderSettings, setShowReminderSettings] = useState(false);
+  const [reminderHours, setReminderHours] = useState(0);
+  const [reminderTypes, setReminderTypes] = useState<CalendarEventType[]>([]);
   const [selected, setSelected] = useState<AppointmentTarget | null>(null);
   const [form, setForm] = useState<EventFormState>({ title: '', customer: '', technician: '', date: todayStr, startTime: '09:00', endTime: '10:00', type: 'os' });
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -105,6 +112,23 @@ export const Schedule: React.FC = () => {
     window.addEventListener('header-action-click', handler);
     return () => window.removeEventListener('header-action-click', handler);
   }, []);
+
+  useEffect(() => {
+    const loadReminderSettings = async () => {
+      try {
+        const { data } = await supabase
+          .from('tenant_settings')
+          .select('schedule_confirmation_hours, confirmation_event_types')
+          .eq('tenant_id', user?.tenantId ?? '')
+          .maybeSingle();
+        setReminderHours(data?.schedule_confirmation_hours ?? 0);
+        setReminderTypes((data?.confirmation_event_types ?? []) as CalendarEventType[]);
+      } catch (err) {
+        console.error('Failed to load reminder settings:', err);
+      }
+    };
+    loadReminderSettings();
+  }, [user?.tenantId]);
 
   const locale = language === 'en' ? 'en-US' : language === 'es' ? 'es-ES' : 'pt-BR';
   const monthLabel = weekDays[0].toLocaleDateString(locale, { month: 'long', year: 'numeric' });
@@ -168,11 +192,25 @@ export const Schedule: React.FC = () => {
           <button className="btn btn-secondary btn-sm" onClick={() => setCurrentWeek(TODAY)}>{t('Hoje')}</button>
         </div>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          {[['OS', '#4f46e5'], [t('Reunião'), '#f59e0b'], [t('Entrega'), '#10b981']].map(([l, c]) => (
-            <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              <div style={{ width: 10, height: 10, borderRadius: 3, background: c as string }} />{l}
-            </div>
-          ))}
+          <button
+            className="btn btn-secondary btn-icon"
+            onClick={() => setShowReminderSettings(true)}
+            title={t('Lembretes de agendamento')}
+            aria-label={t('Lembretes de agendamento')}
+            style={{ position: 'relative' }}
+          >
+            <Bell size={16} />
+            {reminderHours > 0 && (
+              <span style={{ position: 'absolute', top: -4, right: -4, width: 9, height: 9, borderRadius: '50%', background: 'var(--primary)', border: '2px solid var(--card-bg)' }} />
+            )}
+          </button>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            {[['OS', '#4f46e5'], [t('Reunião'), '#f59e0b'], [t('Entrega'), '#10b981']].map(([l, c]) => (
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, background: c as string }} />{l}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -272,6 +310,15 @@ export const Schedule: React.FC = () => {
           onClose={() => setSelected(null)}
           onUpdateStatus={handleUpdateStatus}
           onReschedule={handleReschedule}
+        />
+      )}
+
+      {showReminderSettings && (
+        <ReminderSettingsModal
+          hours={reminderHours}
+          eventTypes={reminderTypes}
+          onClose={() => setShowReminderSettings(false)}
+          onSaved={(h, types) => { setReminderHours(h); setReminderTypes(types); }}
         />
       )}
       </>

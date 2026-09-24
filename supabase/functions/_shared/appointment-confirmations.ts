@@ -65,10 +65,12 @@ async function findConversation(supabase: any, ev: Record<string, any>) {
   return null;
 }
 
+const ALL_EVENT_TYPES = ["os", "delivery", "meeting", "reminder", "other"];
+
 export async function processAppointmentConfirmations(supabase: any, baseUrl: string): Promise<number> {
   const { data: tenants } = await supabase
     .from("tenant_settings")
-    .select("tenant_id, schedule_confirmation_hours, timezone")
+    .select("tenant_id, schedule_confirmation_hours, confirmation_event_types, timezone")
     .not("schedule_confirmation_hours", "is", null)
     .gt("schedule_confirmation_hours", 0);
   if (!tenants?.length) return 0;
@@ -80,6 +82,10 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
     const hours = Number(ts.schedule_confirmation_hours) || 0;
     if (hours <= 0) continue;
 
+    const eventTypes = Array.isArray(ts.confirmation_event_types) && ts.confirmation_event_types.length > 0
+      ? ts.confirmation_event_types
+      : ALL_EVENT_TYPES;
+
     const now = tzNow(tz);
     const nowDate = new Date(`${now.date}T00:00:00Z`);
     const dateTo = new Date(nowDate.getTime() + (hours * 60 + 1440) * 60_000).toISOString().slice(0, 10);
@@ -89,6 +95,7 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
       .select("id, tenant_id, title, customer, date, start_time, os_id, type, status, confirmation_asked_at")
       .eq("tenant_id", ts.tenant_id)
       .in("status", ["scheduled", "rescheduled"])
+      .in("type", eventTypes)
       .is("confirmation_asked_at", null)
       .gte("date", now.date)
       .lte("date", dateTo)
