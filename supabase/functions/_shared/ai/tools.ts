@@ -6,7 +6,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "find_part",
-      description: "Busca uma peça/serviço no catálogo (produtos) e retorna preço e estoque reais. Use ANTES de falar qualquer valor.",
+      description: "Busca peça/serviço no catálogo com preço e estoque reais. Chame antes de citar qualquer valor.",
       parameters: {
         type: "object",
         properties: {
@@ -22,7 +22,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "build_quote",
-      description: "Monta o orçamento com preço da peça + mão de obra conforme a config da empresa. Repasse o texto exato ao cliente.",
+      description: "Monta o orçamento (peça + mão de obra). Repasse o texto exato ao cliente.",
       parameters: {
         type: "object",
         properties: {
@@ -38,7 +38,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "send_pre_quote_templates",
-      description: "Envia os templates diferenciais da empresa (credibilidade) antes do orçamento. Chame uma vez, antes do build_quote.",
+      description: "Envia os templates diferenciais da empresa. Chame uma vez, antes do build_quote.",
       parameters: { type: "object", properties: {} },
     },
   },
@@ -62,7 +62,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "create_service_order",
-      description: "Cria a OS da manutenção agendada. Chame após confirmar a data. Informe part_id para registrar peça e mão de obra reais.",
+      description: "Cria a OS da manutenção agendada. Chame após confirmar a data; informe part_id para registrar peça e mão de obra.",
       parameters: {
         type: "object",
         properties: {
@@ -79,12 +79,12 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "schedule_event",
-      description: "Agenda a manutenção no calendário. Só chame DEPOIS de create_service_order e de o cliente ter confirmado data E horário. start_time é o horário exato dito pelo cliente (NUNCA inventado).",
+      description: "Agenda no calendário. Só após create_service_order e data E horário confirmados pelo cliente (nunca invente horário).",
       parameters: {
         type: "object",
         properties: {
           date: { type: "string", description: "Data futura (YYYY-MM-DD)" },
-          start_time: { type: "string", description: "Horário dito pelo cliente (HH:MM). Obrigatório." },
+          start_time: { type: "string", description: "Horário dito pelo cliente (HH:MM)" },
           os_id: { type: "string", description: "ID da OS criada" },
         },
         required: ["date", "start_time", "os_id"],
@@ -103,7 +103,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "update_customer_name",
-      description: "Salva o nome que o cliente ACABOU DE DIZER na última mensagem. Use a fala exata do cliente — NUNCA o nome atual do sistema/histórico.",
+      description: "Salva o nome que o cliente ACABOU DE DIZER na última mensagem (fala exata, nunca o nome atual do sistema).",
       parameters: {
         type: "object",
         properties: {
