@@ -10,8 +10,8 @@ interface HeaderProps {
   onToggleCollapse?: () => void;
 }
 
-const pageMeta: Record<string, { title: string; addLabel: string }> = {
-  '/':              { title: 'Dashboard',         addLabel: 'Nova OS'           },
+const pageMeta: Record<string, { title: string; addLabel: string; subtitle?: string }> = {
+  '/':              { title: 'Dashboard',         addLabel: 'Nova OS', subtitle: 'Visão geral do seu atendimento e desempenho' },
   '/atendimento':   { title: 'Atendimento',        addLabel: 'Nova Conversa'     },
   '/ordens':        { title: 'Ordens de Serviço',  addLabel: 'Nova OS'           },
   '/clientes':      { title: 'Clientes',           addLabel: 'Novo Cliente'      },
@@ -63,7 +63,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
         >
           {collapsed ? <PanelLeftOpen size={22} /> : <PanelLeftClose size={22} />}
         </button>
-        <h1 className="header-page-title">{t(meta.title)}</h1>
+        <div className="header-title-wrap">
+          <h1 className="header-page-title">{t(meta.title)}</h1>
+          {meta.subtitle && <span className="header-page-subtitle">{t(meta.subtitle)}</span>}
+        </div>
       </div>
 
       {/* Right — add button + language switcher + avatar */}

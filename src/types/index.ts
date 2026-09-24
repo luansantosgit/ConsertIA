@@ -52,6 +52,7 @@ export interface ServiceOrder {
   started_at?: string;
   completed_at?: string;
   technician_id?: string;
+  origin?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   checklist_photos: ChecklistPhoto[];
   created_at: string;
@@ -202,6 +203,7 @@ export interface CalendarEvent {
   type: CalendarEventType;
   os_id?: string;
   color?: string;
+  created_by?: string;
   created_at: string;
 }
 
