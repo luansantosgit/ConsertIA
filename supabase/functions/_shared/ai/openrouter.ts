@@ -5,6 +5,25 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_TOOL_ROUNDS = 8;
 const TOOL_RESULT_KEEP = 300;
 
+/** Tools de etapa única: após usadas, saem das definitions (economia + reforço anti-repetição). */
+const SINGLE_USE_TOOLS = new Set([
+  "find_part",
+  "send_pre_quote_templates",
+  "build_quote",
+  "create_service_order",
+  "schedule_event",
+]);
+
+function activeToolDefinitions(ctx: AgentContext) {
+  return toolDefinitions.filter((t) => {
+    const name = t.function.name;
+    if (SINGLE_USE_TOOLS.has(name) && ctx.toolsUsed.includes(name)) return false;
+    if (name === "create_service_order" && !ctx.agent.auto_os_enabled) return false;
+    if (name === "schedule_event" && !ctx.agent.auto_schedule_enabled) return false;
+    return true;
+  });
+}
+
 interface OpenRouterResponse {
   choices: Array<{
     message: {
@@ -28,7 +47,9 @@ async function callOpenRouter(ctx: AgentContext, messages: ChatMessagePayload[],
     body: JSON.stringify({
       model: ctx.agent.openrouter_model,
       messages,
-      ...(withTools ? { tools: toolDefinitions, tool_choice: "auto" } : {}),
+      ...(withTools && activeToolDefinitions(ctx).length > 0
+        ? { tools: activeToolDefinitions(ctx), tool_choice: "auto" }
+        : {}),
       temperature: 0.4,
       max_tokens: 1500,
     }),

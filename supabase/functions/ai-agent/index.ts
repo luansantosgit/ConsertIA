@@ -57,12 +57,14 @@ async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessageP
     .order("created_at", { ascending: true })
     .limit(200);
   const recent = (rows ?? []).slice(-limit) as HistoryRow[];
+  const FULL_KEEP = 6;
 
   return recent.map((row, index) => {
     const isAi = row.sender_type === "ai" || (row.sender_type === null && row.direction === "outbound");
     const role: "assistant" | "user" = isAi ? "assistant" : "user";
     const isLast = index === recent.length - 1;
-    const content = (row.content ?? "").substring(0, 400);
+    const maxChars = index >= recent.length - FULL_KEEP ? 400 : 160;
+    const content = (row.content ?? "").substring(0, maxChars);
     if (isLast && role === "user" && row.media_url && row.media_type === "image") {
       return {
         role,
