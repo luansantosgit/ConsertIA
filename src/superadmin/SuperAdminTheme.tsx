@@ -19,7 +19,7 @@ const PRESET_COLORS = [
 ];
 
 export const SuperAdminTheme: React.FC = () => {
-  const { globalTheme, tenantThemes, setGlobalTheme, setTenantTheme, applyTheme } = useThemeStore();
+  const { globalTheme, tenantThemes, setGlobalTheme, setTenantTheme, applyTheme, loadGlobalTheme } = useThemeStore();
   const [selectedTenant, setSelectedTenant] = useState<string>('global');
   const [saved, setSaved] = useState(false);
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
@@ -30,7 +30,8 @@ export const SuperAdminTheme: React.FC = () => {
       if (data) setTenants(data);
     };
     fetchTenants();
-  }, []);
+    loadGlobalTheme();
+  }, [loadGlobalTheme]);
 
   useEffect(() => {
     if (selectedTenant === 'global') return;
@@ -87,6 +88,10 @@ export const SuperAdminTheme: React.FC = () => {
             .from('tenant_themes')
             .upsert({ ...payload, tenant_id: t.id }, { onConflict: 'tenant_id' });
         }
+        await supabase
+          .from('global_settings')
+          .update({ theme: payload, updated_at: new Date().toISOString() })
+          .eq('id', '00000000-0000-0000-0000-000000000001');
         applyTheme();
       } else {
         const payload = {

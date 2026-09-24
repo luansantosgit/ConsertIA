@@ -25,6 +25,7 @@ interface ThemeState {
   applyTheme: (tenantId?: string) => void;
   reapplyCSS: () => void; // re-aplica CSS do activeTheme persistido sem resetar state
   loadTenantTheme: (tenantId: string) => Promise<void>;
+  loadGlobalTheme: () => Promise<void>;
 }
 
 const DEFAULT_THEME: Omit<TenantTheme, 'tenantId'> = {
@@ -131,6 +132,34 @@ export const useThemeStore = create<ThemeState>()(
       reapplyCSS: () => {
         // Apenas re-aplica as variáveis CSS do activeTheme já persistido — sem mudar state
         applyCSS(get().activeTheme);
+      },
+
+      loadGlobalTheme: async () => {
+        try {
+          const { data } = await supabase
+            .from('global_settings')
+            .select('theme')
+            .limit(1)
+            .maybeSingle();
+          const raw = (data?.theme ?? {}) as Record<string, unknown>;
+          if (Object.keys(raw).length > 0) {
+            set({
+              globalTheme: {
+                ...DEFAULT_THEME,
+                primaryColor: (raw.primary_color as string) || DEFAULT_THEME.primaryColor,
+                primaryDark: (raw.primary_dark as string) || (raw.primary_color as string) || DEFAULT_THEME.primaryDark,
+                logoUrl: (raw.logo_url as string) ?? null,
+                logoType: (raw.logo_type as 'icon' | 'full') ?? 'icon',
+                logoText: (raw.logo_text as string) || DEFAULT_THEME.logoText,
+                faviconUrl: (raw.favicon_url as string) ?? null,
+                sidebarDark: (raw.sidebar_dark as boolean) ?? false,
+              },
+            });
+            get().applyTheme();
+          }
+        } catch (err) {
+          console.error('Failed to load global theme:', err);
+        }
       },
 
       loadTenantTheme: async (tenantId: string) => {

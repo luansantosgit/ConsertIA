@@ -56,12 +56,18 @@ const RequireAuth: React.FC<{ role?: 'superadmin' | 'tenant'; children: React.Re
 
 const App: React.FC = () => {
   const { user, isAuthenticated, initSession } = useAuthStore();
-  const { applyTheme, loadTenantTheme, reapplyCSS } = useThemeStore();
+  const { applyTheme, loadTenantTheme, loadGlobalTheme, reapplyCSS } = useThemeStore();
 
   // Restaura sessão ao carregar o app
   useEffect(() => {
     initSession();
   }, [initSession]);
+
+  // Tema global vem do banco (funciona em qualquer origem, ex: Vercel)
+  useEffect(() => {
+    loadGlobalTheme();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Aplica IMEDIATAMENTE o CSS do tema persistido no primeiro render
   // (evita o logo piscar antes da auth resolver)
