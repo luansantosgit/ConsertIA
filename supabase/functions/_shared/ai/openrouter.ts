@@ -3,6 +3,7 @@ import { toolDefinitions, executeTool } from "./tools.ts";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_TOOL_ROUNDS = 8;
+const TOOL_RESULT_KEEP = 300;
 
 interface OpenRouterResponse {
   choices: Array<{
@@ -46,13 +47,25 @@ export interface AgentLoopResult {
   error?: string;
 }
 
+/** Após o round de uso, resultados de tools ficam resumidos para não inflar os rounds seguintes. */
+function pruneOldToolResults(messages: ChatMessagePayload[], keepFrom: number): void {
+  for (let i = 0; i < keepFrom; i++) {
+    const m = messages[i];
+    if (m.role === "tool" && typeof m.content === "string" && m.content.length > TOOL_RESULT_KEEP) {
+      m.content = m.content.slice(0, TOOL_RESULT_KEEP) + " …(resumido)";
+    }
+  }
+}
+
 export async function runAgentLoop(ctx: AgentContext, systemPrompt: string, history: ChatMessagePayload[]): Promise<AgentLoopResult> {
   const messages: ChatMessagePayload[] = [{ role: "system", content: systemPrompt }, ...history];
   let inputTokens = 0;
   let outputTokens = 0;
+  let lastToolResultStart = messages.length;
 
   try {
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      if (round > 0) pruneOldToolResults(messages, lastToolResultStart);
       const data = await callOpenRouter(ctx, messages, true);
       inputTokens += data.usage?.prompt_tokens ?? 0;
       outputTokens += data.usage?.completion_tokens ?? 0;
@@ -62,6 +75,7 @@ export async function runAgentLoop(ctx: AgentContext, systemPrompt: string, hist
 
       if (choice.tool_calls && choice.tool_calls.length > 0) {
         messages.push({ role: "assistant", content: choice.content ?? "", tool_calls: choice.tool_calls });
+        lastToolResultStart = messages.length;
         for (const toolCall of choice.tool_calls) {
           let args: any = {};
           try {
