@@ -18,6 +18,19 @@ function tzNow(tz: string): { date: string; time: string } {
   };
 }
 
+/** Pergunta final adaptada ao tipo do agendamento, evitando "comparecimento" para entregas etc. */
+const CONFIRMATION_ASK: Record<string, string> = {
+  os: "Podemos confirmar seu comparecimento?",
+  delivery: "Podemos confirmar a entrega?",
+  meeting: "Podemos confirmar sua presença?",
+  reminder: "Podemos confirmar?",
+  other: "Podemos confirmar?",
+};
+
+function confirmationQuestion(type: string | null | undefined): string {
+  return CONFIRMATION_ASK[type ?? "other"] ?? "Podemos confirmar?";
+}
+
 async function findConversation(supabase: any, ev: Record<string, any>) {
   if (ev.os_id) {
     const { data: so } = await supabase
@@ -73,7 +86,7 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
 
     const { data: events } = await supabase
       .from("calendar_events")
-      .select("id, tenant_id, title, customer, date, start_time, os_id, status, confirmation_asked_at")
+      .select("id, tenant_id, title, customer, date, start_time, os_id, type, status, confirmation_asked_at")
       .eq("tenant_id", ts.tenant_id)
       .in("status", ["scheduled", "rescheduled"])
       .is("confirmation_asked_at", null)
@@ -110,7 +123,7 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
         : ev.date === tomorrowDate
           ? `amanhã às ${time}`
           : `${d}/${m} às ${time}`;
-      const text = `Olá${firstName ? ` ${firstName}` : ""}! Você tem um agendamento de "${ev.title}" para ${whenText}. Podemos confirmar seu comparecimento? 😊`;
+      const text = `Olá${firstName ? ` ${firstName}` : ""}! Você tem um agendamento de "${ev.title}" para ${whenText}. ${confirmationQuestion(ev.type)} 😊`;
 
       const resp = await fetch(`${baseUrl}/send/text`, {
         method: "POST",
