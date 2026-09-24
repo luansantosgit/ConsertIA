@@ -204,10 +204,14 @@ export interface CalendarEvent {
   os_id?: string;
   color?: string;
   created_by?: string;
+  status?: AppointmentStatus;
+  confirmation_asked_at?: string;
   created_at: string;
 }
 
 export type CalendarEventType = 'os' | 'delivery' | 'meeting' | 'reminder' | 'other';
+
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'cancelled' | 'rescheduled' | 'completed' | 'no_show';
 
 export interface BusinessHourDay {
   open: boolean;

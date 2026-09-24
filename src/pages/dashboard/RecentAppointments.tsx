@@ -5,6 +5,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import EmptyState from '@/components/EmptyState';
 import type { CalendarEvent } from '@/types';
 import { todayLocalStr } from './dashboard.utils';
+import { STATUS_BADGES, STATUS_LABELS } from '@/pages/schedule/eventStatus';
 
 function initials(name: string): string {
   return name
@@ -53,7 +54,9 @@ export const RecentAppointments: React.FC<{ events: CalendarEvent[] }> = ({ even
                 <p className="dash-appt-time" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                   {formatWhen(e.date, e.start_time, t('Hoje'))}
                 </p>
-                <span className="badge badge-info">{t('Agendado')}</span>
+                <span className={e.status ? STATUS_BADGES[e.status] : 'badge badge-info'}>
+                  {e.status ? t(STATUS_LABELS[e.status]) : t('Agendado')}
+                </span>
               </div>
             </div>
           );

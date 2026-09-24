@@ -60,12 +60,47 @@ function contextText(ctx: AgentContext): string {
   }
   if (ctx.appointments.length > 0) {
     parts.push(
-      `Agendamentos futuros:\n` +
-        ctx.appointments.map((a) => `- ${a.date} às ${a.start_time} (${a.title})`).join("\n")
+      `Agendamentos:\n` +
+        ctx.appointments.map((a) => {
+          const st = APPOINTMENT_STATUS_LABELS[a.status] ?? "agendado";
+          const past = isPastEvent(a.date, a.start_time, ctx.timezone);
+          return `- ${a.date} às ${a.start_time.slice(0, 5)} (${a.title}) — status: ${st}${past ? " — JÁ OCORREU (horário passado)" : ""}`;
+        }).join("\n")
     );
   }
   if (parts.length === 0) return "Nenhuma OS ou agendamento em andamento para este cliente.";
   return parts.join("\n");
+}
+
+const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
+  scheduled: "agendado",
+  confirmed: "confirmado",
+  cancelled: "cancelado",
+  rescheduled: "remarcado",
+  completed: "ocorreu (cliente compareceu)",
+  no_show: "não compareceu",
+};
+
+function isPastEvent(date: string, startTime: string, timezone: string): boolean {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(new Date());
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+    const nowLocal = `${get("year")}-${get("month")}-${get("day")}T${get("hour").padStart(2, "0")}:${get("minute")}`;
+    return `${date}T${(startTime ?? "00:00").slice(0, 5)}` <= nowLocal;
+  } catch {
+    return false;
+  }
+}
+
+function appointmentRules(ctx: AgentContext): string {
+  if (ctx.appointments.length === 0) return "";
+  return `# Regras de agendamento
+- Agendamento com "JÁ OCORREU" e status ainda "agendado"/"remarcado": na primeira resposta, pergunte se deu tudo certo (ex: "Deu tudo certo com seu atendimento?"). Conforme a resposta do cliente, chame update_appointment_status: "completed" se compareceu/deu tudo certo, "no_show" se não compareceu.
+- Cliente confirmando presença em agendamento futuro → update_appointment_status com "confirmed". Cancelando → "cancelled".
+- Cliente pedindo outro dia/horário → reschedule_appointment (event_id + nova data e horário ditos pelo cliente, dentro do expediente).`;
 }
 
 function handedOffRules(ctx: AgentContext): string {
@@ -144,6 +179,7 @@ ${greetingBase}
 # Contexto do cliente
 ${contextText(ctx)}
 Se já existir OS ou agendamento, referencie-os naturalmente.
+${appointmentRules(ctx)}
 
 # Regras invioláveis
 - ETAPAS ÚNICAS: find_part, templates e orçamento (build_quote) executam UMA única vez por conversa. Já feitos no histórico → NÃO reenvie, siga para agendamento ou handoff.

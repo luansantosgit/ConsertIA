@@ -78,6 +78,37 @@ export const toolDefinitions = [
   {
     type: "function",
     function: {
+      name: "update_appointment_status",
+      description: "Atualiza o status de um agendamento do cliente: confirmed (confirmou presença), cancelled (cancelou), completed (compareceu/deu tudo certo), no_show (não compareceu).",
+      parameters: {
+        type: "object",
+        properties: {
+          event_id: { type: "string", description: "ID do agendamento listado no contexto" },
+          status: { type: "string", description: "confirmed | cancelled | completed | no_show" },
+        },
+        required: ["event_id", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "reschedule_appointment",
+      description: "Remarca um agendamento para nova data e horário ditos pelo cliente (nunca invente horário).",
+      parameters: {
+        type: "object",
+        properties: {
+          event_id: { type: "string", description: "ID do agendamento listado no contexto" },
+          date: { type: "string", description: "Nova data futura (YYYY-MM-DD)" },
+          start_time: { type: "string", description: "Novo horário dito pelo cliente (HH:MM)" },
+        },
+        required: ["event_id", "date", "start_time"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "handoff_to_human",
       description: "Transfere a conversa para um atendente humano. Use ao finalizar ou quando não puder resolver.",
       parameters: { type: "object", properties: {} },
@@ -339,7 +370,7 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
     .single();
   if (error || !event) return { ok: false, error: error?.message ?? "Falha ao agendar" };
 
-  ctx.appointments.unshift({ id: event.id, title: `Manutenção - ${ctx.contactName}`, date, start_time: startTime, os_id: args.os_id ?? null });
+  ctx.appointments.unshift({ id: event.id, title: `Manutenção - ${ctx.contactName}`, date, start_time: startTime, os_id: args.os_id ?? null, status: "scheduled" });
   const [y, m, d] = date.split("-");
   const brDate = `${d}/${m}/${y}`;
   return {
@@ -351,8 +382,73 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
     message: `Agendamento criado para ${brDate} às ${startTime}. Confirme verbalmente ao cliente com data e hora exatas (ex: "Agendado para ${brDate} às ${startTime} ✅") e avise que um atendente vai finalizar os detalhes.`,
   };
 }
-async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {
-  if (ctx.templates.length === 0) return { ok: true, sent: 0, message: "Nenhum template configurado." };
+
+const STATUS_FEEDBACK: Record<string, string> = {
+  confirmed: "confirmado ✅",
+  cancelled: "cancelado",
+  completed: "concluído (cliente compareceu)",
+  no_show: "marcado como não compareceu",
+};
+
+async function updateAppointmentStatus(ctx: AgentContext, args: any): Promise<ToolResult> {
+  const status = String(args?.status ?? "");
+  if (!STATUS_FEEDBACK[status]) {
+    return { ok: false, error: `Status inválido (${status}). Use: confirmed, cancelled, completed ou no_show.` };
+  }
+  const { data: ev, error } = await ctx.supabase
+    .from("calendar_events")
+    .update({ status })
+    .eq("id", String(args?.event_id ?? ""))
+    .eq("tenant_id", ctx.tenantId)
+    .select("id, date, start_time")
+    .maybeSingle();
+  if (error || !ev) return { ok: false, error: "Agendamento não encontrado." };
+  return {
+    ok: true,
+    status,
+    message: `Agendamento de ${ev.date} às ${String(ev.start_time).slice(0, 5)} ${STATUS_FEEDBACK[status]}.`,
+  };
+}
+
+async function rescheduleAppointment(ctx: AgentContext, args: any): Promise<ToolResult> {
+  const date = (args?.date ?? "").toString();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "Data inválida. Use YYYY-MM-DD." };
+  if (date < new Date().toISOString().slice(0, 10)) return { ok: false, error: "Data no passado não é permitida." };
+
+  const rawTime = (args?.start_time ?? "").toString().trim();
+  if (!/^\d{1,2}:\d{2}$/.test(rawTime)) {
+    return { ok: false, error: "Horário ausente ou inválido. NÃO invente horário: pergunte ao cliente qual horário ele prefere." };
+  }
+  const startTime = normalizeTime(rawTime);
+
+  if (!isOpenAt(ctx.businessHours, date, startTime)) {
+    return {
+      ok: false,
+      error: `Fora do expediente em ${date} às ${startTime}. Proponha o próximo horário válido: ${nextOpenDayText(ctx.businessHours, ctx.timezone)}.`,
+    };
+  }
+
+  const endTime = addHour(startTime);
+  const { data: ev, error } = await ctx.supabase
+    .from("calendar_events")
+    .update({ date, start_time: startTime, end_time: endTime, status: "rescheduled", confirmation_asked_at: null })
+    .eq("id", String(args?.event_id ?? ""))
+    .eq("tenant_id", ctx.tenantId)
+    .select("id, title")
+    .maybeSingle();
+  if (error || !ev) return { ok: false, error: "Agendamento não encontrado." };
+
+  const [y, m, d] = date.split("-");
+  const brDate = `${d}/${m}/${y}`;
+  return {
+    ok: true,
+    event_id: ev.id,
+    date,
+    start_time: startTime,
+    message: `Agendamento remarcado para ${brDate} às ${startTime}. Confirme verbalmente ao cliente com data e hora exatas.`,
+  };
+}
+async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {  if (ctx.templates.length === 0) return { ok: true, sent: 0, message: "Nenhum template configurado." };
 
   const { data: recentOut } = await ctx.supabase
     .from("messages")
@@ -432,6 +528,10 @@ async function executeToolInner(ctx: AgentContext, name: string, args: any): Pro
       return createServiceOrder(ctx, args);
     case "schedule_event":
       return scheduleEvent(ctx, args);
+    case "update_appointment_status":
+      return updateAppointmentStatus(ctx, args);
+    case "reschedule_appointment":
+      return rescheduleAppointment(ctx, args);
     case "update_customer_name":
       return updateCustomerName(ctx, args);
     case "handoff_to_human":

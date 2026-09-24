@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Check, Clock } from 'lucide-react';
+import { Check, Clock, CalendarCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth.store';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -41,6 +41,7 @@ export const BusinessHoursSection: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const [hours, setHours] = useState<BusinessHours>(DEFAULT_HOURS);
+  const [confirmationHours, setConfirmationHours] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -52,10 +53,11 @@ export const BusinessHoursSection: React.FC = () => {
       try {
         const { data } = await supabase
           .from('tenant_settings')
-          .select('business_hours')
+          .select('business_hours, schedule_confirmation_hours')
           .eq('tenant_id', user?.tenantId ?? '')
           .maybeSingle();
         setHours(normalize(data?.business_hours));
+        setConfirmationHours(data?.schedule_confirmation_hours ?? 0);
       } catch (err) {
         console.error('Failed to load business hours:', err);
         setError('Erro ao carregar horário de atendimento');
@@ -75,7 +77,7 @@ export const BusinessHoursSection: React.FC = () => {
     try {
       const { error: upsertError } = await supabase
         .from('tenant_settings')
-        .update({ business_hours: hours })
+        .update({ business_hours: hours, schedule_confirmation_hours: confirmationHours || null })
         .eq('tenant_id', user?.tenantId ?? '');
       if (upsertError) throw upsertError;
       setSaved(true);
@@ -144,6 +146,33 @@ export const BusinessHoursSection: React.FC = () => {
             </div>
           );
         })}
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+        <h4 style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <CalendarCheck size={15} />{t('Confirmação de Agendamentos')}
+        </h4>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: 10 }}>
+          {t('O agente envia automaticamente uma mensagem confirmando se o cliente vai comparecer, antes do horário marcado.')}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <select
+            className="select"
+            value={confirmationHours}
+            onChange={e => setConfirmationHours(Number(e.target.value))}
+            style={{ width: 180 }}
+          >
+            <option value={0}>{t('Desativado')}</option>
+            <option value={1}>1 {t('hora antes')}</option>
+            <option value={2}>2 {t('horas antes')}</option>
+            <option value={4}>4 {t('horas antes')}</option>
+            <option value={12}>12 {t('horas antes')}</option>
+            <option value={24}>24 {t('horas antes')}</option>
+          </select>
+          {confirmationHours > 0 && (
+            <span className="badge badge-info">{t('Mensagem automática ativa')}</span>
+          )}
+        </div>
       </div>
 
       <div>
