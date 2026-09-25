@@ -87,7 +87,7 @@ async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessageP
 
 function shouldRespond(ctx: AgentContext): boolean {
   const state = ctx.conversation.ai_state;
-  if (ctx.conversation.is_group) return false;
+  if (ctx.conversation.is_group && !ctx.agent.respond_in_groups) return false;
   if (state === "paused" || state === "off") return false;
   if (state === "handed_off" && ctx.agent.post_handoff_behavior !== "continue") return false;
   return true;

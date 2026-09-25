@@ -327,6 +327,7 @@ export interface AiAgentSettings {
   uncovered_transfer: boolean;
   auto_os_enabled: boolean;
   auto_schedule_enabled: boolean;
+  respond_in_groups: boolean;
   openrouter_model: string;
   own_api_key?: string;
   created_at: string;

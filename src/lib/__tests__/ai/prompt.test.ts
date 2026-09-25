@@ -8,7 +8,7 @@ function mockAgent(overrides: Partial<AgentSettings> = {}): AgentSettings {
     id: 'a1', tenant_id: 't1', agent_name: 'Ana', greeting_enabled: true, ask_name_enabled: false,
     typing_simulation: true, active: true, post_handoff_behavior: 'continue',
     handoff_message: 'msg', transfer_message: 'msg', uncovered_transfer: true,
-    auto_os_enabled: true, auto_schedule_enabled: true,
+    auto_os_enabled: true, auto_schedule_enabled: true, respond_in_groups: false,
     openrouter_model: 'openai/gpt-4o-mini', own_api_key: null,
     ...overrides,
   };

@@ -16,6 +16,7 @@ const DEFAULTS: AiAgentSettings = {
   uncovered_transfer: true,
   auto_os_enabled: true,
   auto_schedule_enabled: true,
+  respond_in_groups: false,
   openrouter_model: 'openai/gpt-4o-mini',
   own_api_key: undefined,
   created_at: '',
