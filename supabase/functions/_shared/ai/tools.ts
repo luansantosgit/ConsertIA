@@ -1,4 +1,4 @@
-import type { AgentContext, PartRow, ToolResult } from "./types.ts";
+import type { AgentContext, PartRow, ToolResult, QuoteItem, QuoteContext } from "./types.ts";
 import { isOpenAt, nextOpenDayText } from "./business-hours.ts";
 
 export const toolDefinitions = [
@@ -22,7 +22,7 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "build_quote",
-      description: "Monta o orçamento (peça + mão de obra). Repasse o texto exato ao cliente.",
+      description: "Monta o orçamento de UM problema/peça (peça + mão de obra). Para múltiplos problemas, chame uma vez por peça e apresente também o total somado. Repasse o texto exato ao cliente.",
       parameters: {
         type: "object",
         properties: {
@@ -46,14 +46,15 @@ export const toolDefinitions = [
     type: "function",
     function: {
       name: "create_service_order",
-      description: "Cria a OS da manutenção agendada. Chame após confirmar a data; informe part_id para registrar peça e mão de obra.",
+      description: "Cria a OS da manutenção agendada. Chame após confirmar a data; informe part_id (ou part_ids quando houver várias peças orçadas) e budget_amount = total somado.",
       parameters: {
         type: "object",
         properties: {
           subject: { type: "string", description: "Título curto (ex: Troca de tela - iPhone 11)" },
           description: { type: "string", description: "Problema relatado" },
-          budget_amount: { type: "number", description: "Valor total aprovado" },
-          part_id: { type: "string", description: "ID da peça orçada" },
+          budget_amount: { type: "number", description: "Valor total aprovado (soma dos orçamentos)" },
+          part_id: { type: "string", description: "ID da peça orçada (usar quando houver apenas uma)" },
+          part_ids: { type: "array", items: { type: "string" }, description: "IDs de TODAS as peças orçadas (usar quando houver mais de uma)" },
         },
         required: ["subject", "budget_amount"],
       },
@@ -204,7 +205,7 @@ async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
     return {
       ok: true,
       found: false,
-      message: "Nenhuma peça encontrada no catálogo. NÃO informe ao cliente que a peça não existe ou está indisponível. Diga com naturalidade: 'Vou te passar para o nosso time técnico e eles vão analisar de perto o caso do seu aparelho.' e chame handoff_to_human em seguida.",
+      message: "Peça não encontrada no catálogo. NÃO informe ao cliente que a peça não existe ou está indisponível. Se você JÁ orçou outras peças nesta conversa, apenas diga com naturalidade que este item será avaliado de perto pelo time técnico e siga o fluxo com os orçamentos existentes. Se NÃO há nenhum outro orçamento em andamento, diga: 'Vou te passar para o nosso time técnico e eles vão analisar de perto o caso do seu aparelho.' e chame handoff_to_human.",
     };
   }
 
@@ -263,7 +264,7 @@ async function buildQuote(ctx: AgentContext, args: any): Promise<ToolResult> {
 
   ctx.canonicalQuote = text;
 
-  const quoteContext = {
+  const newItem: QuoteItem = {
     part_id: part.id,
     part_name: part.name,
     service_type: (args.service_type ?? "").toString(),
@@ -272,30 +273,52 @@ async function buildQuote(ctx: AgentContext, args: any): Promise<ToolResult> {
     labor,
     total,
     quote_text: text,
-    created_at: new Date().toISOString(),
   };
+  const previousItems = (ctx.quoteContext?.items ?? []).filter((i) => i.part_id !== part.id);
+  const items = [...previousItems, newItem];
+  const grandTotal = normalizeMoney(items.reduce((acc, i) => acc + i.total, 0));
+  ctx.allowedValues.add(grandTotal);
+
+  const quoteContext: QuoteContext = { items, grand_total: grandTotal, created_at: new Date().toISOString() };
   ctx.quoteContext = quoteContext;
   await ctx.supabase
     .from("conversations")
     .update({ quote_context: quoteContext })
     .eq("id", ctx.conversation.id);
 
-  return { ok: true, quote_text: text, part_price: partPrice, labor, total };
+  return {
+    ok: true,
+    quote_text: text,
+    part_price: partPrice,
+    labor,
+    total,
+    all_items: items.map((i) => ({ service: i.service_type, part: i.part_name, total: i.total })),
+    grand_total: grandTotal,
+    message: items.length > 1
+      ? `Orçamento do item adicionado. Total somado de TODOS os serviços orçados nesta conversa: ${formatMoney(grandTotal)}. Apresente também esse total ao cliente.`
+      : undefined,
+  };
 }
 
 async function createServiceOrder(ctx: AgentContext, args: any): Promise<ToolResult> {
   if (!ctx.agent.auto_os_enabled) return { ok: false, error: "Criação automática de OS desativada pelo administrador." };
   if (!ctx.customer) return { ok: false, error: "Cliente não vinculado à conversa." };
 
+  const partIds: string[] = Array.isArray(args.part_ids)
+    ? args.part_ids.filter((p: any) => typeof p === "string" && p.length > 0)
+    : args.part_id
+      ? [String(args.part_id)]
+      : [];
+
   let partName: string | null = null;
   let partAmount: number | null = null;
   let laborAmount: number | null = null;
 
-  if (args.part_id) {
+  if (partIds.length === 1) {
     const { data: part } = await ctx.supabase
       .from("products")
       .select("id, name, price")
-      .eq("id", args.part_id)
+      .eq("id", partIds[0])
       .eq("tenant_id", ctx.tenantId)
       .limit(1)
       .maybeSingle();
@@ -304,6 +327,23 @@ async function createServiceOrder(ctx: AgentContext, args: any): Promise<ToolRes
       partAmount = normalizeMoney(Number(part.price));
       laborAmount = ctx.quote.labor_enabled
         ? normalizeMoney(ctx.quote.labor_type === "fixed" ? Number(ctx.quote.labor_value) : partAmount * Number(ctx.quote.labor_value) / 100)
+        : 0;
+    }
+  } else if (partIds.length > 1) {
+    const { data: parts } = await ctx.supabase
+      .from("products")
+      .select("id, name, price")
+      .eq("tenant_id", ctx.tenantId)
+      .in("id", partIds);
+    const rows = ((parts ?? []) as PartRow[]).filter((p) => partIds.includes(p.id));
+    if (rows.length > 0) {
+      partAmount = normalizeMoney(rows.reduce((acc: number, p: PartRow) => acc + Number(p.price), 0));
+      partName = rows.map((p) => p.name).join(" + ");
+      // mão de obra: fixa por serviço (uma OS com N peças = N serviços) ou percentual sobre a soma das peças
+      laborAmount = ctx.quote.labor_enabled
+        ? normalizeMoney(ctx.quote.labor_type === "fixed"
+            ? Number(ctx.quote.labor_value) * rows.length
+            : partAmount * Number(ctx.quote.labor_value) / 100)
         : 0;
     }
   }

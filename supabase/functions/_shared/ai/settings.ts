@@ -1,4 +1,4 @@
-import type { AgentContext, AgentSettings, QuoteSettings, DiagnosisSettings, CoverageRow, TemplateRow, OpenOrderRow, AppointmentRow } from "./types.ts";
+import type { AgentContext, AgentSettings, QuoteSettings, DiagnosisSettings, CoverageRow, TemplateRow, OpenOrderRow, AppointmentRow, QuoteItem, QuoteContext } from "./types.ts";
 import { normalizeBusinessHours } from "./business-hours.ts";
 
 function periodOfDay(hour: number): string {
@@ -78,6 +78,33 @@ export async function trackUsage(supabase: any, tenantId: string, tokensIn: numb
   await supabase
     .from("ai_token_usage")
     .insert({ tenant_id: tenantId, period, tokens_in: tokensIn, tokens_out: tokensOut, cost });
+}
+
+function normalizeQuoteContext(raw: any): QuoteContext | null {
+  if (!raw) return null;
+  if (Array.isArray(raw.items)) {
+    const items = raw.items as QuoteItem[];
+    const grandTotal = items.reduce((acc, i) => acc + Number(i.total || 0), 0);
+    return {
+      items,
+      grand_total: Number(raw.grand_total) || grandTotal,
+      created_at: raw.created_at ?? "",
+    };
+  }
+  if (raw.part_id) {
+    const item: QuoteItem = {
+      part_id: raw.part_id,
+      part_name: raw.part_name ?? "",
+      service_type: raw.service_type ?? "",
+      device_model: raw.device_model ?? "",
+      part_price: Number(raw.part_price) || 0,
+      labor: Number(raw.labor) || 0,
+      total: Number(raw.total) || 0,
+      quote_text: raw.quote_text ?? "",
+    };
+    return { items: [item], grand_total: item.total, created_at: raw.created_at ?? "" };
+  }
+  return null;
 }
 
 export async function loadAgentContext(supabase: any, conversationId: string): Promise<AgentContext | null> {
@@ -193,7 +220,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     contactName: conversation.contact_name || conversation.contact_phone,
     openOrders,
     appointments,
-    quoteContext: (conversation.quote_context ?? null) as AgentContext["quoteContext"],
+    quoteContext: normalizeQuoteContext(conversation.quote_context) as AgentContext["quoteContext"],
     isFirstContact,
     period: currentPeriod(settingsRes.data?.timezone || "America/Sao_Paulo"),
     timezone: settingsRes.data?.timezone || "America/Sao_Paulo",
@@ -214,9 +241,12 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
   const allowed = new Set<number>();
   const qc = partial.quoteContext;
   if (qc) {
-    [qc.part_price, qc.labor, qc.total].forEach((v) => {
-      if (Number.isFinite(v)) allowed.add(Math.round(v * 100) / 100);
-    });
+    for (const item of qc.items) {
+      [item.part_price, item.labor, item.total].forEach((v) => {
+        if (Number.isFinite(v)) allowed.add(Math.round(v * 100) / 100);
+      });
+    }
+    if (Number.isFinite(qc.grand_total)) allowed.add(Math.round(qc.grand_total * 100) / 100);
   }
   partial.allowedValues = allowed;
 
