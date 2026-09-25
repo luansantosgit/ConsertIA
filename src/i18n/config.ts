@@ -386,6 +386,10 @@ export const resources = {
       'Quando enviar': 'Quando enviar',
       'Quais eventos disparam o lembrete': 'Quais eventos disparam o lembrete',
 
+      // Agente IA — grupos (Issue #29)
+      'Responder em grupos': 'Responder em grupos',
+      'Permite que o agente responda mensagens em conversas de grupo. Desativado, ele ignora grupos completamente.': 'Permite que o agente responda mensagens em conversas de grupo. Desativado, ele ignora grupos completamente.',
+
       // Chat modal & Actions
       'Iniciar Conversa': 'Iniciar Conversa',
       'Iniciar Chat': 'Iniciar Chat',
@@ -785,6 +789,10 @@ export const resources = {
       'Quando enviar': 'When to send',
       'Quais eventos disparam o lembrete': 'Which events trigger the reminder',
 
+      // AI agent — groups (Issue #29)
+      'Responder em grupos': 'Respond in groups',
+      'Permite que o agente responda mensagens em conversas de grupo. Desativado, ele ignora grupos completamente.': 'Allows the agent to reply in group chats. When disabled, it ignores groups completely.',
+
       // Chat modal & Actions
       'Iniciar Conversa': 'Start Conversation',
       'Iniciar Chat': 'Start Chat',
@@ -1183,6 +1191,10 @@ export const resources = {
       'Lembretes de agendamento': 'Recordatorios de citas',
       'Quando enviar': 'Cuándo enviar',
       'Quais eventos disparam o lembrete': 'Qué eventos activan el recordatorio',
+
+      // Agente IA — grupos (Issue #29)
+      'Responder em grupos': 'Responder en grupos',
+      'Permite que o agente responda mensagens em conversas de grupo. Desativado, ele ignora grupos completamente.': 'Permite que el agente responda mensajes en conversas de grupo. Desactivado, ignora los grupos por completo.',
 
       // Chat modal & Actions
       'Iniciar Conversa': 'Iniciar Conversación',

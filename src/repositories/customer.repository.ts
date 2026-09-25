@@ -102,15 +102,15 @@ export class CustomerRepository extends BaseSupabaseRepository<Customer> {
     const customer = await this.getById(id);
     if (customer && cascadeChats) {
       const phones = [customer.phone, customer.mobile].filter(Boolean) as string[];
-      const conditions: string[] = [`customer_id.eq.${id}`];
+      const convConditions: string[] = [`customer_id.eq.${id}`];
+      const leadConditions: string[] = [`customer_id.eq.${id}`];
       for (const p of phones) {
         const clean = p.replace(/\D/g, '');
         if (clean) {
-          conditions.push(`contact_phone.eq.${clean}`);
           const without55 = clean.startsWith('55') ? clean.slice(2) : clean;
-          conditions.push(`contact_phone.eq.${without55}`);
           const with55 = clean.startsWith('55') ? clean : `55${clean}`;
-          conditions.push(`contact_phone.eq.${with55}`);
+          convConditions.push(`contact_phone.eq.${clean}`, `contact_phone.eq.${without55}`, `contact_phone.eq.${with55}`);
+          leadConditions.push(`phone.eq.${clean}`, `phone.eq.${without55}`, `phone.eq.${with55}`);
         }
       }
 
@@ -118,7 +118,7 @@ export class CustomerRepository extends BaseSupabaseRepository<Customer> {
         .from('conversations')
         .select('id')
         .eq('tenant_id', this.tenantId)
-        .or(conditions.join(','));
+        .or(convConditions.join(','));
 
       if (convs && convs.length > 0) {
         const convIds = convs.map(c => c.id);
@@ -130,7 +130,7 @@ export class CustomerRepository extends BaseSupabaseRepository<Customer> {
         .from('leads')
         .delete()
         .eq('tenant_id', this.tenantId)
-        .or(conditions.join(','));
+        .or(leadConditions.join(','));
     } else {
       await supabase.from('conversations').update({ customer_id: null }).eq('customer_id', id);
       await supabase.from('leads').update({ customer_id: null }).eq('customer_id', id);

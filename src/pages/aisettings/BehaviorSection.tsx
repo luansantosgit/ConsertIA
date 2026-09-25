@@ -93,6 +93,12 @@ export const BehaviorSection: React.FC<BehaviorSectionProps> = ({ agent, saving,
           checked={agent.uncovered_transfer}
           onChange={v => set('uncovered_transfer', v)}
         />
+        <Toggle
+          label={t('Responder em grupos')}
+          description={t('Permite que o agente responda mensagens em conversas de grupo. Desativado, ele ignora grupos completamente.')}
+          checked={agent.respond_in_groups}
+          onChange={v => set('respond_in_groups', v)}
+        />
       </div>
 
       <div className="form-group">

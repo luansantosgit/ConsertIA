@@ -50,14 +50,16 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   onTogglePin,
   onAiClick,
 }) => {
-  // Contadores de nao lidas por categoria, sincronizados em tempo real via
-  // conversations (atualizado pelos canais realtime de messages/conversations)
+  // Contadores de chats com mensagens nao lidas (nao a soma de mensagens),
+  // sincronizados em tempo real via conversations
   const unreadByFilter = useMemo(() => {
     const acc = { all: 0, chats: 0, groups: 0 };
     for (const c of conversations) {
-      acc.all += c.unread_count;
-      if (c.is_group) acc.groups += c.unread_count;
-      else acc.chats += c.unread_count;
+      if (c.unread_count > 0) {
+        acc.all++;
+        if (c.is_group) acc.groups++;
+        else acc.chats++;
+      }
     }
     return acc;
   }, [conversations]);
@@ -89,7 +91,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>Conversas</h3>
           <span className="badge badge-danger">
-            {conversations.reduce((a, c) => a + c.unread_count, 0)} não lidas
+            {unreadByFilter.all} {unreadByFilter.all === 1 ? 'não lida' : 'não lidas'}
           </span>
         </div>
         <div className="search-wrap" style={{ marginBottom: 10 }}>
