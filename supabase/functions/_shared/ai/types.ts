@@ -74,7 +74,7 @@ export interface PartRow {
   device_model: string | null;
 }
 
-export interface QuoteContext {
+export interface QuoteItem {
   part_id: string;
   part_name: string;
   service_type: string;
@@ -83,6 +83,11 @@ export interface QuoteContext {
   labor: number;
   total: number;
   quote_text: string;
+}
+
+export interface QuoteContext {
+  items: QuoteItem[];
+  grand_total: number;
   created_at: string;
 }
 

@@ -68,13 +68,15 @@ function contextText(ctx: AgentContext): string {
         }).join("\n")
     );
   }
-  if (ctx.quoteContext) {
+  if (ctx.quoteContext && ctx.quoteContext.items.length > 0) {
     const q = ctx.quoteContext;
     parts.push(
-      `Orçamento JÁ ENVIADO nesta conversa (não refaça, não re-pergunte marca/modelo/problema):\n` +
-        `- Serviço: ${q.service_type} ${q.device_model} | Peça: ${q.part_name} | part_id: ${q.part_id}\n` +
-        `- Valores: peça ${formatMoneySafe(q.part_price)} + mão de obra ${formatMoneySafe(q.labor)} = total ${formatMoneySafe(q.total)}\n` +
-        `Ao confirmar data E horário com o cliente, chame create_service_order com ESTE part_id e budget_amount = ${q.total}, e depois schedule_event.`
+      `Orçamento(s) JÁ ENVIADO(S) nesta conversa (não refaça, não re-pergunte marca/modelo/problema):\n` +
+        q.items.map((i, idx) =>
+          `- Item ${idx + 1}: ${i.service_type} ${i.device_model} | Peça: ${i.part_name} | part_id: ${i.part_id} | total ${formatMoneySafe(i.total)}`
+        ).join("\n") +
+        `\n- TOTAL SOMADO de todos os serviços: ${formatMoneySafe(q.grand_total)}\n` +
+        `Ao confirmar data E horário, chame create_service_order com ${q.items.length > 1 ? `part_ids = [${q.items.map((i) => i.part_id).join(", ")}]` : `part_id = ${q.items[0].part_id}`} e budget_amount = ${q.grand_total}, e depois schedule_event. Se um dos problemas ficou sem preço (peça não encontrada), crie a OS apenas com os itens orçados e informe que o restante será avaliado pelo time técnico.`
     );
   }
   if (parts.length === 0) return "Nenhuma OS ou agendamento em andamento para este cliente.";
@@ -185,8 +187,8 @@ ${greetingBase}
 2. Cobertura da empresa: ${coverageText(ctx)}. Não coberto → avise que um especialista vai atender em breve e chame handoff_to_human.
 3. Diagnóstico de tela: ${glassText(ctx)}
 4. Antes de citar qualquer valor, chame find_part NA MESMA resposta (pode avisar: "Aguarde um instante, estou buscando informações 🔧").
-5. Peça encontrada: chame send_pre_quote_templates, depois build_quote, e repasse EXATAMENTE o texto retornado, sem alterar valores.
-6. Pergunte em qual DATA e HORÁRIO o cliente prefere agendar e aguarde. NUNCA invente horário: se só veio a data, pergunte "Prefere algum horário?". Confirmados data E horário → chame create_service_order (com part_id da peça orçada) e depois schedule_event com o horário exato. Confirme verbalmente depois (ex: "Agendado para 24/09 às 14:00 ✅").
+5. Peça(s) encontrada(s): chame send_pre_quote_templates, depois UM build_quote POR problema/peça, e repasse EXATAMENTE os textos retornados. Com MAIS DE UM problema orçado, apresente também o TOTAL SOMADO dos serviços.
+6. Pergunte em qual DATA e HORÁRIO o cliente prefere agendar e aguarde. NUNCA invente horário: se só veio a data, pergunte "Prefere algum horário?". Confirmados data E horário → chame create_service_order (part_id da peça orçada, ou part_ids de TODAS as peças se houver múltiplos serviços; budget_amount = total somado) e depois schedule_event com o horário exato. Confirme verbalmente depois (ex: "Agendado para 24/09 às 14:00 ✅").
 7. Avise que um atendente vai finalizar os detalhes e chame handoff_to_human.
 
 # Contexto do cliente
@@ -195,10 +197,10 @@ Se já existir OS ou agendamento, referencie-os naturalmente.
 ${appointmentRules(ctx)}
 
 # Regras invioláveis
-- ETAPAS ÚNICAS: find_part, templates e orçamento (build_quote) executam UMA única vez por conversa. Já feitos no histórico → NÃO reenvie, siga para agendamento ou handoff.
-- NUNCA invente preços, prazos ou disponibilidade: valores SOMENTE de find_part/build_quote, exatamente como retornados.
+- ETAPAS ÚNICAS: para CADA problema, find_part/templates/orçamento (build_quote) executam UMA única vez por conversa. Já orçado no histórico ou no contexto → NÃO re-orçe, siga para agendamento ou handoff.
+- MÚLTIPLOS PROBLEMAS: orce todos os que tiverem peça no catálogo (um build_quote por peça, apresentando também o total somado). Peça não encontrada para UM dos problemas: NÃO transfira por isso — orce os demais e diga com naturalidade que o item sem preço será avaliado de perto pelo time técnico; chame handoff_to_human apenas se NENHUMA peça for encontrada ou o cliente pedir.
+- NUNCA invente preços, prazos ou disponibilidade: valores SOMENTE de find_part/build_quote, exatamente como retornados (incluindo o total somado informado pela tool).
 - NUNCA responda apenas "vou verificar", "aguarde" — execute a tool NA MESMA resposta e finalize com o resultado em mãos (o cliente vê "digitando...").
-- Peça NÃO encontrada: NÃO diga que não existe/está em falta. Diga "Vou te passar para o nosso time técnico e eles vão analisar de perto o caso do seu aparelho." e chame handoff_to_human.
 - schedule_event exige data E horário ditos pelo cliente; datas passadas e horários inventados são proibidos.
 - Agendamento só dentro do expediente.
 - Pedido fora do escopo ou algo que não saiba: chame handoff_to_human.
