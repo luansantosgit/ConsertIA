@@ -883,12 +883,15 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .card-title {
   font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text-primary);
+  min-width: 0;
 }
 
 .card-link {
@@ -1118,6 +1121,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 .badge-success { background: var(--success-bg); color: var(--success-text); }
@@ -1418,11 +1422,13 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 /* ── KPI cards ── */
 .dash-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
 }
 
-@media (max-width: 600px)  { .dash-kpis { grid-template-columns: 1fr; } }
+/* 5 em linha reta em qualquer desktop; em telas estreitas 2+2+1 */
+@media (max-width: 1024px) { .dash-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px)  { .dash-kpis { grid-template-columns: 1fr; } }
 
 .dash-kpi {
   background: var(--card-bg);
@@ -1493,10 +1499,12 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 
 .dash-row-2 > .card, .dash-row-3 > .card { min-width: 0; }
 
-@media (max-width: 1200px) {
+/* Layout completo em 100% de zoom em qualquer desktop (1366+);
+   abaixo de ~1024px de viewport (zoom >100% ou telas pequenas) começa a ajustar */
+@media (max-width: 1024px) {
   .dash-row-2, .dash-row-3 { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 800px) {
+@media (max-width: 640px) {
   .dash-row-2, .dash-row-3 { grid-template-columns: 1fr; }
 }
 
@@ -1508,6 +1516,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   padding: 3px;
+  flex-shrink: 0;
 }
 
 .dash-toggle-btn {
@@ -1520,6 +1529,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
+  white-space: nowrap;
   transition: all 0.15s ease;
 }
 
@@ -1667,6 +1677,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   cursor: pointer;
   font-family: inherit;
   flex-shrink: 0;
+  white-space: nowrap;
   transition: transform var(--transition);
 }
 
