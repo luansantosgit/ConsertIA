@@ -10,6 +10,7 @@ function mockCtx(overrides: Partial<AgentContext> = {}): AgentContext {
     eq: vi.fn().mockReturnThis(),
     ilike: vi.fn().mockReturnThis(),
     or: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockResolvedValue({ data: PART, error: null }),
     limit: vi.fn().mockReturnThis(),
   };

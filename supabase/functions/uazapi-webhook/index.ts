@@ -348,18 +348,41 @@ serve(async (req) => {
 
         if (bumpError) console.error(`[webhook] Erro ao atualizar conversa:`, bumpError.message);
 
-        // Dispara o agente de IA quando o canal está com IA ativa (recurso desacoplado do canal)
+        // Dispara o agente de IA com debounce por conversa: mensagens em rajada
+        // (ex.: "segunda mesmo" + "Kkk" com 1s de diferença) geram UMA única
+        // resposta, sempre com todo o conteúdo novo já inserido.
         if (aiEnabled && !isGroup) {
-          const trigger = fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/ai-agent`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-            },
-            body: JSON.stringify({ conversation_id: conversation.id }),
-          })
-            .then((r) => r.text())
-            .catch((e) => console.warn("[webhook] ai-agent trigger failed:", (e as Error)?.message));
+          const triggerToken = crypto.randomUUID();
+          await supabase
+            .from("conversations")
+            .update({
+              ai_trigger_token: triggerToken,
+              ai_trigger_after: new Date(Date.now() + 3000).toISOString(),
+            })
+            .eq("id", conversation.id);
+
+          const trigger = (async () => {
+            await new Promise((r) => setTimeout(r, 3500));
+            // Claim atômico: só o gatilho mais recente dispara o agente
+            const { data: claimed } = await supabase
+              .from("conversations")
+              .update({ ai_trigger_token: null, ai_trigger_after: null })
+              .eq("id", conversation.id)
+              .eq("ai_trigger_token", triggerToken)
+              .select("id")
+              .maybeSingle();
+            if (!claimed) return;
+
+            const resp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/ai-agent`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({ conversation_id: conversation.id }),
+            });
+            void await resp.text();
+          })().catch((e) => console.warn("[webhook] ai-agent trigger failed:", (e as Error).message));
           if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
             EdgeRuntime.waitUntil(trigger);
           } else {

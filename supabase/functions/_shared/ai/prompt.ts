@@ -68,8 +68,21 @@ function contextText(ctx: AgentContext): string {
         }).join("\n")
     );
   }
+  if (ctx.quoteContext) {
+    const q = ctx.quoteContext;
+    parts.push(
+      `Orçamento JÁ ENVIADO nesta conversa (não refaça, não re-pergunte marca/modelo/problema):\n` +
+        `- Serviço: ${q.service_type} ${q.device_model} | Peça: ${q.part_name} | part_id: ${q.part_id}\n` +
+        `- Valores: peça ${formatMoneySafe(q.part_price)} + mão de obra ${formatMoneySafe(q.labor)} = total ${formatMoneySafe(q.total)}\n` +
+        `Ao confirmar data E horário com o cliente, chame create_service_order com ESTE part_id e budget_amount = ${q.total}, e depois schedule_event.`
+    );
+  }
   if (parts.length === 0) return "Nenhuma OS ou agendamento em andamento para este cliente.";
   return parts.join("\n");
+}
+
+function formatMoneySafe(value: number): string {
+  return `R$ ${Number(value || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const APPOINTMENT_STATUS_LABELS: Record<string, string> = {

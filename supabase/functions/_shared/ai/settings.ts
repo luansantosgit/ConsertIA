@@ -193,6 +193,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     contactName: conversation.contact_name || conversation.contact_phone,
     openOrders,
     appointments,
+    quoteContext: (conversation.quote_context ?? null) as AgentContext["quoteContext"],
     isFirstContact,
     period: currentPeriod(settingsRes.data?.timezone || "America/Sao_Paulo"),
     timezone: settingsRes.data?.timezone || "America/Sao_Paulo",
@@ -209,6 +210,15 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
   const entitlement = await loadEntitlement(supabase, partial);
   partial.apiKey = entitlement.apiKey;
   partial.tokenLimit = entitlement.tokenLimit;
+
+  const allowed = new Set<number>();
+  const qc = partial.quoteContext;
+  if (qc) {
+    [qc.part_price, qc.labor, qc.total].forEach((v) => {
+      if (Number.isFinite(v)) allowed.add(Math.round(v * 100) / 100);
+    });
+  }
+  partial.allowedValues = allowed;
 
   return partial as AgentContext;
 }

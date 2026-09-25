@@ -74,6 +74,18 @@ export interface PartRow {
   device_model: string | null;
 }
 
+export interface QuoteContext {
+  part_id: string;
+  part_name: string;
+  service_type: string;
+  device_model: string;
+  part_price: number;
+  labor: number;
+  total: number;
+  quote_text: string;
+  created_at: string;
+}
+
 export interface AgentContext {
   supabase: any;
   conversation: Record<string, any>;
@@ -88,6 +100,7 @@ export interface AgentContext {
   contactName: string;
   openOrders: OpenOrderRow[];
   appointments: AppointmentRow[];
+  quoteContext?: QuoteContext | null;
   isFirstContact: boolean;
   apiKey: string | null;
   tokenLimit: number;
