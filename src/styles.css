@@ -1418,12 +1418,10 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 /* ── KPI cards ── */
 .dash-kpis {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
-@media (max-width: 1400px) { .dash-kpis { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 900px)  { .dash-kpis { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px)  { .dash-kpis { grid-template-columns: 1fr; } }
 
 .dash-kpi {
@@ -1437,6 +1435,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   gap: 14px;
   overflow: hidden;
   position: relative;
+  min-width: 0;
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
@@ -1445,7 +1444,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 .dash-kpi--purple { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); border: none; color: #fff; }
 .dash-kpi--blue   { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); border: none; color: #fff; }
 
-.dash-kpi-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.dash-kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; min-width: 0; }
 
 .dash-kpi-icon {
   width: 42px;
@@ -1471,13 +1470,14 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 .dash-kpi-delta.down { color: var(--danger-text); background: var(--danger-bg); }
 .dash-kpi-delta--light { background: rgba(255,255,255,0.22); color: #fff; }
 
-.dash-kpi-value { font-size: 1.875rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
-.dash-kpi-label { font-size: 0.8125rem; color: var(--text-muted); margin-top: 5px; font-weight: 600; }
+.dash-kpi-value { font-size: clamp(1.5rem, 1.8vw, 1.875rem); font-weight: 800; color: var(--text-primary); line-height: 1.1; overflow-wrap: break-word; }
+.dash-kpi-label { font-size: 0.8125rem; color: var(--text-muted); margin-top: 5px; font-weight: 600; overflow-wrap: break-word; }
 .dash-kpi-footer {
   font-size: 0.75rem;
   color: var(--text-muted);
   border-top: 1px dashed var(--border);
   padding-top: 10px;
+  overflow-wrap: break-word;
 }
 
 .dash-kpi--purple .dash-kpi-value,
@@ -1488,8 +1488,10 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 .dash-kpi--blue .dash-kpi-footer { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.3); }
 
 /* ── Rows ── */
-.dash-row-2 { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 16px; align-items: stretch; }
-.dash-row-3 { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 16px; align-items: stretch; }
+.dash-row-2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.dash-row-3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: stretch; }
+
+.dash-row-2 > .card, .dash-row-3 > .card { min-width: 0; }
 
 @media (max-width: 1200px) {
   .dash-row-2, .dash-row-3 { grid-template-columns: 1fr 1fr; }
@@ -1542,9 +1544,9 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 .dash-donut-center { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
 .dash-donut-center-label { font-size: 0.6875rem; color: var(--text-muted); font-weight: 600; margin-top: 3px; }
 
-.dash-donut-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
-.dash-donut-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.8125rem; color: var(--text-secondary); }
-.dash-donut-item-left { display: flex; align-items: center; gap: 4px; }
+.dash-donut-list { width: 100%; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dash-donut-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.8125rem; color: var(--text-secondary); gap: 8px; min-width: 0; }
+.dash-donut-item-left { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dash-donut-item-count { font-weight: 700; color: var(--text-primary); }
 
 /* ── Appointments ── */
@@ -1572,7 +1574,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   flex-shrink: 0;
 }
 
-.dash-appt-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+.dash-appt-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dash-appt-time { font-size: 0.75rem; color: var(--text-muted); }
 
 /* ── Client analysis ── */
@@ -1609,6 +1611,8 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   color: #fff;
   position: relative;
   overflow: hidden;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .dash-ai-banner::before {
