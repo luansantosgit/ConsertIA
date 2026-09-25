@@ -262,6 +262,24 @@ async function buildQuote(ctx: AgentContext, args: any): Promise<ToolResult> {
     .replace(/\{total\}/g, formatMoney(total));
 
   ctx.canonicalQuote = text;
+
+  const quoteContext = {
+    part_id: part.id,
+    part_name: part.name,
+    service_type: (args.service_type ?? "").toString(),
+    device_model: (args.device_model ?? "").toString(),
+    part_price: partPrice,
+    labor,
+    total,
+    quote_text: text,
+    created_at: new Date().toISOString(),
+  };
+  ctx.quoteContext = quoteContext;
+  await ctx.supabase
+    .from("conversations")
+    .update({ quote_context: quoteContext })
+    .eq("id", ctx.conversation.id);
+
   return { ok: true, quote_text: text, part_price: partPrice, labor, total };
 }
 
