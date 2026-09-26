@@ -41,8 +41,8 @@ async function callOpenRouter(ctx: AgentContext, messages: ChatMessagePayload[],
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${ctx.apiKey}`,
-      "HTTP-Referer": "https://consertia.app",
-      "X-Title": "ConsertIA",
+      "HTTP-Referer": "https://deeperia.com.br",
+      "X-Title": "DeeperIA",
     },
     body: JSON.stringify({
       model: ctx.agent.openrouter_model,

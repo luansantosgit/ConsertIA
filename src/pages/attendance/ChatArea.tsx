@@ -166,7 +166,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           <Reply size={14} color="var(--primary)" />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: '0.6875rem', fontWeight: 700, margin: 0, color: 'var(--primary)' }}>
-              {quotedMessage.from === 'customer' ? 'Cliente' : quotedMessage.from === 'bot' ? 'IA ConsertIA' : 'Você'}
+              {quotedMessage.from === 'customer' ? 'Cliente' : quotedMessage.from === 'bot' ? 'IA DeeperIA' : 'Você'}
             </p>
             <p style={{ fontSize: '0.6875rem', margin: 0, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {quotedMessage.text || 'Mensagem original'}

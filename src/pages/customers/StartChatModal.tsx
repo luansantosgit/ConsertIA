@@ -112,7 +112,7 @@ export const StartChatModal: React.FC<StartChatModalProps> = ({ customer, isOpen
       }
 
       onClose();
-      navigate(`/atendimento?conversationId=${conv.id}`);
+      navigate(`/app/atendimento?conversationId=${conv.id}`);
     } catch (err) {
       console.error('Failed to start chat:', err);
       setError(t('Erro ao iniciar chat'));

@@ -1,8 +1,8 @@
-# ConsertIA - Agent Instructions
+# DeeperIA - Agent Instructions
 
 ## Project Overview
 
-ConsertIA is a multi-tenant CRM + AI system for technical assistance (repair shops).
+DeeperIA is a multi-tenant CRM + AI system for technical assistance (repair shops).
 Stack: React 19, TypeScript, Vite, Tailwind v4, Zustand, React Router v7, i18next, Supabase.
 
 ---

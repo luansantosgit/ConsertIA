@@ -33,7 +33,7 @@ export const RecentAppointments: React.FC<{ events: CalendarEvent[] }> = ({ even
     <div className="card card-p">
       <div className="card-header">
         <h3 className="card-title">{t('Últimos Agendamentos')}</h3>
-        <button className="card-link" onClick={() => navigate('/agenda')}>
+        <button className="card-link" onClick={() => navigate('/app/agenda')}>
           {t('Ver todos')} →
         </button>
       </div>

@@ -33,7 +33,7 @@ const DEFAULT_THEME: Omit<TenantTheme, 'tenantId'> = {
   primaryDark: '#4338ca',
   logoUrl: null,
   logoType: 'icon',
-  logoText: 'ConsertIA',
+  logoText: 'DeeperIA',
   faviconUrl: null,
   sidebarDark: false,
 };
@@ -46,7 +46,7 @@ function applyCSS(theme: Omit<TenantTheme, 'tenantId'>) {
   root.style.setProperty('--primary-dark', theme.primaryDark);
 
   // Titulo da aba respeita o nome configurado pelo superadmin
-  document.title = `${theme.logoText || 'ConsertIA'} - CRM + IA para Assistência Técnica`;
+  document.title = `${theme.logoText || 'DeeperIA'} - CRM + IA para Assistência Técnica`;
 
   // Gera variações automáticas da cor primária
   root.style.setProperty('--primary-light', theme.primaryColor + '20');
@@ -69,7 +69,7 @@ function applyCSS(theme: Omit<TenantTheme, 'tenantId'>) {
     link.href = theme.faviconUrl;
   } else {
     // Gera favicon SVG com a cor primária e sigla
-    const initial = (theme.logoText || 'C').charAt(0).toUpperCase();
+    const initial = (theme.logoText || 'D').charAt(0).toUpperCase();
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
       <rect width='32' height='32' rx='8' fill='${encodeURIComponent(theme.primaryColor)}'/>
       <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' 
@@ -201,7 +201,7 @@ export const useThemeStore = create<ThemeState>()(
       },
     }),
     {
-      name: 'consertia-theme',
+      name: 'deeperia-theme',
     }
   )
 );

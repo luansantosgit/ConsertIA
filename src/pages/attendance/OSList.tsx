@@ -109,7 +109,7 @@ export const OSList: React.FC<OSListProps> = ({
           <button
             className="btn btn-ghost btn-sm"
             style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', color: 'var(--primary)', gap: 4 }}
-            onClick={() => navigate('/ordens')}
+            onClick={() => navigate('/app/ordens')}
           >
             Ver todas as OS no sistema <ExternalLink size={12} />
           </button>

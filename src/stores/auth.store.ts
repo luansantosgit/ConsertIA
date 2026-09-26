@@ -112,7 +112,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'consertia-auth',
+      name: 'deeperia-auth',
       partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )

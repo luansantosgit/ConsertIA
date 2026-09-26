@@ -118,6 +118,25 @@ export interface Lead {
 
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
 
+// ============================================================
+// SITE INSTITUCIONAL (landing page) — FUNIL DE LEADS
+// ============================================================
+
+export type LandingLeadStatus = 'novo' | 'contatado' | 'convertido' | 'perdido';
+
+export interface LandingLead {
+  id: string;
+  name: string;
+  whatsapp: string;
+  store_name: string;
+  quotes_per_day?: number | null;
+  ticket?: number | null;
+  status: LandingLeadStatus;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type MessageSenderType = 'customer' | 'ai' | 'attendant';
 
 export interface Message {
