@@ -3,16 +3,18 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   LayoutDashboard, Building2, CreditCard, Palette, Link2,
-  LogOut, Shield, PanelLeftClose, PanelLeftOpen, Bot,
+  LogOut, Shield, PanelLeftClose, PanelLeftOpen, Bot, Filter, Settings,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin' },
   { icon: Building2, label: 'Empresas', path: '/superadmin/empresas' },
+  { icon: Filter, label: 'Funil de Leads', path: '/superadmin/leads' },
   { icon: CreditCard, label: 'Planos', path: '/superadmin/planos' },
   { icon: Palette, label: 'Temas & Marcas', path: '/superadmin/tema' },
   { icon: Link2, label: 'Integrações', path: '/superadmin/integracoes' },
+  { icon: Settings, label: 'Configurações', path: '/superadmin/configuracoes' },
   { icon: Bot, label: 'Provedor de IA', path: '/superadmin/provedor-ia' },
 ];
 
@@ -39,7 +41,7 @@ export const SuperAdminLayout: React.FC = () => {
       <aside className={`sidebar sa-sidebar ${mobileOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}>
         <div
           className="sidebar-logo-btn"
-          title="ConsertIA Superadmin"
+          title="DeeperIA Superadmin"
           style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff' }}
         >
           <Shield size={20} />

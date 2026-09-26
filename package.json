@@ -50,6 +50,7 @@
     "eslint-plugin-react-refresh": "^0.5.4",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "sharp": "^0.35.4",
     "vitest": "^4.1.11"
   }
 }

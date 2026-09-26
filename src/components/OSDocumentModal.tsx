@@ -117,7 +117,7 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
               </div>
               <div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                  {company.company_name || activeTheme.logoText || 'ConsertIA'}
+                  {company.company_name || activeTheme.logoText || 'DeeperIA'}
                 </h2>
                 {(company.cnpj || company.whatsapp || company.phone) && (
                   <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: '2px 0 0 0' }}>
@@ -265,7 +265,7 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
                 {labels.customerSignature}
               </div>
               <div style={{ textAlign: 'center', borderTop: '1px solid #94a3b8', paddingTop: 6 }}>
-                {company.company_name || activeTheme.logoText || 'ConsertIA'} — {labels.techSignature}
+                {company.company_name || activeTheme.logoText || 'DeeperIA'} — {labels.techSignature}
               </div>
             </div>
           </div>

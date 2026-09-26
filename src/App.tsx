@@ -29,6 +29,8 @@ import { SuperAdminPlans }    from '@/superadmin/SuperAdminPlans';
 import { SuperAdminTheme }    from '@/superadmin/SuperAdminTheme';
 import { SuperAdminIntegracoes } from '@/superadmin/SuperAdminIntegracoes';
 import { SuperAdminAi } from '@/superadmin/SuperAdminAi';
+import { SuperAdminLeads } from '@/superadmin/SuperAdminLeads';
+import { SuperAdminSettings } from '@/superadmin/SuperAdminSettings';
 
 import './i18n/config';
 import './styles.css';
@@ -49,7 +51,7 @@ const RequireAuth: React.FC<{ role?: 'superadmin' | 'tenant'; children: React.Re
 }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (role === 'superadmin' && user?.role !== 'superadmin') return <Navigate to="/" replace />;
+  if (role === 'superadmin' && user?.role !== 'superadmin') return <Navigate to="/app" replace />;
   if (role === 'tenant' && user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
   return <>{children}</>;
 };
@@ -100,16 +102,18 @@ const App: React.FC = () => {
         >
           <Route index element={<SuperAdminDashboard />} />
           <Route path="empresas" element={<SuperAdminCompanies />} />
+          <Route path="leads" element={<SuperAdminLeads />} />
           <Route path="planos" element={<SuperAdminPlans />} />
           <Route path="tema" element={<SuperAdminTheme />} />
           <Route path="integracoes" element={<SuperAdminIntegracoes />} />
+          <Route path="configuracoes" element={<SuperAdminSettings />} />
           <Route path="provedor-ia" element={<SuperAdminAi />} />
         </Route>
 
         {/* ── Tenant ── */}
         <Route path="/login" element={<TenantLogin />} />
         <Route
-          path="/"
+          path="/app"
           element={
             <RequireAuth role="tenant">
               <TenantLayout />
@@ -131,7 +135,23 @@ const App: React.FC = () => {
         {/* ── Checklist público ── */}
         <Route path="/checklist/:osId" element={<Suspense fallback={<PageLoader />}><ChecklistPage /></Suspense>} />
 
-        {/* ── Redirect padrão ── */}
+        {/* ── Redirects padrão ── */}
+        {/* Em produção o site institucional (HTML estático) ocupa "/" do domínio
+            principal via vercel.json; em dev/edge casos o SPA decide pelo auth. */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              user?.role === 'superadmin' ? (
+                <Navigate to="/superadmin" replace />
+              ) : (
+                <Navigate to="/app" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route
           path="*"
           element={
@@ -139,7 +159,7 @@ const App: React.FC = () => {
               user?.role === 'superadmin' ? (
                 <Navigate to="/superadmin" replace />
               ) : (
-                <Navigate to="/" replace />
+                <Navigate to="/app" replace />
               )
             ) : (
               <Navigate to="/login" replace />

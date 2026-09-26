@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeeperIA — Sistema com IA para Assistência Técnica de Celular</title>
+  <meta name="description" content="O DeeperIA atende seu cliente no WhatsApp em menos de 15 segundos: pré-diagnóstico do defeito, preço na hora e agendamento 24/7. Aumente a conversão de orçamentos da sua assistência técnica de celular." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://deeperia.com.br/" />
+  <meta name="theme-color" content="#121212" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://deeperia.com.br/" />
+  <meta property="og:site_name" content="DeeperIA" />
+  <meta property="og:title" content="DeeperIA — Sistema com IA para Assistência Técnica de Celular" />
+  <meta property="og:description" content="Agente de IA que atende no WhatsApp em segundos, pré-diagnostica o defeito e fecha o orçamento 24/7 para assistências técnicas de celular." />
+  <meta property="og:image" content="https://deeperia.com.br/site/img/og-cover.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="DeeperIA — IA para Assistência Técnica de Celular" />
+  <meta name="twitter:description" content="Atendimento no WhatsApp em segundos, pré-diagnóstico e orçamento 24/7." />
+  <meta name="twitter:image" content="https://deeperia.com.br/site/img/og-cover.webp" />
+
+  <!-- Favicon (atualizado dinamicamente com o logo do sistema) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2306b6d4'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'%3ED%3C/text%3E%3C/svg%3E" />
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/site/site.css" />
+
+  <!-- Subdomínios do sistema vão direto pro painel; o site vive no domínio principal -->
+  <script>
+    (function () {
+      var h = location.hostname;
+      var main = ['deeperia.com.br', 'www.deeperia.com.br', 'localhost', '127.0.0.1'];
+      if (main.indexOf(h) === -1 && location.pathname === '/') location.replace('/app');
+    })();
+  </script>
+
+  <!-- Dados estruturados -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://deeperia.com.br/#org",
+        "name": "DeeperIA",
+        "url": "https://deeperia.com.br/",
+        "logo": "https://deeperia.com.br/site/img/og-cover.webp",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "vendas",
+          "telephone": "+55-18-99741-1233",
+          "availableLanguage": "pt-BR"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://deeperia.com.br/#site",
+        "url": "https://deeperia.com.br/",
+        "name": "DeeperIA",
+        "inLanguage": "pt-BR",
+        "publisher": { "@id": "https://deeperia.com.br/#org" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://deeperia.com.br/#app",
+        "name": "DeeperIA",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, Android, iOS",
+        "description": "Sistema com agente de IA para assistências técnicas de celular: atendimento no WhatsApp em segundos, pré-diagnóstico, orçamento e agendamento 24/7.",
+        "inLanguage": "pt-BR",
+        "offers": {
+          "@type": "Offer",
+          "price": "69.90",
+          "priceCurrency": "BRL",
+          "url": "https://deeperia.com.br/#precos"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://deeperia.com.br/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "A IA pode dar preço errado para o cliente?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Não. Você define a tabela de preços e os limites de margem para cada tipo de serviço. A IA só informa valores dentro do que você autorizou." }
+          },
+          {
+            "@type": "Question",
+            "name": "Preciso deixar meu computador ligado?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Não. O sistema roda 100% na nuvem. Atende, diagnostica e agenda mesmo com a loja física fechada." }
+          },
+          {
+            "@type": "Question",
+            "name": "Se o cliente quiser falar com um humano?",
+            "acceptedAnswer": { "@type": "Answer", "text": "A IA identifica a necessidade e transfere a conversa imediatamente para um atendente humano, com o resumo completo do atendimento." }
+          },
+          {
+            "@type": "Question",
+            "name": "Como funciona a integração com o WhatsApp?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Conectamos seu número atual do WhatsApp (ou um novo número dedicado). A IA responde no mesmo chat que seus clientes já usam, sem trocar de aplicativo." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body id="site-root">
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/" aria-label="DeeperIA — início">
+        <span class="brand-mark" id="brand-mark">D</span>
+        <img class="brand-logo" id="brand-logo" src="" alt="DeeperIA" style="display:none" />
+        <span data-brand-text>DeeperIA</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Navegação principal">
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#calculadora">Calculadora</a>
+        <a href="#agente">Agente</a>
+        <a href="#precos">Preços</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <div class="header-cta">
+        <a class="btn btn-ghost btn-sm" href="/login">Entrar no painel</a>
+        <a class="btn btn-primary btn-sm" href="#" data-wa data-wa-msg="Olá! Quero saber mais sobre o DeeperIA para a minha assistência técnica.">Falar com especialista</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. HERO -->
+    <section class="hero" aria-label="Apresentação">
+      <div class="container">
+        <div>
+          <span class="hero-eyebrow"><span class="dot"></span> IA treinada para assistências de celular</span>
+          <h1>Sua assistência técnica perde <em>orçamento todos os dias</em> porque o cliente não quer esperar a resposta no WhatsApp?</h1>
+          <p class="hero-sub">
+            Conheça o <strong>DeeperIA</strong>: o agente de IA que atende em segundos, pré-diagnostica o defeito do aparelho
+            e fecha o orçamento <strong>24 horas por dia</strong> — inclusive com a loja fechada.
+          </p>
+          <div class="hero-ctas">
+            <button class="btn btn-primary" data-open-lead>TESTAR AGORA NA SUA LOJA</button>
+            <a class="btn btn-ghost" href="#como-funciona">Ver como funciona ↓</a>
+          </div>
+          <p class="hero-note">Sem fidelidade · Cancele quando quiser · Instalação guiada em 1 dia</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="wa-header">
+                <div class="wa-avatar">AI</div>
+                <div class="wa-title">Assistência — IA DeeperIA<small>online · responde em segundos</small></div>
+              </div>
+              <div class="wa-body" id="wa-body">
+                <div class="bubble bubble-ia">Olá! 👋 Sou a IA da assistência. Clique em um exemplo abaixo e veja o atendimento na prática.</div>
+                <div class="typing" id="wa-typing" aria-hidden="true"><span></span><span></span><span></span></div>
+              </div>
+              <div class="quick-replies" id="quick-replies">
+                <span class="qr-label">Simule um atendimento real:</span>
+                <button class="qr-btn" data-scenario="screen">📱 Tela de iPhone 13 quebrada</button>
+                <button class="qr-btn" data-scenario="water">💧 Celular caiu na água</button>
+                <button class="qr-btn" data-scenario="battery">🔋 Troca de bateria do S22</button>
+              </div>
+            </div>
+            <div class="phone-cta-overlay" id="phone-cta">
+              <p>É exatamente assim que seus clientes seriam atendidos. A qualquer hora.</p>
+              <button class="btn btn-primary btn-sm" data-open-lead>ATIVAR NA MINHA LOJA</button>
+            </div>
+          </div>
+          <p class="sim-hint">Simulação local — nenhum dado é enviado.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MÉTRICAS -->
+    <section class="metrics" aria-label="Resultados">
+      <div class="container">
+        <div class="metric reveal">
+          <span class="metric-value">< 15s</span>
+          <span class="metric-label">tempo médio de resposta aos clientes no WhatsApp</span>
+        </div>
+        <div class="metric reveal">
+          <span class="metric-value">+35%</span>
+          <span class="metric-label">de aumento na conversão de orçamentos fechados</span>
+        </div>
+        <div class="metric reveal">
+          <span class="metric-value">24/7</span>
+          <span class="metric-label">atendimento ativo mesmo com a loja física fechada</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. ANTES E DEPOIS -->
+    <section class="section" id="como-funciona" aria-label="Antes e depois">
+      <div class="container">
+        <div class="section-head center reveal">
+          <p class="section-tag">O choque de realidade</p>
+          <h2>Assistência tradicional × com o DeeperIA</h2>
+          <p>Cada minuto de espera é um cliente decidindo procurar outra assistência. Compare a sua operação:</p>
+        </div>
+        <div class="compare-grid">
+          <article class="compare-card trad reveal">
+            <h3 class="compare-head">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Assistência tradicional
+            </h3>
+            <ul class="compare-list">
+              <li><span class="icon">✕</span><span>Cliente espera <strong>40 minutos</strong> por um orçamento simples.</span></li>
+              <li><span class="icon">✕</span><span>Técnico <strong>para a bancada</strong> para responder áudios longos.</span></li>
+              <li><span class="icon">✕</span><span><strong>Mensagens perdidas</strong> fora do horário comercial.</span></li>
+              <li><span class="icon">✕</span><span>Atendimento <strong>inconsistente</strong> no pico do dia.</span></li>
+            </ul>
+          </article>
+          <article class="compare-card deeperia reveal">
+            <h3 class="compare-head">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8L12 2z"/></svg>
+              Com o DeeperIA
+            </h3>
+            <ul class="compare-list">
+              <li><span class="icon">✓</span><span>Resposta em <strong>10 segundos</strong> com pré-diagnóstico exato.</span></li>
+              <li><span class="icon">✓</span><span>IA filtra <strong>modelo, defeito e urgência</strong> e entrega o lead pronto.</span></li>
+              <li><span class="icon">✓</span><span><strong>Orçamentos pré-agendados</strong> enquanto a loja está fechada.</span></li>
+              <li><span class="icon">✓</span><span><strong>Padronização técnica</strong> sem erros de preço.</span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. CALCULADORA -->
+    <section class="section" id="calculadora" aria-label="Calculadora de lucro perdido">
+      <div class="container">
+        <div class="section-head center reveal">
+          <p class="section-tag">Faça as contas</p>
+          <h2>Quanto você deixa na mesa todo mês?</h2>
+          <p>Arraste os controles e veja, em tempo real, o lucro perdido por demora no atendimento e falta de follow-up.</p>
+        </div>
+        <div class="calc-card reveal">
+          <div>
+            <div class="calc-field">
+              <label for="calc-quotes">Orçamentos que você recebe por dia no WhatsApp <output id="calc-quotes-out" for="calc-quotes">20 orçamentos</output></label>
+              <input type="range" id="calc-quotes" min="1" max="100" value="20" step="1" aria-label="Orçamentos por dia" />
+            </div>
+            <div class="calc-field">
+              <label for="calc-ticket">Ticket médio por serviço <output id="calc-ticket-out" for="calc-ticket">R$ 250</output></label>
+              <input type="range" id="calc-ticket" min="50" max="2000" value="250" step="10" aria-label="Ticket médio" />
+            </div>
+          </div>
+          <div class="calc-result">
+            <span class="label">Você pode estar deixando até</span>
+            <span class="value" id="calc-result">R$ 37.500</span>
+            <span class="detail" id="calc-detail">≈ 150 orçamentos perdidos por mês</span>
+            <span class="label" style="margin-top:6px">por mês na mesa</span>
+            <button class="btn btn-primary" data-open-lead data-lead-ctx="calc">RECUPERAR ESSE LUCRO AGORA</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. AGENTE TÉCNICO -->
+    <section class="section" id="agente" aria-label="Agente técnico especialista">
+      <div class="container">
+        <div class="agent-grid">
+          <div class="agent-copy">
+            <div class="section-head reveal" style="margin-bottom:0">
+              <p class="section-tag">O diferencial do nicho</p>
+              <h2>Um agente técnico de verdade, não um robô de FAQ</h2>
+              <p>O DeeperIA foi treinado com o vocabulário de quem vive de bancada de telefonia.</p>
+            </div>
+            <div class="feature reveal">
+              <span class="icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+              </span>
+              <div>
+                <h3>Conhecimento do nicho</h3>
+                <p>Sabe a diferença entre troca de vidro e tela completa, entende reparo de placa, conector de carga e banho químico.</p>
+              </div>
+            </div>
+            <div class="feature reveal">
+              <span class="icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              </span>
+              <div>
+                <h3>Qualificação automática</h3>
+                <p>Extrai o modelo exato do aparelho, o sintoma do defeito e a urgência do cliente antes de repassar ao técnico.</p>
+              </div>
+            </div>
+            <div class="feature reveal">
+              <span class="icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+              </span>
+              <div>
+                <h3>Handoff humano instantâneo</h3>
+                <p>Quando o cliente precisa de uma pessoa, a conversa sai da IA e cai direto no chat do atendente, com resumo pronto.</p>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-primary reveal" data-open-lead>QUERO ESSE AGENTE NA MINHA LOJA</button>
+            </div>
+          </div>
+          <div class="agent-media reveal">
+            <img src="/site/img/agent-mascot.webp" alt="Mascote do sistema DeeperIA: robô de IA com o logo no peito segurando chave de precisão de assistência técnica de celular" width="768" height="512" loading="lazy" />
+            <img src="/site/img/agent-mascot-phone.webp" alt="Mascote DeeperIA segurando smartphone com chat de atendimento no WhatsApp e ferramentas de assistência técnica" width="768" height="512" loading="lazy" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. PREÇOS -->
+    <section class="section" id="precos" aria-label="Preços">
+      <div class="container">
+        <div class="section-head center reveal">
+          <p class="section-tag">Preço de quem vive de bancada</p>
+          <h2>Sem pegadinha, sem ancoragem, sem fidelidade</h2>
+        </div>
+        <div class="plans-grid" id="plans-grid">
+          <article class="pricing-card reveal">
+            <span class="pricing-badge">Plano Profissional</span>
+            <p class="plan-name">Tudo liberado, sem letra miúda</p>
+            <p class="price">R$ 69,90<small>/mês</small></p>
+            <ul class="pricing-list">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Todas as funcionalidades de IA liberadas</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Integração com o seu WhatsApp atual</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Cota generosa de atendimentos mensais inclusa</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> CRM completo: OS, estoque, financeiro e agenda</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Sem fidelidade — cancele quando quiser</li>
+            </ul>
+            <button class="btn btn-primary btn-block" data-open-lead data-plan="Profissional">ATIVAR MINHA LOJA HOJE</button>
+            <p class="pricing-note">Ativação em até 24h · Suporte humano gratuito · Sem taxa de instalação</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. FAQ -->
+    <section class="section" id="faq" aria-label="Perguntas frequentes">
+      <div class="container">
+        <div class="section-head center reveal">
+          <p class="section-tag">Perguntas frequentes</p>
+          <h2>Objeções respondidas de frente</h2>
+        </div>
+        <div class="faq reveal">
+          <details>
+            <summary>A IA pode dar preço errado para o cliente?</summary>
+            <p>Não. Você define a tabela de preços e os limites de margem para cada tipo de serviço. A IA só informa valores dentro do que você autorizou.</p>
+          </details>
+          <details>
+            <summary>Preciso deixar meu computador ligado?</summary>
+            <p>Não. O sistema roda 100% na nuvem. Atende, diagnostica e agenda mesmo com a loja física fechada.</p>
+          </details>
+          <details>
+            <summary>Se o cliente quiser falar com um humano?</summary>
+            <p>A IA identifica a necessidade e transfere a conversa imediatamente para um atendente humano, com o resumo completo do atendimento.</p>
+          </details>
+          <details>
+            <summary>Como funciona a integração com o WhatsApp?</summary>
+            <p>Conectamos seu número atual do WhatsApp (ou um novo número dedicado). A IA responde no mesmo chat que seus clientes já usam, sem trocar de aplicativo.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="final-cta" aria-label="Comece agora">
+      <div class="container">
+        <h2>Seu próximo cliente está mandando mensagem agora.</h2>
+        <p>A pergunta é: quem vai responder primeiro — você, ou a assistência do outro lado da rua?</p>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap">
+          <button class="btn btn-primary" data-open-lead>QUERO O DEEPERIA NA MINHA LOJA</button>
+          <a class="btn btn-ghost" href="#" data-wa data-wa-msg="Olá! Quero ativar o DeeperIA na minha assistência técnica.">Tirar dúvida no WhatsApp</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="/">
+            <span class="brand-mark">D</span>
+            <img class="brand-logo" src="" alt="DeeperIA" style="display:none" />
+            <span data-brand-text>DeeperIA</span>
+          </a>
+          <p>Sistema de gestão com agente de IA para assistências técnicas de celular.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h4>Produto</h4>
+            <ul>
+              <li><a href="#como-funciona">Como funciona</a></li>
+              <li><a href="#calculadora">Calculadora</a></li>
+              <li><a href="#precos">Preços</a></li>
+              <li><a href="#faq">FAQ</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Sistema</h4>
+            <ul>
+              <li><a href="/login">Entrar no painel</a></li>
+              <li><a href="/app">Dashboard</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Contato</h4>
+            <ul>
+              <li><a href="#" data-wa>WhatsApp comercial</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 DeeperIA. Todos os direitos reservados.</span>
+        <span>Feito para assistências técnicas de celular 🇧🇷</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL DE LEAD -->
+  <div class="modal-overlay" id="lead-modal" role="dialog" aria-modal="true" aria-labelledby="lead-modal-title">
+    <div class="modal">
+      <button class="modal-close" id="lead-close" aria-label="Fechar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+
+      <form id="lead-form" novalidate>
+        <h3 id="lead-modal-title">Ativar o DeeperIA na minha loja</h3>
+        <p class="modal-sub" id="lead-modal-sub">Preencha em 20 segundos. Nosso time chama você no WhatsApp com um teste gratuito do agente na SUA operação.</p>
+        <div class="form-alert" id="lead-alert" role="alert"></div>
+        <div class="field" id="field-name">
+          <label for="lead-name">Seu nome</label>
+          <input type="text" id="lead-name" name="name" autocomplete="name" placeholder="Como podemos te chamar?" />
+          <span class="error">Informe seu nome.</span>
+        </div>
+        <div class="field" id="field-whatsapp">
+          <label for="lead-whatsapp">Seu WhatsApp</label>
+          <input type="tel" id="lead-whatsapp" name="whatsapp" autocomplete="tel" inputmode="tel" placeholder="(18) 99999-9999" />
+          <span class="error">WhatsApp inválido — inclua o DDD.</span>
+        </div>
+        <div class="field" id="field-store_name">
+          <label for="lead-store">Nome da assistência</label>
+          <input type="text" id="lead-store" name="store_name" autocomplete="organization" placeholder="Nome da sua loja" />
+          <span class="error">Informe o nome da loja.</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="lead-submit">QUERO ATIVAR NA MINHA LOJA</button>
+        <p class="privacy-note">Seus dados ficam no nosso funil comercial e nunca são compartilhados. Sem spam.</p>
+      </form>
+
+      <div class="form-success" id="lead-success">
+        <div class="check">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h4>Recebido! Estamos quase lá 🚀</h4>
+        <p>Nosso time vai te chamar no WhatsApp em instantes para ativar o agente na sua loja.</p>
+        <a class="btn btn-wa btn-block" href="#" data-wa data-wa-msg="Olá! Acabei de enviar meus dados no site do DeeperIA.">Adiantar pelo WhatsApp agora</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/site/site.js"></script>
+</body>
+</html>
