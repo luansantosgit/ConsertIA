@@ -38,16 +38,30 @@ async function getPublicConfig(): Promise<Record<string, unknown>> {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
-  // Seleciona APENAS o campo público — platform_settings guarda segredos.
-  const [{ data: platform }, { data: global }] = await Promise.all([
+  // Seleciona APENAS os campos públicos — platform_settings guarda segredos.
+  const [{ data: platform }, { data: global }, { data: planRows }] = await Promise.all([
     supabase.from("platform_settings").select("support_whatsapp").limit(1).maybeSingle(),
     supabase.from("global_settings").select("theme").limit(1).maybeSingle(),
+    supabase
+      .from("plans")
+      .select("name, price, features, show_on_site, featured")
+      .eq("active", true)
+      .order("price", { ascending: true }),
   ]);
 
   const theme = (global?.theme ?? {}) as Record<string, unknown>;
 
+  const plans = (planRows ?? []).map((p: Record<string, unknown>) => ({
+    name: (p.name as string) ?? "",
+    price: typeof p.price === "number" ? p.price : 0,
+    features: Array.isArray(p.features) ? (p.features as string[]) : [],
+    show_on_site: p.show_on_site === true,
+    featured: p.featured === true,
+  }));
+
   return {
     support_whatsapp: platform?.support_whatsapp ?? "",
+    plans,
     branding: {
       logo_url: (theme.logo_url as string) ?? null,
       logo_type: (theme.logo_type as string) ?? "icon",
@@ -73,6 +87,7 @@ async function saveLead(payload: Record<string, unknown>): Promise<Response> {
 
   const quotesPerDay = payload.quotes_per_day == null ? null : intIn(payload.quotes_per_day, 0, 1000);
   const ticket = payload.ticket == null ? null : intIn(payload.ticket, 0, 1000000);
+  const planName = String(payload.plan_name ?? "").trim().slice(0, 100);
   if (quotesPerDay === null && payload.quotes_per_day != null) {
     return json({ ok: false, error: "Orçamentos por dia inválido." }, 400);
   }
@@ -95,6 +110,7 @@ async function saveLead(payload: Record<string, unknown>): Promise<Response> {
       store_name: storeName,
       quotes_per_day: quotesPerDay,
       ticket,
+      plan_name: planName || null,
       updated_at: now,
     },
     { onConflict: "whatsapp" }

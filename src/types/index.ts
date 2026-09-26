@@ -131,6 +131,7 @@ export interface LandingLead {
   store_name: string;
   quotes_per_day?: number | null;
   ticket?: number | null;
+  plan_name?: string | null;
   status: LandingLeadStatus;
   notes?: string | null;
   created_at: string;

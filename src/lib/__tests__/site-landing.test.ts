@@ -4,6 +4,8 @@ import {
   formatBRL,
   digits,
   validateLead,
+  escapeHtml,
+  normalizePlans,
   DEFAULT_SUPPORT_WA,
 } from '../../../public/site/site.js';
 
@@ -29,6 +31,45 @@ describe('formatBRL', () => {
   it('formata valores no padrão brasileiro (com espaço não-quebrável)', () => {
     expect(formatBRL(37500)).toBe('R$\u00A037.500');
     expect(formatBRL(69.9)).toBe('R$\u00A070');
+  });
+
+  it('formata preço de plano com centavos', () => {
+    expect(formatBRL(69.9, 2)).toBe('R$\u00A069,90');
+    expect(formatBRL(250, 2)).toBe('R$\u00A0250,00');
+  });
+});
+
+describe('escapeHtml', () => {
+  it('escapa caracteres perigosos (defesa XSS)', () => {
+    expect(escapeHtml('<img "x"> & DeeperIA')).toBe('&#60;img &#34;x&#34;&#62; &#38; DeeperIA');
+    expect(escapeHtml("d'Agua")).toBe('d&#39;Agua');
+  });
+});
+
+describe('normalizePlans (planos vindos do superadmin)', () => {
+  it('normaliza planos válidos e limpa features vazias', () => {
+    const plans = normalizePlans([
+      { name: ' Profissional ', price: '69.9', features: ['IA liberada', '   ', ''], show_on_site: true, featured: false },
+    ]);
+    expect(plans).toHaveLength(1);
+    expect(plans[0].name).toBe('Profissional');
+    expect(plans[0].price).toBe(69.9);
+    expect(plans[0].features).toEqual(['IA liberada']);
+    expect(plans[0].showOnSite).toBe(true);
+    expect(plans[0].featured).toBe(false);
+  });
+
+  it('descarta entradas inválidas e entrada não-array', () => {
+    expect(normalizePlans(null)).toEqual([]);
+    expect(normalizePlans([{ bad: 1 }, { name: 'X' }, { name: 'Ok' }])).toEqual([
+      expect.objectContaining({ name: 'Ok' }),
+    ]);
+  });
+
+  it('preço inválido vira zero e plano nunca marcado fica sem preço', () => {
+    const [plan] = normalizePlans([{ name: 'Sem preco', price: 'abc', show_on_site: false }]);
+    expect(plan.price).toBe(0);
+    expect(plan.showOnSite).toBe(false);
   });
 });
 

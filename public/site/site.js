@@ -8,8 +8,42 @@ export function digits(value) {
   return String(value ?? '').replace(/\D+/g, '');
 }
 
-export function formatBRL(value) {
-  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+export function formatBRL(value, decimals = 0) {
+  return Number(value).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+export function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&#38;')
+    .replace(/</g, '&#60;')
+    .replace(/>/g, '&#62;')
+    .replace(/"/g, '&#34;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Normaliza a lista de planos recebida da Edge Function (dado não
+ * confiável): mantém apenas entradas válidas e limita as features.
+ */
+export function normalizePlans(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((p) => p && typeof p.name === 'string' && p.name.trim().length >= 2)
+    .map((p) => ({
+      name: String(p.name).trim().slice(0, 80),
+      price: Number.isFinite(Number(p.price)) ? Math.max(0, Number(p.price)) : 0,
+      features: (Array.isArray(p.features) ? p.features : [])
+        .filter((f) => typeof f === 'string' && f.trim())
+        .slice(0, 8)
+        .map((f) => String(f).trim().slice(0, 120)),
+      showOnSite: p.show_on_site === true,
+      featured: p.featured === true,
+    }));
 }
 
 /**
@@ -81,6 +115,7 @@ async function loadConfig() {
     const cfg = await res.json();
     initSupportLinks(cfg.support_whatsapp);
     applyBranding(cfg.branding?.logo_url, cfg.branding?.logo_text);
+    renderPlans(normalizePlans(cfg.plans));
   } catch {
     initSupportLinks(DEFAULT_SUPPORT_WA);
   }
@@ -194,6 +229,41 @@ function initCalculator() {
   render();
 }
 
+/* ── Planos dinâmicos (exibidos conforme cadastro no superadmin) ── */
+
+const CHECK_SVG =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+
+function planCard(plan) {
+  const article = document.createElement('article');
+  article.className = 'pricing-card';
+
+  const priceBlock = plan.showOnSite
+    ? `<p class="price">${formatBRL(plan.price, 2)}<small>/mês</small></p>`
+    : '<p class="price price-consult">Sob consulta</p>';
+  const ctaLabel = plan.showOnSite ? 'ATIVAR MINHA LOJA HOJE' : 'CONSULTAR VALOR';
+  const badge = plan.featured ? '<span class="pricing-badge">Mais popular</span>' : '';
+
+  article.innerHTML = `
+    ${badge}
+    <p class="plan-name">${escapeHtml(plan.name)}</p>
+    ${priceBlock}
+    <ul class="pricing-list">
+      ${plan.features.map((f) => `<li>${CHECK_SVG} ${escapeHtml(f)}</li>`).join('')}
+    </ul>
+    <button class="btn btn-primary btn-block" data-open-lead data-plan="${escapeHtml(plan.name)}">${ctaLabel}</button>
+    <p class="pricing-note">Sem fidelidade — cancele quando quiser</p>
+  `;
+  return article;
+}
+
+function renderPlans(plans) {
+  const grid = document.getElementById('plans-grid');
+  if (!grid || !plans.length) return;
+  grid.innerHTML = '';
+  plans.forEach((plan) => grid.appendChild(planCard(plan)));
+}
+
 /* ── Modal de lead ── */
 
 function markInvalid(field, on) {
@@ -215,6 +285,7 @@ function initLeadModal() {
   const form = document.getElementById('lead-form');
   const success = document.getElementById('lead-success');
   const alert = document.getElementById('lead-alert');
+  const subtitle = document.getElementById('lead-modal-sub');
   if (!overlay || !form) return;
 
   let ctx = {};
@@ -225,14 +296,23 @@ function initLeadModal() {
     success.classList.remove('show');
     alert.classList.remove('show');
     ['name', 'whatsapp', 'store_name'].forEach((f) => markInvalid(f, false));
+    const baseSub = 'Preencha em 20 segundos. Nosso time chama você no WhatsApp com um teste gratuito do agente na SUA operação.';
+    if (subtitle) subtitle.textContent = ctx.plan_name ? `Plano ${ctx.plan_name}: ${baseSub}` : baseSub;
     overlay.classList.add('show');
     document.getElementById('lead-name')?.focus();
   };
   const close = () => overlay.classList.remove('show');
 
-  document.querySelectorAll('[data-open-lead]').forEach((el) =>
-    el.addEventListener('click', (e) => { e.preventDefault(); open(el.getAttribute('data-lead-ctx') === 'calc' ? calcContext() : {}); })
-  );
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-open-lead]');
+    if (!el) return;
+    e.preventDefault();
+    const plan = el.getAttribute('data-plan');
+    const context = {};
+    if (plan) context.plan_name = plan;
+    if (el.getAttribute('data-lead-ctx') === 'calc') Object.assign(context, calcContext());
+    open(context);
+  });
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   document.getElementById('lead-close')?.addEventListener('click', close);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });

@@ -327,20 +327,22 @@
           <p class="section-tag">Preço de quem vive de bancada</p>
           <h2>Sem pegadinha, sem ancoragem, sem fidelidade</h2>
         </div>
-        <article class="pricing-card reveal">
-          <span class="pricing-badge">Plano Profissional</span>
-          <p class="plan-name">Tudo liberado, sem letra miúda</p>
-          <p class="price">R$ 69,90<small>/mês</small></p>
-          <ul class="pricing-list">
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Todas as funcionalidades de IA liberadas</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Integração com o seu WhatsApp atual</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Cota generosa de atendimentos mensais inclusa</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> CRM completo: OS, estoque, financeiro e agenda</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Sem fidelidade — cancele quando quiser</li>
-          </ul>
-          <button class="btn btn-primary btn-block" data-open-lead>ATIVAR MINHA LOJA HOJE</button>
-          <p class="pricing-note">Ativação em até 24h · Suporte humano gratuito · Sem taxa de instalação</p>
-        </article>
+        <div class="plans-grid" id="plans-grid">
+          <article class="pricing-card reveal">
+            <span class="pricing-badge">Plano Profissional</span>
+            <p class="plan-name">Tudo liberado, sem letra miúda</p>
+            <p class="price">R$ 69,90<small>/mês</small></p>
+            <ul class="pricing-list">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Todas as funcionalidades de IA liberadas</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Integração com o seu WhatsApp atual</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Cota generosa de atendimentos mensais inclusa</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> CRM completo: OS, estoque, financeiro e agenda</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Sem fidelidade — cancele quando quiser</li>
+            </ul>
+            <button class="btn btn-primary btn-block" data-open-lead data-plan="Profissional">ATIVAR MINHA LOJA HOJE</button>
+            <p class="pricing-note">Ativação em até 24h · Suporte humano gratuito · Sem taxa de instalação</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -437,7 +439,7 @@
 
       <form id="lead-form" novalidate>
         <h3 id="lead-modal-title">Ativar o DeeperIA na minha loja</h3>
-        <p class="modal-sub">Preencha em 20 segundos. Nosso time chama você no WhatsApp com um teste gratuito do agente na SUA operação.</p>
+        <p class="modal-sub" id="lead-modal-sub">Preencha em 20 segundos. Nosso time chama você no WhatsApp com um teste gratuito do agente na SUA operação.</p>
         <div class="form-alert" id="lead-alert" role="alert"></div>
         <div class="field" id="field-name">
           <label for="lead-name">Seu nome</label>

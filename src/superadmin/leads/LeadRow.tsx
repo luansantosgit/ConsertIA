@@ -55,9 +55,10 @@ export const LeadRow: React.FC<LeadRowProps> = ({ lead, onStatusChange, onNotesS
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 8 }}>
             {lead.store_name} · {date}
           </span>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            {lead.quotes_per_day != null && <>~{lead.quotes_per_day} orçamentos/dia · </>}
-            {lead.ticket != null && <>ticket R$ {lead.ticket.toLocaleString('pt-BR')} · </>}
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {lead.plan_name && <span className="badge badge-primary" style={{ fontSize: '0.6875rem' }}>Plano: {lead.plan_name}</span>}
+            {lead.quotes_per_day != null && <span>~{lead.quotes_per_day} orç./dia</span>}
+            {lead.ticket != null && <span>ticket R$ {lead.ticket.toLocaleString('pt-BR')}</span>}
             <a href={`https://wa.me/${lead.whatsapp}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', fontWeight: 600 }}>
               {lead.whatsapp}
             </a>
