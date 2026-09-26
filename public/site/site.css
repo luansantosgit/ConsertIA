@@ -138,7 +138,14 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; letter-spacing
 .wa-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #3b82f6); display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; color: #fff; }
 .wa-title { font-size: 0.85rem; font-weight: 700; line-height: 1.2; }
 .wa-title small { display: block; font-size: 0.68rem; font-weight: 400; opacity: 0.85; }
-.wa-body { padding: 14px 10px 12px; min-height: 320px; display: flex; flex-direction: column; gap: 8px; background: #efe7de url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 0l8 8h-8v6h12V2l8 8-8 8h8v6H30V2z' fill='%23000' fill-opacity='0.025'/%3E%3C/svg%3E"); }
+.wa-body {
+  padding: 14px 10px 12px; height: 340px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+  background: #efe7de url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 0l8 8h-8v6h12V2l8 8-8 8h8v6H30V2z' fill='%23000' fill-opacity='0.025'/%3E%3C/svg%3E");
+  scrollbar-width: thin;
+}
+.wa-body::-webkit-scrollbar { width: 5px; }
+.wa-body::-webkit-scrollbar-thumb { background: #cfc4b8; border-radius: 99px; }
 .bubble {
   max-width: 82%; padding: 8px 11px; border-radius: 10px;
   font-size: 0.8rem; line-height: 1.45; color: #111;

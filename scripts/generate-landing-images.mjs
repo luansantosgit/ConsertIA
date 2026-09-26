@@ -17,20 +17,21 @@ const ROOT = path.resolve(process.cwd());
 const OUT_DIR = path.join(ROOT, 'public', 'site', 'img');
 const MODEL = 'openai/gpt-image-1-mini';
 
+const MASCOT_STYLE =
+  'high quality 3D character render in the style of a modern tech brand mascot, friendly rounded robot with a dark graphite metallic body (#121212 tones), glowing cyan (#22d3ee) eyes and accents, cyan rim lighting, clean dark graphite studio background with subtle cyan glow, centered composition, cohesive with a premium dark tech website, photorealistic materials, no watermark';
+
 const IMAGES = [
   {
-    name: 'agent-bench',
+    name: 'agent-mascot',
     aspect_ratio: '3:2',
     width: 900,
-    prompt:
-      'Realistic editorial photograph inside a modern smartphone repair workshop at night: focused technician in dark graphite-tone bench repairing a smartphone logic board under a stereoscopic microscope, cyan LED accent lighting, precision screwdriver set and organized phone parts on an anti-static mat, shallow depth of field, moody professional atmosphere, photorealistic, high detail, no text, no watermark, no logos',
+    prompt: `Friendly AI robot mascot technician of a phone repair software, standing and smiling, holding a precision screwdriver, wearing a small repair tool belt. On its chest a glowing cyan circular emblem containing the brand name, the text reads exactly "DeeperIA" in clean modern letters. ${MASCOT_STYLE}`,
   },
   {
-    name: 'agent-macro',
+    name: 'agent-mascot-phone',
     aspect_ratio: '3:2',
     width: 900,
-    prompt:
-      'Extreme macro photograph of a smartphone charging port connector being repaired with fine tweezers and micro-soldering iron tip, dark background with cyan rim light, professional repair bench with flux and jumper wire, ultra sharp focus, photorealistic, no text, no watermark, no logos',
+    prompt: `The same friendly AI robot mascot technician smiling and waving, one hand holding up a smartphone displaying a chat conversation with green and white speech bubbles (WhatsApp style chat), the other hand holding a small wrench, on its chest a glowing cyan circular emblem with the brand name, the text reads exactly "DeeperIA". ${MASCOT_STYLE}`,
   },
   {
     name: 'og-cover',
@@ -116,6 +117,12 @@ async function generateImage(apiKey, spec) {
 }
 
 async function main() {
+  const only = process.argv.slice(2);
+  const targets = only.length ? IMAGES.filter((i) => only.includes(i.name)) : IMAGES;
+  if (!targets.length) {
+    throw new Error(`Nenhuma imagem corresponde a: ${only.join(', ')}`);
+  }
+
   console.log('→ Obtendo credencial OpenRouter da plataforma...');
   const apiKey = await getOpenRouterKey();
   await mkdir(OUT_DIR, { recursive: true });
@@ -128,7 +135,7 @@ async function main() {
   }
 
   let totalCost = 0;
-  for (const spec of IMAGES) {
+  for (const spec of targets) {
     console.log(`→ Gerando "${spec.name}"...`);
     const { buffer, mediaType, cost } = await generateImage(apiKey, spec);
     if (cost) totalCost += cost;

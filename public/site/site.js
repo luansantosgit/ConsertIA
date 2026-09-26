@@ -49,26 +49,38 @@ function initSupportLinks(number) {
   });
 }
 
+/**
+ * Aplica o branding do sistema: quando existe logo completa carregada,
+ * mostra apenas a imagem (esconde marca e nome). Nome é só fallback.
+ */
+function applyBranding(logoUrl, logoText) {
+  if (logoText) {
+    document.querySelectorAll('[data-brand-text]').forEach((el) => {
+      el.textContent = logoText;
+    });
+  }
+  if (!logoUrl) return;
+
+  const favicon = document.querySelector('link[rel="icon"]');
+  if (favicon) favicon.href = logoUrl;
+
+  document.querySelectorAll('.brand').forEach((brand) => {
+    const img = brand.querySelector('img.brand-logo');
+    if (!img) return;
+    img.src = logoUrl;
+    img.style.display = '';
+    brand.querySelector('.brand-mark')?.style.setProperty('display', 'none');
+    brand.querySelector('[data-brand-text]')?.style.setProperty('display', 'none');
+  });
+}
+
 async function loadConfig() {
   try {
     const res = await fetch(LANDING_LEAD_ENDPOINT, { method: 'GET' });
     if (!res.ok) throw new Error('config');
     const cfg = await res.json();
     initSupportLinks(cfg.support_whatsapp);
-    const { logo_url: logoUrl, logo_text: logoText } = cfg.branding ?? {};
-    if (logoUrl) {
-      const img = document.getElementById('brand-logo');
-      const mark = document.getElementById('brand-mark');
-      if (img) { img.src = logoUrl; img.style.display = ''; }
-      if (mark) mark.style.display = 'none';
-      const favicon = document.querySelector('link[rel="icon"]');
-      if (favicon) favicon.href = logoUrl;
-    }
-    if (logoText) {
-      document.querySelectorAll('[data-brand-text]').forEach((el) => {
-        el.textContent = logoText;
-      });
-    }
+    applyBranding(cfg.branding?.logo_url, cfg.branding?.logo_text);
   } catch {
     initSupportLinks(DEFAULT_SUPPORT_WA);
   }
@@ -156,7 +168,7 @@ function runScenario(key) {
     if (runId !== simRunId) return;
     quickReplies.querySelectorAll('.qr-btn').forEach((b) => (b.disabled = false));
     overlay.classList.add('show');
-  }, delay + 300);
+  }, delay + 5000);
 }
 
 /* ── Calculadora ── */
