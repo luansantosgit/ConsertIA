@@ -25,6 +25,18 @@ function businessHoursText(ctx: AgentContext): string {
 - Só agende dentro do expediente; pedido fora → proponha o próximo horário válido.`;
 }
 
+function companyInfoText(ctx: AgentContext): string {
+  const addr = ctx.companyAddress?.trim();
+  const phone = ctx.companyPhone?.trim();
+  if (!addr && !phone) return "";
+  const lines: string[] = [];
+  if (addr) {
+    lines.push(`- Endereço: ${addr}. Se o cliente perguntar endereço/localização/como chegar, informe-o com naturalidade e continue o atendimento normalmente — NÃO transfira por isso.`);
+  }
+  if (phone) lines.push(`- Telefone: ${phone}.`);
+  return `\n# Dados da empresa\n${lines.join("\n")}`;
+}
+
 function greetingPhrase(ctx: AgentContext): string {
   if (ctx.period === "manhã") return "Bom dia";
   if (ctx.period === "tarde") return "Boa tarde";
@@ -179,6 +191,7 @@ ${dateContext(ctx.timezone)}
 
 # Horário de atendimento
 ${businessHoursText(ctx)}
+${companyInfoText(ctx)}
 
 ${greetingBase}
 
