@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bell, BellOff, Save, RotateCcw } from 'lucide-react';
+import { X, Bell, BellOff, Save, RotateCcw, FileText } from 'lucide-react';
 import type { StageAutoMessage } from '@/lib/os-auto-message.service';
+import type { ServiceOrderStatus } from '@/types';
 
 interface OSAutoMessageModalProps {
   isOpen: boolean;
   stageLabel: string;
+  stage?: ServiceOrderStatus;
   initial: StageAutoMessage;
   defaultMessage: string;
   saving: boolean;
@@ -15,6 +17,7 @@ interface OSAutoMessageModalProps {
 export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
   isOpen,
   stageLabel,
+  stage,
   initial,
   defaultMessage,
   saving,
@@ -23,11 +26,13 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
 }) => {
   const [enabled, setEnabled] = useState(false);
   const [message, setMessage] = useState('');
+  const [sendPdf, setSendPdf] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
       setEnabled(initial.enabled);
       setMessage(initial.message);
+      setSendPdf(initial.sendPdf !== false);
     }
   }, [isOpen, initial]);
 
@@ -91,32 +96,62 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
           </label>
 
           {enabled && (
-            <div className="form-group" style={{ marginTop: 14 }}>
-              <label className="form-label">Mensagem enviada ao lead</label>
-              <textarea
-                className="textarea"
-                rows={4}
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                placeholder={defaultMessage}
-                autoFocus
-              />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 }}>
-                <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>
-                  {message.trim()
-                    ? 'A mensagem é enviada pelo WhatsApp e registrada no histórico do chat.'
-                    : 'Em branco: será enviada a mensagem padrão deste estágio.'}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setMessage(defaultMessage)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}
-                >
-                  <RotateCcw size={12} />Padrão
-                </button>
+            <>
+              <div className="form-group" style={{ marginTop: 14 }}>
+                <label className="form-label">Mensagem enviada ao lead</label>
+                <textarea
+                  className="textarea"
+                  rows={4}
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  placeholder={defaultMessage}
+                  autoFocus
+                />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 }}>
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>
+                    {message.trim()
+                      ? 'A mensagem é enviada pelo WhatsApp e registrada no histórico do chat.'
+                      : 'Em branco: será enviada a mensagem padrão deste estágio.'}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setMessage(defaultMessage)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}
+                  >
+                    <RotateCcw size={12} />Padrão
+                  </button>
+                </div>
               </div>
-            </div>
+
+              {stage === 'awaiting_approval' && (
+                <label
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                    border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer',
+                    background: sendPdf ? '#ecfdf5' : '#f8fafc', transition: 'background 0.15s',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={sendPdf}
+                    onChange={e => setSendPdf(e.target.checked)}
+                    style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                    <FileText size={16} color={sendPdf ? '#10b981' : 'var(--text-muted)'} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Enviar junto o PDF da OS
+                      </p>
+                      <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                        O orçamento em PDF é gerado e enviado ao cliente logo após a mensagem.
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              )}
+            </>
           )}
         </div>
 
@@ -124,7 +159,7 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
           <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
           <button
             className="btn btn-primary"
-            onClick={() => onSave({ enabled, message: message.trim() })}
+            onClick={() => onSave({ enabled, message: message.trim(), ...(stage === 'awaiting_approval' ? { sendPdf } : {}) })}
             disabled={saving}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >

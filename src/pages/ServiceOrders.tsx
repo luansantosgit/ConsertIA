@@ -144,6 +144,7 @@ export const ServiceOrders: React.FC = () => {
           customerPhone: current.customerPhone,
           customerName: current.customerName,
           customerId: current.customer_id,
+          osId: current.id,
         },
         autoMessages[newStatus],
       );
@@ -499,6 +500,7 @@ export const ServiceOrders: React.FC = () => {
       <OSAutoMessageModal
         isOpen={configStage !== null}
         stageLabel={configStage ? STATUS_META[configStage].label : ''}
+        stage={configStage ?? undefined}
         initial={configStage
           ? autoMessages[configStage] ?? { enabled: true, message: DEFAULT_STAGE_MESSAGES[configStage] }
           : { enabled: false, message: '' }}
