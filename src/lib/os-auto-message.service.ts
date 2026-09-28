@@ -15,6 +15,31 @@ export type KanbanAutoMessages = Partial<Record<ServiceOrderStatus, StageAutoMes
 const SETTINGS_KEY = 'kanban_auto_messages';
 const SEND_DELAY_MS = 10_000;
 
+/** Mensagem padrão de cada coluna do kanban — usada quando o usuário não personalizou (ou apagou) o texto. */
+export const DEFAULT_STAGE_MESSAGES: Record<ServiceOrderStatus, string> = {
+  pending: 'Olá! Recebemos seu equipamento e a OS já está registrada por aqui. Vamos analisar e te mantemos informado. 🔧',
+  diagnosis: 'Seu aparelho entrou em análise! Nossos técnicos estão verificando o problema e logo te damos um retorno. 🔍',
+  awaiting_approval: 'A análise do seu aparelho ficou pronta! Dá uma olhada no orçamento e me confirma se podemos seguir com o reparo. 😊',
+  approved: 'Aprovação recebida, obrigado! Vamos preparar tudo para o reparo do seu aparelho. ✅',
+  awaiting_part: 'Já estamos providenciando a peça do seu aparelho! Te avisamos assim que ela chegar para começar o reparo. 📦',
+  in_progress: 'O reparo do seu aparelho começou! Te atualizamos por aqui assim que tivermos novidades. 🔧',
+  completed: 'Prontinho! O reparo do seu aparelho foi concluído. ✅',
+  ready: 'Seu aparelho está pronto para retirada! 🎉 Pode vir buscar quando preferir, dentro do nosso horário de atendimento.',
+  cancelled: 'Sua OS foi cancelada. Se mudar de ideia, é só falar com a gente. 😉',
+};
+
+/**
+ * Resolve a mensagem de um estágio:
+ * - configuração inexistente → padrão (ativo)
+ * - enabled === false explicitamente → desativado (respeita a escolha)
+ * - mensagem vazia/apagada → padrão
+ */
+export function resolveStageMessage(status: ServiceOrderStatus, config?: StageAutoMessage): { enabled: boolean; message: string } {
+  if (config && config.enabled === false) return { enabled: false, message: config.message };
+  const message = config?.message?.trim() || DEFAULT_STAGE_MESSAGES[status];
+  return { enabled: !!message, message };
+}
+
 export async function loadKanbanAutoMessages(): Promise<KanbanAutoMessages> {
   try {
     const raw = await new TenantSettingsRepository().getValue(SETTINGS_KEY);
@@ -39,8 +64,13 @@ export interface AutoMessageTarget {
 
 // Agenda via DB: o disparo nao depende mais do navegador ficar aberto.
 // O navegador processa em 10s (primario); o pg_cron + Edge Function cobre o fallback.
-export async function scheduleStageAutoMessage(target: AutoMessageTarget, config?: StageAutoMessage): Promise<void> {
-  if (!config?.enabled || !config.message.trim()) return;
+export async function scheduleStageAutoMessage(
+  status: ServiceOrderStatus,
+  target: AutoMessageTarget,
+  config?: StageAutoMessage
+): Promise<void> {
+  const resolved = resolveStageMessage(status, config);
+  if (!resolved.enabled || !resolved.message.trim()) return;
   try {
     const convRepo = new ConversationRepository();
     let conversationId = target.conversationId || null;
@@ -65,7 +95,7 @@ export async function scheduleStageAutoMessage(target: AutoMessageTarget, config
         customer_id: target.customerId || null,
         customer_name: target.customerName || null,
         contact_phone: phone,
-        content: config.message.trim(),
+        content: resolved.message.trim(),
         scheduled_at: scheduledAt,
         status: 'pending',
       })

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bell, BellOff, Save } from 'lucide-react';
+import { X, Bell, BellOff, Save, RotateCcw } from 'lucide-react';
 import type { StageAutoMessage } from '@/lib/os-auto-message.service';
 
 interface OSAutoMessageModalProps {
   isOpen: boolean;
   stageLabel: string;
   initial: StageAutoMessage;
+  defaultMessage: string;
   saving: boolean;
   onSave: (cfg: StageAutoMessage) => void;
   onClose: () => void;
@@ -15,6 +16,7 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
   isOpen,
   stageLabel,
   initial,
+  defaultMessage,
   saving,
   onSave,
   onClose,
@@ -96,12 +98,24 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
                 rows={4}
                 value={message}
                 onChange={e => setMessage(e.target.value)}
-                placeholder="Ex: Olá! Sua ordem de serviço entrou em análise. Assim que tivermos o diagnóstico, avisamos por aqui. 🔧"
+                placeholder={defaultMessage}
                 autoFocus
               />
-              <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                A mensagem é enviada pelo WhatsApp e registrada no histórico do chat.
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 }}>
+                <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>
+                  {message.trim()
+                    ? 'A mensagem é enviada pelo WhatsApp e registrada no histórico do chat.'
+                    : 'Em branco: será enviada a mensagem padrão deste estágio.'}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setMessage(defaultMessage)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}
+                >
+                  <RotateCcw size={12} />Padrão
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -111,7 +125,7 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
           <button
             className="btn btn-primary"
             onClick={() => onSave({ enabled, message: message.trim() })}
-            disabled={enabled && !message.trim() || saving}
+            disabled={saving}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
             <Save size={14} /> {saving ? 'Salvando...' : 'Salvar'}
