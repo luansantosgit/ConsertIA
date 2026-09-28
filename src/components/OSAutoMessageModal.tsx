@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Bell, BellOff, Save, RotateCcw, FileText } from 'lucide-react';
-import type { StageAutoMessage } from '@/lib/os-auto-message.service';
+import { defaultStageMessage, type StageAutoMessage } from '@/lib/os-auto-message.service';
 import type { ServiceOrderStatus } from '@/types';
 
 interface OSAutoMessageModalProps {
@@ -8,7 +8,6 @@ interface OSAutoMessageModalProps {
   stageLabel: string;
   stage?: ServiceOrderStatus;
   initial: StageAutoMessage;
-  defaultMessage: string;
   saving: boolean;
   onSave: (cfg: StageAutoMessage) => void;
   onClose: () => void;
@@ -19,7 +18,6 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
   stageLabel,
   stage,
   initial,
-  defaultMessage,
   saving,
   onSave,
   onClose,
@@ -27,6 +25,8 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
   const [enabled, setEnabled] = useState(false);
   const [message, setMessage] = useState('');
   const [sendPdf, setSendPdf] = useState(true);
+
+  const activeDefault = defaultStageMessage(stage ?? 'pending', sendPdf);
 
   useEffect(() => {
     if (isOpen) {
@@ -104,7 +104,7 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
                   rows={4}
                   value={message}
                   onChange={e => setMessage(e.target.value)}
-                  placeholder={defaultMessage}
+                  placeholder={activeDefault}
                   autoFocus
                 />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 }}>
@@ -116,7 +116,7 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
-                    onClick={() => setMessage(defaultMessage)}
+                    onClick={() => setMessage(activeDefault)}
                     style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}
                   >
                     <RotateCcw size={12} />Padrão

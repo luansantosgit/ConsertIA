@@ -9,7 +9,7 @@ import { OSDocumentModal } from '@/components/OSDocumentModal';
 import { ServiceOrderRepository } from '@/repositories/service-order.repository';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { formatOSCode, formatCurrency } from '@/lib/format';
-import { loadKanbanAutoMessages, saveKanbanAutoMessages, scheduleStageAutoMessage, DEFAULT_STAGE_MESSAGES, type KanbanAutoMessages, type StageAutoMessage } from '@/lib/os-auto-message.service';
+import { loadKanbanAutoMessages, saveKanbanAutoMessages, scheduleStageAutoMessage, type KanbanAutoMessages, type StageAutoMessage } from '@/lib/os-auto-message.service';
 import { SkeletonStats, SkeletonTable } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -502,9 +502,8 @@ export const ServiceOrders: React.FC = () => {
         stageLabel={configStage ? STATUS_META[configStage].label : ''}
         stage={configStage ?? undefined}
         initial={configStage
-          ? autoMessages[configStage] ?? { enabled: true, message: DEFAULT_STAGE_MESSAGES[configStage] }
+          ? autoMessages[configStage] ?? { enabled: true, message: '' }
           : { enabled: false, message: '' }}
-        defaultMessage={configStage ? DEFAULT_STAGE_MESSAGES[configStage] : ''}
         saving={savingAutoMsg}
         onSave={cfg => { if (configStage) handleSaveAutoMessage(configStage, cfg); }}
         onClose={() => setConfigStage(null)}
