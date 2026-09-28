@@ -61,7 +61,7 @@ export const TenantLogin: React.FC = () => {
     setLoading(false);
     if (result.success) {
       const { user } = useAuthStore.getState();
-      navigate(user?.role === 'superadmin' ? '/superadmin' : '/');
+      navigate(user?.role === 'superadmin' ? '/superadmin' : '/app');
     } else {
       setError(result.error || 'Erro ao fazer login');
     }

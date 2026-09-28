@@ -55,7 +55,7 @@ export const AiAgentBanner: React.FC<{ stats: DashboardStats }> = ({ stats }) =>
         />
       </div>
 
-      <button className="dash-ai-btn" onClick={() => navigate('/agente-ia')}>
+      <button className="dash-ai-btn" onClick={() => navigate('/app/agente-ia')}>
         {t('Ver detalhes')}
       </button>
     </div>

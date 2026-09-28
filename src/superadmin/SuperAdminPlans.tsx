@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Check, Edit2, Trash2, Users, Zap, Loader2 } from 'lucide-react';
+import { CreditCard, Plus, Check, Edit2, Trash2, Users, Zap, Loader2, Globe } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/format';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -16,8 +16,8 @@ interface DbPlan {
   features?: string[];
   featured?: boolean;
   active?: boolean;
+  show_on_site?: boolean;
 }
-
 
 interface Plan {
   id: string;
@@ -31,8 +31,11 @@ interface Plan {
   features: string[];
   featured: boolean;
   active: boolean;
+  showOnSite: boolean;
   companies: number;
 }
+
+
 
 const FEATURES_DEFAULTS: Record<string, string[]> = {
   starter: ['Até 3 usuários', 'Até 100 OS/mês', 'Dashboard básico', 'Clientes ilimitados', 'Suporte por e-mail'],
@@ -79,6 +82,7 @@ export const SuperAdminPlans: React.FC = () => {
         features: p.features || FEATURES_DEFAULTS[p.id] || [],
         featured: p.featured || false,
         active: p.active !== false,
+        showOnSite: p.show_on_site === true,
         companies: countByPlan[p.id] || 0,
       }));
 
@@ -143,6 +147,15 @@ export const SuperAdminPlans: React.FC = () => {
       await fetchPlans();
     } catch (error) {
       console.error('Error saving plan:', error);
+    }
+  };
+
+  const toggleShowOnSite = async (plan: Plan, value: boolean) => {
+    setPlans((prev) => prev.map((p) => (p.id === plan.id ? { ...p, showOnSite: value } : p)));
+    const { error } = await supabase.from('plans').update({ show_on_site: value }).eq('id', plan.id);
+    if (error) {
+      setPlans((prev) => prev.map((p) => (p.id === plan.id ? { ...p, showOnSite: !value } : p)));
+      console.error('Error toggling show_on_site:', error);
     }
   };
 
@@ -277,7 +290,7 @@ export const SuperAdminPlans: React.FC = () => {
               ))}
             </ul>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
               <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => openEdit(plan)}>
                 <Edit2 size={13} />
                 Editar
@@ -290,6 +303,23 @@ export const SuperAdminPlans: React.FC = () => {
                 <Trash2 size={13} />
               </button>
             </div>
+
+            <label
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.8125rem',
+                marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--border)',
+                color: plan.showOnSite ? 'var(--primary)' : 'var(--text-muted)', fontWeight: plan.showOnSite ? 600 : 400,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={plan.showOnSite}
+                onChange={(e) => toggleShowOnSite(plan, e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+              />
+              <Globe size={14} />
+              {plan.showOnSite ? 'Exibindo no site com preço' : 'Mostrar plano no site'}
+            </label>
           </div>
         ))}
       </div>

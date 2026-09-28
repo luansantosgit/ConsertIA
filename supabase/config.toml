@@ -1,4 +1,4 @@
-project_id = "consertia"
+project_id = "deeperia"
 
 # Uazapi chama webhooks sem header de Authorization (JWT)
 # conforme a propria spec deles — precisa desativar a verificacao

@@ -7,7 +7,7 @@ export const TenantLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const showFloatingFooter = !location.pathname.startsWith('/atendimento');
+  const showFloatingFooter = !location.pathname.startsWith('/app/atendimento');
 
   return (
     <div className="app-layout">

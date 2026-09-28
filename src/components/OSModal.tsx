@@ -86,7 +86,7 @@ export const OSModal: React.FC<OSModalProps> = ({
 
   const handleGoToAllOS = () => {
     onClose();
-    navigate('/ordens');
+    navigate('/app/ordens');
   };
 
   return (

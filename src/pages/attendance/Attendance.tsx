@@ -102,7 +102,7 @@ export const Attendance: React.FC = () => {
   };
 
   const handleAiIconClick = (conv: ConvRow) => {
-    if (window.localStorage.getItem('consertia:skip-ai-takeover-modal') === '1') {
+    if (window.localStorage.getItem('deeperia:skip-ai-takeover-modal') === '1') {
       executeAiToggle(conv.id, conv.ai_state);
       return;
     }
@@ -283,7 +283,7 @@ export const Attendance: React.FC = () => {
         onConfirm={() => {
           const { convId, aiState } = confirmClaimAi;
           if (dontShowAgain) {
-            window.localStorage.setItem('consertia:skip-ai-takeover-modal', '1');
+            window.localStorage.setItem('deeperia:skip-ai-takeover-modal', '1');
           }
           setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined });
           executeAiToggle(convId, aiState);

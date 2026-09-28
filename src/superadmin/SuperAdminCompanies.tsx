@@ -88,7 +88,7 @@ export const SuperAdminCompanies: React.FC = () => {
       const mapped: Company[] = tenants.map((t: DbTenant) => ({
         id: t.id,
         name: t.name,
-        domain: t.slug ? `${t.slug}.consertia.app` : '',
+        domain: t.slug ? `${t.slug}.deeperia.com.br` : '',
         plan: nameMap[t.plan_id] || 'Sem plano',
         users: usersByTenant[t.id] || 0,
         status: t.active ? 'Ativo' : 'Inativo',

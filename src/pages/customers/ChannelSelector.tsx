@@ -34,7 +34,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = ({
           type="button"
           className="btn btn-secondary btn-sm"
           style={{ fontSize: '0.75rem', gap: 4 }}
-          onClick={() => { onClose(); navigate('/configuracoes?tab=conexoes'); }}
+          onClick={() => { onClose(); navigate('/app/configuracoes?tab=conexoes'); }}
         >
           {t('Conectar')} <ExternalLink size={12} />
         </button>

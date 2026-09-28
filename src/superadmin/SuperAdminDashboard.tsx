@@ -136,7 +136,7 @@ export const SuperAdminDashboard: React.FC = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Visão geral da plataforma ConsertIA</p>
+          <p className="page-subtitle">Visão geral da plataforma DeeperIA</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-secondary">Exportar relatório</button>

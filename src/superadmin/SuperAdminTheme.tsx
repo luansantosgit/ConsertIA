@@ -78,7 +78,7 @@ export const SuperAdminTheme: React.FC = () => {
           primary_dark: currentTheme.primaryDark || currentTheme.primaryColor,
           logo_url: currentTheme.logoUrl || null,
           logo_type: currentTheme.logoType || 'icon',
-          logo_text: currentTheme.logoText || 'ConsertIA',
+          logo_text: currentTheme.logoText || 'DeeperIA',
           favicon_url: currentTheme.faviconUrl || null,
           sidebar_dark: currentTheme.sidebarDark || false,
           updated_at: new Date().toISOString(),
@@ -100,7 +100,7 @@ export const SuperAdminTheme: React.FC = () => {
           primary_dark: currentTheme.primaryDark || currentTheme.primaryColor,
           logo_url: currentTheme.logoUrl || null,
           logo_type: currentTheme.logoType || 'icon',
-          logo_text: currentTheme.logoText || 'ConsertIA',
+          logo_text: currentTheme.logoText || 'DeeperIA',
           favicon_url: currentTheme.faviconUrl || null,
           sidebar_dark: currentTheme.sidebarDark || false,
           updated_at: new Date().toISOString(),
@@ -230,7 +230,7 @@ export const SuperAdminTheme: React.FC = () => {
                 className="input"
                 value={currentTheme.logoText}
                 onChange={(e) => updateTheme({ logoText: e.target.value })}
-                placeholder="ConsertIA"
+                placeholder="DeeperIA"
               />
             </div>
 

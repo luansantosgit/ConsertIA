@@ -83,7 +83,7 @@ export async function generateQRCode(connectionId: string): Promise<GenerateQRRe
       return { success: false, error: 'Conexao nao encontrada.' };
     }
 
-    const instanceName = connection.instance_name || `consertia-${Date.now()}`;
+    const instanceName = connection.instance_name || `deeperia-${Date.now()}`;
     const adminToken = settings.adminToken;
 
     if (!adminToken) {
