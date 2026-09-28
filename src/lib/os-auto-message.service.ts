@@ -21,7 +21,7 @@ const SEND_DELAY_MS = 10_000;
 export const DEFAULT_STAGE_MESSAGES: Record<ServiceOrderStatus, string> = {
   pending: 'Olá! Recebemos seu equipamento e a OS já está registrada por aqui. Vamos analisar e te mantemos informado. 🔧',
   diagnosis: 'Seu aparelho entrou em análise! Nossos técnicos estão verificando o problema e logo te damos um retorno. 🔍',
-  awaiting_approval: 'Atualizamos o Status do seu serviço! Te informaremos aqui a cada nova atualização...',
+  awaiting_approval: 'A análise do seu aparelho ficou pronta! Dá uma olhada no orçamento e me confirma se podemos seguir com o reparo. 😊',
   approved: 'Aprovação recebida, obrigado! Vamos preparar tudo para o reparo do seu aparelho. ✅',
   awaiting_part: 'Já estamos providenciando a peça do seu aparelho! Te avisamos assim que ela chegar para começar o reparo. 📦',
   in_progress: 'O reparo do seu aparelho começou! Te atualizamos por aqui assim que tivermos novidades. 🔧',
@@ -30,16 +30,24 @@ export const DEFAULT_STAGE_MESSAGES: Record<ServiceOrderStatus, string> = {
   cancelled: 'Sua OS foi cancelada. Se mudar de ideia, é só falar com a gente. 😉',
 };
 
+/** Aguardando Aprovação: o padrão depende do envio do PDF — com PDF fala do orçamento; sem PDF é status genérico. */
+const AWAITING_APPROVAL_WITHOUT_PDF = 'Atualizamos o Status do seu serviço! Te informaremos aqui a cada nova atualização...';
+
+export function defaultStageMessage(status: ServiceOrderStatus, sendPdf: boolean): string {
+  if (status === 'awaiting_approval' && !sendPdf) return AWAITING_APPROVAL_WITHOUT_PDF;
+  return DEFAULT_STAGE_MESSAGES[status];
+}
+
 /**
  * Resolve a mensagem de um estágio:
  * - configuração inexistente → padrão (ativo)
  * - enabled === false explicitamente → desativado (respeita a escolha)
- * - mensagem vazia/apagada → padrão
+ * - mensagem vazia/apagada → padrão (no Ag. Aprovação, conforme o toggle de PDF)
  */
 export function resolveStageMessage(status: ServiceOrderStatus, config?: StageAutoMessage): { enabled: boolean; message: string; sendPdf: boolean } {
   if (config && config.enabled === false) return { enabled: false, message: config.message, sendPdf: false };
-  const message = config?.message?.trim() || DEFAULT_STAGE_MESSAGES[status];
   const sendPdf = status === 'awaiting_approval' ? config?.sendPdf !== false : false;
+  const message = config?.message?.trim() || defaultStageMessage(status, sendPdf);
   return { enabled: !!message, message, sendPdf };
 }
 
