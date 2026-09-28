@@ -65,6 +65,17 @@ const App: React.FC = () => {
     initSession();
   }, [initSession]);
 
+  // Sessão expirada (refresh falhou): limpa o estado e volta ao login
+  useEffect(() => {
+    const handler = () => {
+      const { isAuthenticated } = useAuthStore.getState();
+      if (!isAuthenticated) return;
+      useAuthStore.setState({ user: null, isAuthenticated: false });
+    };
+    window.addEventListener('session-expired', handler);
+    return () => window.removeEventListener('session-expired', handler);
+  }, []);
+
   // Tema global vem do banco (funciona em qualquer origem, ex: Vercel)
   useEffect(() => {
     loadGlobalTheme();
