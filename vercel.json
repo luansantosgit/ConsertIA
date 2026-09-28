@@ -1,1 +1,1 @@
-﻿{"rewrites": [{"source": "/", "destination": "/site/index.html"}, {"source": "/site", "destination": "/site/index.html"}, {"source": "/(.*)", "destination": "/index.html"}]}
+{"rewrites": {"beforeFiles": [{"source": "/", "destination": "/site/index.html"}, {"source": "/site", "destination": "/site/index.html"}], "afterFiles": [{"source": "/(.*)", "destination": "/index.html"}]}}
