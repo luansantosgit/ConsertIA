@@ -9,7 +9,7 @@ import { OSDocumentModal } from '@/components/OSDocumentModal';
 import { ServiceOrderRepository } from '@/repositories/service-order.repository';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { formatOSCode, formatCurrency } from '@/lib/format';
-import { loadKanbanAutoMessages, saveKanbanAutoMessages, scheduleStageAutoMessage, type KanbanAutoMessages, type StageAutoMessage } from '@/lib/os-auto-message.service';
+import { loadKanbanAutoMessages, saveKanbanAutoMessages, scheduleStageAutoMessage, DEFAULT_STAGE_MESSAGES, type KanbanAutoMessages, type StageAutoMessage } from '@/lib/os-auto-message.service';
 import { SkeletonStats, SkeletonTable } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -138,6 +138,7 @@ export const ServiceOrders: React.FC = () => {
       await repo.updateStatus(osId, newStatus);
       // Agenda mensagem automatica do estagio via fila no banco (10s)
       void scheduleStageAutoMessage(
+        newStatus,
         {
           conversationId: current.conversationId,
           customerPhone: current.customerPhone,
@@ -402,7 +403,7 @@ export const ServiceOrders: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: meta.color }} />
                     <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t(col.label)}</span>
-                    {autoMessages[col.key]?.enabled && (
+                    {(autoMessages[col.key]?.enabled ?? true) && (
                       <span title="Mensagem automática ativa"><Bell size={11} color="#10b981" /></span>
                     )}
                   </div>
@@ -413,11 +414,11 @@ export const ServiceOrders: React.FC = () => {
                       aria-label="Configurar mensagem automática"
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer', padding: 3,
-                        borderRadius: 6, color: autoMessages[col.key]?.enabled ? 'var(--primary)' : 'var(--text-muted)',
+                        borderRadius: 6, color: (autoMessages[col.key]?.enabled ?? true) ? 'var(--primary)' : 'var(--text-muted)',
                         display: 'flex', alignItems: 'center', transition: 'color 0.15s',
                       }}
                       onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = autoMessages[col.key]?.enabled ? 'var(--primary)' : 'var(--text-muted)')}
+                      onMouseLeave={e => (e.currentTarget.style.color = (autoMessages[col.key]?.enabled ?? true) ? 'var(--primary)' : 'var(--text-muted)')}
                     >
                       <Settings size={13} />
                     </button>
@@ -498,7 +499,10 @@ export const ServiceOrders: React.FC = () => {
       <OSAutoMessageModal
         isOpen={configStage !== null}
         stageLabel={configStage ? STATUS_META[configStage].label : ''}
-        initial={configStage ? autoMessages[configStage] || { enabled: false, message: '' } : { enabled: false, message: '' }}
+        initial={configStage
+          ? autoMessages[configStage] ?? { enabled: true, message: DEFAULT_STAGE_MESSAGES[configStage] }
+          : { enabled: false, message: '' }}
+        defaultMessage={configStage ? DEFAULT_STAGE_MESSAGES[configStage] : ''}
         saving={savingAutoMsg}
         onSave={cfg => { if (configStage) handleSaveAutoMessage(configStage, cfg); }}
         onClose={() => setConfigStage(null)}
