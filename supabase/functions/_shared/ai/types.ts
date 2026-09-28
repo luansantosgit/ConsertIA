@@ -96,6 +96,8 @@ export interface AgentContext {
   conversation: Record<string, any>;
   tenantId: string;
   companyName: string;
+  companyAddress: string;
+  companyPhone: string;
   agent: AgentSettings;
   quote: QuoteSettings;
   diagnosis: DiagnosisSettings;
