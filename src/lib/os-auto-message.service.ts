@@ -8,6 +8,8 @@ import type { ServiceOrderStatus, Conversation } from '@/types';
 export interface StageAutoMessage {
   enabled: boolean;
   message: string;
+  /** Apenas para o estágio Aguardando Aprovação: envia o PDF da OS junto. Padrão true. */
+  sendPdf?: boolean;
 }
 
 export type KanbanAutoMessages = Partial<Record<ServiceOrderStatus, StageAutoMessage>>;
@@ -19,7 +21,7 @@ const SEND_DELAY_MS = 10_000;
 export const DEFAULT_STAGE_MESSAGES: Record<ServiceOrderStatus, string> = {
   pending: 'Olá! Recebemos seu equipamento e a OS já está registrada por aqui. Vamos analisar e te mantemos informado. 🔧',
   diagnosis: 'Seu aparelho entrou em análise! Nossos técnicos estão verificando o problema e logo te damos um retorno. 🔍',
-  awaiting_approval: 'A análise do seu aparelho ficou pronta! Dá uma olhada no orçamento e me confirma se podemos seguir com o reparo. 😊',
+  awaiting_approval: 'Atualizamos o Status do seu serviço! Te informaremos aqui a cada nova atualização...',
   approved: 'Aprovação recebida, obrigado! Vamos preparar tudo para o reparo do seu aparelho. ✅',
   awaiting_part: 'Já estamos providenciando a peça do seu aparelho! Te avisamos assim que ela chegar para começar o reparo. 📦',
   in_progress: 'O reparo do seu aparelho começou! Te atualizamos por aqui assim que tivermos novidades. 🔧',
@@ -34,10 +36,11 @@ export const DEFAULT_STAGE_MESSAGES: Record<ServiceOrderStatus, string> = {
  * - enabled === false explicitamente → desativado (respeita a escolha)
  * - mensagem vazia/apagada → padrão
  */
-export function resolveStageMessage(status: ServiceOrderStatus, config?: StageAutoMessage): { enabled: boolean; message: string } {
-  if (config && config.enabled === false) return { enabled: false, message: config.message };
+export function resolveStageMessage(status: ServiceOrderStatus, config?: StageAutoMessage): { enabled: boolean; message: string; sendPdf: boolean } {
+  if (config && config.enabled === false) return { enabled: false, message: config.message, sendPdf: false };
   const message = config?.message?.trim() || DEFAULT_STAGE_MESSAGES[status];
-  return { enabled: !!message, message };
+  const sendPdf = status === 'awaiting_approval' ? config?.sendPdf !== false : false;
+  return { enabled: !!message, message, sendPdf };
 }
 
 export async function loadKanbanAutoMessages(): Promise<KanbanAutoMessages> {
@@ -60,6 +63,7 @@ export interface AutoMessageTarget {
   customerPhone?: string;
   customerName?: string;
   customerId?: string;
+  osId?: string;
 }
 
 // Agenda via DB: o disparo nao depende mais do navegador ficar aberto.
@@ -111,6 +115,15 @@ export async function scheduleStageAutoMessage(
     window.setTimeout(() => {
       void processScheduledRow(row.id);
     }, SEND_DELAY_MS);
+
+    // Estágio Ag. Aprovação: envia também o PDF da OS (padrão habilitado, best-effort)
+    if (resolved.sendPdf && target.osId && phone) {
+      window.setTimeout(() => {
+        void import('@/lib/os-pdf.service').then(m =>
+          m.sendOsPdfToLead(target.osId!, phone, resolved.message)
+        );
+      }, SEND_DELAY_MS + 2_000);
+    }
   } catch (err) {
     console.error('Failed to schedule stage auto message:', err);
   }
