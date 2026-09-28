@@ -34,15 +34,6 @@
 
   <link rel="stylesheet" href="/site/site.css" />
 
-  <!-- Subdomínios do sistema vão direto pro painel; o site vive no domínio principal -->
-  <script>
-    (function () {
-      var h = location.hostname;
-      var main = ['deeperia.com.br', 'www.deeperia.com.br', 'localhost', '127.0.0.1'];
-      if (main.indexOf(h) === -1 && location.pathname === '/') location.replace('/app');
-    })();
-  </script>
-
   <!-- Dados estruturados -->
   <script type="application/ld+json">
   {
@@ -412,7 +403,6 @@
             <h4>Sistema</h4>
             <ul>
               <li><a href="/login">Entrar no painel</a></li>
-              <li><a href="/app">Dashboard</a></li>
             </ul>
           </div>
           <div>

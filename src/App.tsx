@@ -51,7 +51,7 @@ const RequireAuth: React.FC<{ role?: 'superadmin' | 'tenant'; children: React.Re
 }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (role === 'superadmin' && user?.role !== 'superadmin') return <Navigate to="/app" replace />;
+  if (role === 'superadmin' && user?.role !== 'superadmin') return <Navigate to="/" replace />;
   if (role === 'tenant' && user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
   return <>{children}</>;
 };
@@ -113,7 +113,7 @@ const App: React.FC = () => {
         {/* ── Tenant ── */}
         <Route path="/login" element={<TenantLogin />} />
         <Route
-          path="/app"
+          path="/"
           element={
             <RequireAuth role="tenant">
               <TenantLayout />
@@ -135,23 +135,9 @@ const App: React.FC = () => {
         {/* ── Checklist público ── */}
         <Route path="/checklist/:osId" element={<Suspense fallback={<PageLoader />}><ChecklistPage /></Suspense>} />
 
-        {/* ── Redirects padrão ── */}
-        {/* Em produção o site institucional (HTML estático) ocupa "/" do domínio
-            principal via vercel.json; em dev/edge casos o SPA decide pelo auth. */}
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              user?.role === 'superadmin' ? (
-                <Navigate to="/superadmin" replace />
-              ) : (
-                <Navigate to="/app" replace />
-              )
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+        {/* ── Redirect padrão ── */}
+        {/* Em produção o vercel.json serve o site institucional em "/" apenas
+            do domínio principal; subdomínios e previews caem no SPA direto. */}
         <Route
           path="*"
           element={
@@ -159,7 +145,7 @@ const App: React.FC = () => {
               user?.role === 'superadmin' ? (
                 <Navigate to="/superadmin" replace />
               ) : (
-                <Navigate to="/app" replace />
+                <Navigate to="/" replace />
               )
             ) : (
               <Navigate to="/login" replace />

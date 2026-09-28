@@ -1,1 +1,1 @@
-{"rewrites": [{"source": "/(.*)", "destination": "/spa/index.html"}]}
+{"rewrites": [{"source": "/", "has": [{"type": "header", "key": "host", "value": "deeperia.com.br"}], "destination": "/site/index.html"}, {"source": "/", "has": [{"type": "header", "key": "host", "value": "www.deeperia.com.br"}], "destination": "/site/index.html"}, {"source": "/(.*)", "destination": "/spa/index.html"}]}

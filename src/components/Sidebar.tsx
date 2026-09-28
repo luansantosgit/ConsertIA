@@ -24,16 +24,16 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { icon: SolidDashboardIcon, label: 'Dashboard', path: '/app' },
-  { icon: SolidAtendimentoIcon, label: 'Atendimento', path: '/app/atendimento' },
-  { icon: SolidOrdensIcon, label: 'Ordens de Serviço', path: '/app/ordens' },
-  { icon: SolidClientesIcon, label: 'Clientes', path: '/app/clientes' },
-  { icon: SolidEstoqueIcon, label: 'Estoque', path: '/app/estoque' },
-  { icon: SolidFinanceiroIcon, label: 'Financeiro', path: '/app/financeiro' },
-  { icon: SolidAgendaIcon, label: 'Agenda', path: '/app/agenda' },
-  { icon: SolidRelatoriosIcon, label: 'Relatórios', path: '/app/relatorios' },
-  { icon: SolidAgenteIaIcon, label: 'Agente de IA', path: '/app/agente-ia' },
-  { icon: SolidConfiguracoesIcon, label: 'Configurações', path: '/app/configuracoes' },
+  { icon: SolidDashboardIcon, label: 'Dashboard', path: '/' },
+  { icon: SolidAtendimentoIcon, label: 'Atendimento', path: '/atendimento' },
+  { icon: SolidOrdensIcon, label: 'Ordens de Serviço', path: '/ordens' },
+  { icon: SolidClientesIcon, label: 'Clientes', path: '/clientes' },
+  { icon: SolidEstoqueIcon, label: 'Estoque', path: '/estoque' },
+  { icon: SolidFinanceiroIcon, label: 'Financeiro', path: '/financeiro' },
+  { icon: SolidAgendaIcon, label: 'Agenda', path: '/agenda' },
+  { icon: SolidRelatoriosIcon, label: 'Relatórios', path: '/relatorios' },
+  { icon: SolidAgenteIaIcon, label: 'Agente de IA', path: '/agente-ia' },
+  { icon: SolidConfiguracoesIcon, label: 'Configurações', path: '/configuracoes' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -86,14 +86,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="sidebar-nav">
           {navItems.map((item) => {
             const isActive =
-              item.path === '/app'
-                ? location.pathname === '/app'
+              item.path === '/'
+                ? location.pathname === '/'
                 : location.pathname.startsWith(item.path);
             const translatedLabel = t(item.label);
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
+                end={item.path === '/'}
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
                 data-label={translatedLabel}
                 onClick={onClose}

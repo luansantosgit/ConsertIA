@@ -177,7 +177,7 @@ export const ServiceOrders: React.FC = () => {
         }
       }
       if (convId) {
-        navigate(`/app/atendimento?conversationId=${convId}`);
+        navigate(`/atendimento?conversationId=${convId}`);
       } else {
         setError('Cliente sem telefone/WhatsApp cadastrado para abrir o chat');
       }
