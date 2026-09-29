@@ -118,45 +118,72 @@ export async function scheduleStageAutoMessage(
 
     const tenantId = useAuthStore.getState().user?.tenantId || '';
 
-    // Ag. Aprovação com PDF: dispara SOMENTE o PDF com a mensagem como legenda
-    // (sem mensagem de texto duplicada na sequência)
+    // Ag. Aprovação com PDF: dispara SOMENTE o PDF com a mensagem como legenda.
+    // Se o envio do PDF falhar, cai para a mensagem de texto (nunca fica sem aviso).
     if (resolved.sendPdf && target.osId) {
-      window.setTimeout(() => {
-        void import('@/lib/os-pdf.service').then(m =>
-          m.sendOsPdfToLead(target.osId!, phone, resolved.message)
-        );
+      window.setTimeout(async () => {
+        const m = await import('@/lib/os-pdf.service');
+        const ok = await m.sendOsPdfToLead(target.osId!, phone, resolved.message);
+        if (!ok) {
+          await queueText({
+            tenantId,
+            conversationId,
+            customerId: target.customerId,
+            customerName: target.customerName,
+            phone,
+            content: resolved.message,
+          });
+        }
       }, SEND_DELAY_MS);
       return;
     }
 
-    const scheduledAt = new Date(Date.now() + SEND_DELAY_MS).toISOString();
-    const { data: row, error } = await supabase
-      .from('scheduled_messages')
-      .insert({
-        tenant_id: tenantId,
-        conversation_id: conversationId,
-        customer_id: target.customerId || null,
-        customer_name: target.customerName || null,
-        contact_phone: phone,
-        content: resolved.message.trim(),
-        scheduled_at: scheduledAt,
-        status: 'pending',
-      })
-      .select()
-      .single();
-
-    if (error || !row) {
-      console.error('Failed to schedule auto message:', error?.message);
-      return;
-    }
-
-    // Caminho primario: processa em 10s se o navegador ainda estiver aberto
-    window.setTimeout(() => {
-      void processScheduledRow(row.id);
-    }, SEND_DELAY_MS);
+    await queueText({
+      tenantId,
+      conversationId,
+      customerId: target.customerId,
+      customerName: target.customerName,
+      phone,
+      content: resolved.message,
+    });
   } catch (err) {
     console.error('Failed to schedule stage auto message:', err);
   }
+}
+
+// Insere a mensagem na fila no banco (navegador processa em 10s; pg_cron cobre o fallback)
+async function queueText(input: {
+  tenantId: string;
+  conversationId: string | null;
+  customerId?: string | null;
+  customerName?: string | null;
+  phone: string;
+  content: string;
+}): Promise<void> {
+  const { data: row, error } = await supabase
+    .from('scheduled_messages')
+    .insert({
+      tenant_id: input.tenantId,
+      conversation_id: input.conversationId,
+      customer_id: input.customerId || null,
+      customer_name: input.customerName || null,
+      contact_phone: input.phone,
+      content: input.content.trim(),
+      scheduled_at: new Date(Date.now() + SEND_DELAY_MS).toISOString(),
+      status: 'pending',
+    })
+    .select()
+    .single();
+
+  if (error || !row) {
+    console.error('Failed to schedule auto message:', error?.message);
+    return;
+  }
+
+  // Caminho primario: processa em 10s se o navegador ainda estiver aberto
+  window.setTimeout(() => {
+    void processScheduledRow(row.id);
+  }, SEND_DELAY_MS);
 }
 
 // Claim atomico da fila: so processa quem chegar primeiro (navegador ou worker)
