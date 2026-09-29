@@ -111,12 +111,13 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
                   <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>
                     {message.trim()
                       ? 'A mensagem é enviada pelo WhatsApp e registrada no histórico do chat.'
-                      : 'Em branco: será enviada a mensagem padrão deste estágio.'}
+                      : 'Em branco: será enviada a mensagem padrão deste estágio (o texto do placeholder).'}
                   </p>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
-                    onClick={() => setMessage(activeDefault)}
+                    onClick={() => setMessage('')}
+                    title="Restaurar mensagem padrão (placeholder)"
                     style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}
                   >
                     <RotateCcw size={12} />Padrão
