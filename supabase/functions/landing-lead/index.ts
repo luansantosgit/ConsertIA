@@ -66,6 +66,7 @@ async function getPublicConfig(): Promise<Record<string, unknown>> {
       logo_url: (theme.logo_url as string) ?? null,
       logo_type: (theme.logo_type as string) ?? "icon",
       logo_text: (theme.logo_text as string) ?? "DeeperIA",
+      favicon_url: (theme.favicon_url as string) ?? null,
     },
   };
 }
