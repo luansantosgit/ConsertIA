@@ -27,6 +27,8 @@ export function useAiSettings() {
   const [diagnosis, setDiagnosis] = useState<AiDiagnosisSettings | null>(null);
   const [templates, setTemplates] = useState<AiPreQuoteTemplate[]>([]);
   const [usesPlatformToken, setUsesPlatformToken] = useState(true);
+  const [allowedModels, setAllowedModels] = useState<string[]>([]);
+  const [defaultModel, setDefaultModel] = useState('');
   const [usageTokens, setUsageTokens] = useState(0);
   const [tokenLimit, setTokenLimit] = useState<number | null>(null);
   const [agentDesc, setAgentDesc] = useState('');
@@ -60,6 +62,8 @@ export function useAiSettings() {
         setDiagnosis(diagnosisData);
         setTemplates(templateData);
         setUsesPlatformToken(entitlement?.use_platform_token !== false);
+        setAllowedModels((entitlement?.allowed_models ?? []) as string[]);
+        setDefaultModel(entitlement?.default_model ?? '');
         setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
         setTokenLimit(entitlement?.token_limit_override ?? planLimit);
         setAiLogs(logs);
@@ -175,7 +179,7 @@ export function useAiSettings() {
     activeSection, setActiveSection,
     loading, saving, saved,
     agent, quote, diagnosis, templates,
-    usesPlatformToken, usageTokens, tokenLimit,
+    usesPlatformToken, usageTokens, tokenLimit, allowedModels, defaultModel,
     agentDesc, setAgentDesc,
     saveAgent, savePersonality, saveQuote, saveDiagnosis,
     createTemplate, updateTemplate, deleteTemplate,

@@ -45,7 +45,7 @@ async function callOpenRouter(ctx: AgentContext, messages: ChatMessagePayload[],
       "X-Title": "DeeperIA",
     },
     body: JSON.stringify({
-      model: ctx.agent.openrouter_model,
+      model: ctx.effectiveModel || ctx.agent.openrouter_model,
       messages,
       ...(withTools && activeToolDefinitions(ctx).length > 0
         ? { tools: activeToolDefinitions(ctx), tool_choice: "auto" }

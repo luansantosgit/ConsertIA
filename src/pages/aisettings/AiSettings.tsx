@@ -122,6 +122,8 @@ export const AiSettings: React.FC = () => {
               usesPlatformToken={h.usesPlatformToken}
               usageTokens={h.usageTokens}
               tokenLimit={h.tokenLimit}
+              allowedModels={h.allowedModels}
+              defaultModel={h.defaultModel}
               saving={h.saving}
               saved={h.saved}
               onSave={h.saveAgent}
