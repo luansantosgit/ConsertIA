@@ -2,34 +2,34 @@ import React, { useState } from 'react';
 import { Check, Zap } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { AiAgentSettings } from '@/types';
+import { OPENROUTER_MODELS } from '@/lib/openrouter-models';
 
 interface IntegrationsTabProps {
   agent: AiAgentSettings | null;
   usesPlatformToken: boolean;
   usageTokens: number;
   tokenLimit: number | null;
+  allowedModels?: string[];
+  defaultModel?: string;
   saving: boolean;
   saved: boolean;
   onSave: (partial: Partial<AiAgentSettings>) => void;
 }
 
-const OPENROUTER_MODELS = [
-  { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini — econômico e rápido' },
-  { id: 'openai/gpt-4o', label: 'GPT-4o — mais assertivo (multimodal)' },
-  { id: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash — rápido e econômico' },
-  { id: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro — mais assertivo' },
-  { id: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet — conversacional' },
-  { id: 'google/gemini-flash-1.5', label: 'Gemini Flash 1.5 — rápido e barato' },
-  { id: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B — open source' },
-];
-
 export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
-  agent, usesPlatformToken, usageTokens, tokenLimit, saving, saved, onSave,
+  agent, usesPlatformToken, usageTokens, tokenLimit, allowedModels = [], defaultModel = '', saving, saved, onSave,
 }) => {
   const { t } = useTranslation();
   const [apiKey, setApiKey] = useState('');
 
   if (!agent) return null;
+
+  const restricted = usesPlatformToken && allowedModels.length > 0;
+  const visibleModels = restricted
+    ? OPENROUTER_MODELS.filter(m => allowedModels.includes(m.id))
+    : OPENROUTER_MODELS;
+  const effectiveDefault = defaultModel && allowedModels.includes(defaultModel) ? defaultModel : allowedModels[0];
+  const isDefaultChoice = restricted && agent.openrouter_model === effectiveDefault;
 
   const usagePercent = tokenLimit && tokenLimit > 0 ? Math.min(100, Math.round((usageTokens / tokenLimit) * 100)) : 0;
 
@@ -52,10 +52,23 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             value={agent.openrouter_model}
             onChange={e => onSave({ openrouter_model: e.target.value })}
           >
-            {OPENROUTER_MODELS.map(model => (
-              <option key={model.id} value={model.id}>{model.label}</option>
+            {visibleModels.map(model => (
+              <option key={model.id} value={model.id}>
+                {model.label}
+                {effectiveDefault && model.id === effectiveDefault ? ' — padrão' : ''}
+              </option>
             ))}
           </select>
+          {isDefaultChoice && (
+            <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+              {t('Modelo padrão definido pelo administrador — altere se preferir.')}
+            </p>
+          )}
+          {restricted && !visibleModels.some(m => m.id === agent.openrouter_model) && effectiveDefault && (
+            <p style={{ fontSize: '0.6875rem', color: 'var(--warning, #b45309)', margin: '4px 0 0' }}>
+              {t('Seu modelo atual não está na lista liberada; o padrão do administrador será usado.')}
+            </p>
+          )}
         </div>
 
         <div className="form-group">

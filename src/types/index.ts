@@ -411,6 +411,8 @@ export interface TenantAiEntitlement {
   tenant_id: string;
   use_platform_token: boolean;
   token_limit_override?: number;
+  allowed_models?: string[] | null;
+  default_model?: string | null;
   created_at: string;
   updated_at: string;
 }

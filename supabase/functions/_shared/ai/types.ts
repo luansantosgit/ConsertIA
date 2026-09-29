@@ -111,6 +111,7 @@ export interface AgentContext {
   isFirstContact: boolean;
   apiKey: string | null;
   tokenLimit: number;
+  effectiveModel?: string;
   period: string;
   timezone: string;
   businessHours: BusinessHoursConfig;

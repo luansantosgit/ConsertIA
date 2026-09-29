@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Eye, EyeOff, Bot, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/hooks/useTranslation';
+import { OPENROUTER_MODELS, modelLabel } from '@/lib/openrouter-models';
 
 interface TenantRow { id: string; name: string; plan_id: string | null }
 interface PlanRow { id: string; name: string; ai_token_limit: number }
-interface EntitlementRow { tenant_id: string; use_platform_token: boolean; token_limit_override: number | null }
+interface EntitlementRow { tenant_id: string; use_platform_token: boolean; token_limit_override: number | null; allowed_models?: string[] | null; default_model?: string | null }
 interface UsageRow { tenant_id: string; tokens_in: number; tokens_out: number }
 
 export const SuperAdminAi: React.FC = () => {
@@ -15,8 +16,7 @@ export const SuperAdminAi: React.FC = () => {
   const [mode, setMode] = useState<'all' | 'selected'>('all');
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [plans, setPlans] = useState<PlanRow[]>([]);
-  const [entitlements, setEntitlements] = useState<Record<string, EntitlementRow>>({});
-  const [usage, setUsage] = useState<Record<string, number>>({});
+  const [entitlements, setEntitlements] = useState<Record<string, EntitlementRow>>({});  const [usage, setUsage] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -29,7 +29,7 @@ export const SuperAdminAi: React.FC = () => {
         supabase.from('platform_ai_config').select('*').limit(1).maybeSingle(),
         supabase.from('tenants').select('id, name, plan_id').order('name'),
         supabase.from('plans').select('id, name, ai_token_limit'),
-        supabase.from('tenant_ai_entitlements').select('tenant_id, use_platform_token, token_limit_override'),
+        supabase.from('tenant_ai_entitlements').select('tenant_id, use_platform_token, token_limit_override, allowed_models, default_model'),
         supabase.from('ai_token_usage').select('tenant_id, tokens_in, tokens_out').eq('period', period),
       ]);
       if (cfg.data) {
@@ -109,6 +109,47 @@ export const SuperAdminAi: React.FC = () => {
     return ent?.token_limit_override ?? planLimit(tenant);
   };
 
+  // ── Modelos permitidos/padrão (aplicam quando a empresa usa o token global) ──
+  const [expandedTenant, setExpandedTenant] = useState<string | null>(null);
+  const [draftAllowed, setDraftAllowed] = useState<string[]>([]);
+  const [draftDefault, setDraftDefault] = useState('');
+
+  const openModels = (tenantId: string) => {
+    const ent = entitlements[tenantId];
+    const allowed = (ent?.allowed_models ?? []) as string[];
+    setDraftAllowed(allowed);
+    setDraftDefault(ent?.default_model ?? (allowed[0] ?? ''));
+    setExpandedTenant(prev => prev === tenantId ? null : tenantId);
+  };
+
+  const toggleModel = (id: string) => {
+    setDraftAllowed(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+    setDraftDefault(prev => (draftAllowed.includes(id) && prev === id) ? '' : prev);
+  };
+
+  const saveModels = async (tenantId: string) => {
+    const allowed = draftAllowed.length > 0 ? draftAllowed : null;
+    const defaultModel = allowed ? (draftDefault && allowed.includes(draftDefault) ? draftDefault : allowed[0]) : null;
+    try {
+      const { error } = await supabase
+        .from('tenant_ai_entitlements')
+        .upsert({
+          tenant_id: tenantId,
+          use_platform_token: entitlements[tenantId]?.use_platform_token ?? false,
+          allowed_models: allowed,
+          default_model: defaultModel,
+        }, { onConflict: 'tenant_id' });
+      if (error) throw error;
+      setEntitlements(prev => ({
+        ...prev,
+        [tenantId]: { ...prev[tenantId], tenant_id: tenantId, allowed_models: allowed, default_model: defaultModel },
+      }));
+      setExpandedTenant(null);
+    } catch (err) {
+      console.error('Failed to save allowed models:', err);
+    }
+  };
+
   if (loading) {
     return <div className="page"><div className="card card-p"><div className="skeleton" style={{ height: 120 }} /></div></div>;
   }
@@ -175,7 +216,7 @@ export const SuperAdminAi: React.FC = () => {
             return (
               <div key={tenant.id} style={{
                 display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px',
-                border: '1px solid var(--border)', borderRadius: 10,
+                border: '1px solid var(--border)', borderRadius: 10, flexWrap: 'wrap',
               }}>
                 <div style={{ flex: 1 }}>
                   <strong style={{ fontSize: '0.875rem' }}>{tenant.name}</strong>
@@ -206,6 +247,60 @@ export const SuperAdminAi: React.FC = () => {
                   defaultValue={ent?.token_limit_override ?? ''}
                   onBlur={e => { if (e.target.value !== String(ent?.token_limit_override ?? '')) setOverride(tenant.id, e.target.value); }}
                 />
+
+              {usesToken && (
+                <div style={{
+                  marginTop: 10, padding: '12px 14px', borderRadius: 10,
+                  background: '#f8fafc', border: '1px dashed var(--border)', flexBasis: '100%',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <strong style={{ fontSize: '0.8125rem' }}>{t('Modelos permitidos (token global)')}</strong>
+                    <button className="btn btn-secondary btn-sm" onClick={() => openModels(tenant.id)}>
+                      {expandedTenant === tenant.id ? t('Cancelar') : `${t('Editar')} (${(ent?.allowed_models ?? []).length})`}
+                    </button>
+                  </div>
+                  {expandedTenant !== tenant.id ? (
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {ent?.allowed_models?.length
+                        ? `${ent.allowed_models.map(m => modelLabel(m)).join(' · ')} — ${t('Padrão')}: ${modelLabel(ent.default_model ?? ent.allowed_models[0])}`
+                        : t('Todos os modelos liberados (o admin da empresa escolhe livremente).')}
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 6 }}>
+                        {OPENROUTER_MODELS.map(m => (
+                          <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox" checked={draftAllowed.includes(m.id)}
+                              onChange={() => toggleModel(m.id)}
+                              style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                            />
+                            {m.label}
+                          </label>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <label className="form-label" style={{ margin: 0, fontSize: '0.75rem' }}>{t('Modelo padrão')}</label>
+                        <select
+                          className="select" style={{ maxWidth: 260 }}
+                          value={draftDefault}
+                          onChange={e => setDraftDefault(e.target.value)}
+                        >
+                          {draftAllowed.map(id => (
+                            <option key={id} value={id}>{modelLabel(id)}</option>
+                          ))}
+                        </select>
+                        <button className="btn btn-primary btn-sm" onClick={() => saveModels(tenant.id)} disabled={draftAllowed.length === 0}>
+                          <Save size={13} /> {t('Salvar')}
+                        </button>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                        {t('Sem seleção = todos os modelos liberados. O padrão entra quando a empresa não escolher nenhum.')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
             );
           })}

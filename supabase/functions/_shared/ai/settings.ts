@@ -13,10 +13,10 @@ export function currentPeriod(timezone: string): string {
   return periodOfDay(Number.isFinite(hour) ? hour : new Date().getHours());
 }
 
-async function loadEntitlement(supabase: any, ctx: Partial<AgentContext>): Promise<{ apiKey: string | null; tokenLimit: number }> {
+async function loadEntitlement(supabase: any, ctx: Partial<AgentContext>): Promise<{ apiKey: string | null; tokenLimit: number; platformCovered: boolean; effectiveModel: string }> {
   const [{ data: platform }, { data: entitlement }, { data: tenant }] = await Promise.all([
     supabase.from("platform_ai_config").select("openrouter_token, distribution_mode").limit(1).maybeSingle(),
-    supabase.from("tenant_ai_entitlements").select("use_platform_token, token_limit_override").eq("tenant_id", ctx.tenantId).limit(1).maybeSingle(),
+    supabase.from("tenant_ai_entitlements").select("use_platform_token, token_limit_override, allowed_models, default_model").eq("tenant_id", ctx.tenantId).limit(1).maybeSingle(),
     supabase.from("tenants").select("plan_id").eq("id", ctx.tenantId).limit(1).maybeSingle(),
   ]);
 
@@ -35,9 +35,23 @@ async function loadEntitlement(supabase: any, ctx: Partial<AgentContext>): Promi
     return {
       apiKey: platform.openrouter_token,
       tokenLimit: entitlement?.token_limit_override ?? planLimit,
+      platformCovered: true,
+      effectiveModel: resolveEffectiveModel(ctx.agent?.openrouter_model ?? "", entitlement, true),
     };
   }
-  return { apiKey: ctx.agent?.own_api_key ?? null, tokenLimit: 0 };
+  return { apiKey: ctx.agent?.own_api_key ?? null, tokenLimit: 0, platformCovered: false, effectiveModel: ctx.agent?.openrouter_model ?? "" };
+}
+
+/** Modelo efetivo: com token global, só modelos permitidos e fallback ao padrão do superadmin. */
+export function resolveEffectiveModel(agentModel: string, entitlement: any, platformCovered: boolean): string {
+  if (!platformCovered) return agentModel;
+  const allowed = Array.isArray(entitlement?.allowed_models) ? entitlement.allowed_models.filter((m: any) => typeof m === "string") : [];
+  if (allowed.length === 0) return agentModel; // lista livre (nada configurado)
+  if (allowed.includes(agentModel)) return agentModel;
+  const def = typeof entitlement?.default_model === "string" && allowed.includes(entitlement.default_model)
+    ? entitlement.default_model
+    : allowed[0];
+  return def;
 }
 
 export async function quotaExceeded(supabase: any, tenantId: string, limit: number): Promise<boolean> {
@@ -239,6 +253,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
   const entitlement = await loadEntitlement(supabase, partial);
   partial.apiKey = entitlement.apiKey;
   partial.tokenLimit = entitlement.tokenLimit;
+  partial.effectiveModel = entitlement.effectiveModel;
 
   const allowed = new Set<number>();
   const qc = partial.quoteContext;

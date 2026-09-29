@@ -98,7 +98,7 @@ async function logAi(ctx: AgentContext, payload: Record<string, any>): Promise<v
     tenant_id: ctx.tenantId,
     conversation_id: ctx.conversation.id,
     provider: "openrouter",
-    model: ctx.agent.openrouter_model,
+    model: ctx.effectiveModel || ctx.agent.openrouter_model,
     success: payload.success ?? true,
     tools_used: ctx.toolsUsed,
     tool_results: ctx.toolResults,
