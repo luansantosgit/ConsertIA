@@ -86,17 +86,19 @@ function initSupportLinks(number) {
 /**
  * Aplica o branding do sistema: quando existe logo completa carregada,
  * mostra apenas a imagem (esconde marca e nome). Nome é só fallback.
+ * Favicon usa o favicon dedicado do painel (favicon_url), não a logo.
  */
-function applyBranding(logoUrl, logoText) {
+function applyBranding(logoUrl, logoText, faviconUrl) {
   if (logoText) {
     document.querySelectorAll('[data-brand-text]').forEach((el) => {
       el.textContent = logoText;
     });
   }
+  if (faviconUrl) {
+    const favicon = document.querySelector('link[rel="icon"]');
+    if (favicon) favicon.href = faviconUrl;
+  }
   if (!logoUrl) return;
-
-  const favicon = document.querySelector('link[rel="icon"]');
-  if (favicon) favicon.href = logoUrl;
 
   document.querySelectorAll('.brand').forEach((brand) => {
     const img = brand.querySelector('img.brand-logo');
@@ -114,7 +116,7 @@ async function loadConfig() {
     if (!res.ok) throw new Error('config');
     const cfg = await res.json();
     initSupportLinks(cfg.support_whatsapp);
-    applyBranding(cfg.branding?.logo_url, cfg.branding?.logo_text);
+    applyBranding(cfg.branding?.logo_url, cfg.branding?.logo_text, cfg.branding?.favicon_url);
     renderPlans(normalizePlans(cfg.plans));
   } catch {
     initSupportLinks(DEFAULT_SUPPORT_WA);
