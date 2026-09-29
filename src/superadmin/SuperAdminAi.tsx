@@ -20,6 +20,8 @@ export const SuperAdminAi: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [globalAllowed, setGlobalAllowed] = useState<string[]>([]);
+  const [globalDefault, setGlobalDefault] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -35,6 +37,8 @@ export const SuperAdminAi: React.FC = () => {
       if (cfg.data) {
         setToken(cfg.data.openrouter_token ?? '');
         setMode(cfg.data.distribution_mode ?? 'selected');
+        setGlobalAllowed(((cfg.data.allowed_models ?? []) as string[]).filter((m: any) => typeof m === 'string'));
+        setGlobalDefault((cfg.data.default_model ?? '') as string);
       }
       setTenants(tenantRows.data ?? []);
       setPlans(planRows.data ?? []);
@@ -56,13 +60,19 @@ export const SuperAdminAi: React.FC = () => {
   const saveConfig = async () => {
     setSaving(true);
     try {
+      const payload = {
+        openrouter_token: token,
+        distribution_mode: mode,
+        // Config global só vale no modo "all"; no modo "selected" cada empresa define a sua
+        allowed_models: mode === 'all' ? (globalAllowed.length > 0 ? globalAllowed : null) : null,
+        default_model: mode === 'all' ? (globalAllowed.includes(globalDefault) ? globalDefault : globalAllowed[0] ?? null) : null,
+        updated_at: new Date().toISOString(),
+      };
       const { data: existing } = await supabase.from('platform_ai_config').select('id').limit(1).maybeSingle();
       if (existing?.id) {
-        await supabase.from('platform_ai_config').update({
-          openrouter_token: token, distribution_mode: mode, updated_at: new Date().toISOString(),
-        }).eq('id', existing.id);
+        await supabase.from('platform_ai_config').update(payload).eq('id', existing.id);
       } else {
-        await supabase.from('platform_ai_config').insert({ openrouter_token: token, distribution_mode: mode });
+        await supabase.from('platform_ai_config').insert(payload);
       }
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 2500);
@@ -71,6 +81,11 @@ export const SuperAdminAi: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const toggleGlobalModel = (id: string) => {
+    setGlobalAllowed(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+    setGlobalDefault(prev => (globalAllowed.includes(id) && prev === id) ? '' : prev);
   };
 
   const toggleTenantToken = async (tenantId: string, next: boolean) => {
@@ -201,6 +216,42 @@ export const SuperAdminAi: React.FC = () => {
             {t('Empresas sem acesso ao token central usam a própria chave OpenRouter no painel delas (Agente de IA > Integrações).')}
           </p>
         </div>
+
+        {mode === 'all' && (
+          <div style={{ padding: '12px 14px', borderRadius: 10, background: '#f8fafc', border: '1px dashed var(--border)' }}>
+            <strong style={{ fontSize: '0.8125rem' }}>{t('Modelos permitidos (global — todas as empresas)')}</strong>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 6, margin: '10px 0' }}>
+              {OPENROUTER_MODELS.map(m => (
+                <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox" checked={globalAllowed.includes(m.id)}
+                    onChange={() => toggleGlobalModel(m.id)}
+                    style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                  />
+                  {m.label}
+                </label>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <label className="form-label" style={{ margin: 0, fontSize: '0.75rem' }}>{t('Modelo padrão')}</label>
+              <select
+                className="select" style={{ maxWidth: 260 }}
+                value={globalDefault}
+                onChange={e => setGlobalDefault(e.target.value)}
+              >
+                {globalAllowed.map(id => (
+                  <option key={id} value={id}>{modelLabel(id)}</option>
+                ))}
+              </select>
+              <button className="btn btn-primary btn-sm" onClick={saveConfig} disabled={saving || globalAllowed.length === 0}>
+                <Save size={13} /> {t('Salvar modelos globais')}
+              </button>
+            </div>
+            <p style={{ margin: '8px 0 0', fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+              {t('Sem seleção = todos os modelos liberados. O padrão entra quando a empresa não escolher nenhum.')}
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="card card-p">
@@ -248,7 +299,7 @@ export const SuperAdminAi: React.FC = () => {
                   onBlur={e => { if (e.target.value !== String(ent?.token_limit_override ?? '')) setOverride(tenant.id, e.target.value); }}
                 />
 
-              {usesToken && (
+              {mode === 'selected' && usesToken && (
                 <div style={{
                   marginTop: 10, padding: '12px 14px', borderRadius: 10,
                   background: '#f8fafc', border: '1px dashed var(--border)', flexBasis: '100%',
