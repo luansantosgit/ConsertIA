@@ -19,6 +19,7 @@ interface OSModalProps {
   initialCustomerName?: string;
   initialEquipment?: string;
   initialCustomerId?: string;
+  initialOs?: OSRow;
   onClose: () => void;
   onSave: (os: OSRow, sendToChat?: boolean) => void;
   onPreviewPdf?: (os: OSRow) => void;
@@ -28,28 +29,44 @@ export const OSModal: React.FC<OSModalProps> = ({
   initialCustomerName = '',
   initialEquipment = '',
   initialCustomerId = '',
+  initialOs,
   onClose,
   onSave,
 }) => {
   const navigate = useNavigate();
+  const isEdit = !!initialOs;
   const [form, setForm] = useState({
-    customerName: initialCustomerName,
-    equipmentLabel: initialEquipment,
-    subject: '',
-    description: '',
-    budget_amount: 0,
-    priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
-    technicianName: '',
+    customerName: initialOs?.customerName ?? initialCustomerName,
+    equipmentLabel: initialOs?.equipmentLabel ?? initialEquipment,
+    subject: initialOs?.subject ?? '',
+    description: initialOs?.description ?? '',
+    budget_amount: initialOs?.budget_amount ?? 0,
+    priority: (initialOs?.priority ?? 'medium') as 'low' | 'medium' | 'high' | 'urgent',
+    technicianName: initialOs?.technicianName ?? '',
   });
 
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [tempOS, setTempOS] = useState<OSRow | null>(null);
-  const [photos, setPhotos] = useState<ChecklistPhoto[]>([]);
+  const [photos, setPhotos] = useState<ChecklistPhoto[]>(initialOs?.checklist_photos ?? []);
 
   const s = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 
   const buildOSObject = (): OSRow => {
+    if (initialOs) {
+      return {
+        ...initialOs,
+        subject: form.subject || initialOs.subject,
+        description: form.description,
+        budget_amount: form.budget_amount > 0 ? form.budget_amount : undefined,
+        priority: form.priority,
+        checklist_photos: photos,
+        customerName: form.customerName || 'Cliente',
+        equipmentLabel: form.equipmentLabel || 'Equipamento não especificado',
+        technicianName: form.technicianName,
+        updated_at: new Date().toISOString(),
+      };
+    }
     const id = tempOS?.id || `OS-${String(Math.floor(Math.random() * 9000) + 1000)}`;
     return {
       id,
@@ -103,10 +120,10 @@ export const OSModal: React.FC<OSModalProps> = ({
                 <FileText size={18} />
               </div>
               <div>
-                <h3 className="modal-title">Nova Ordem de Serviço</h3>
-                {initialCustomerName && (
+                <h3 className="modal-title">{isEdit ? 'Alterar Ordem de Serviço' : 'Nova Ordem de Serviço'}</h3>
+                {(initialCustomerName || initialOs?.customerName) && (
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Cliente: <strong>{initialCustomerName}</strong>
+                    Cliente: <strong>{initialOs?.customerName || initialCustomerName}</strong>
                   </p>
                 )}
               </div>
@@ -191,7 +208,7 @@ export const OSModal: React.FC<OSModalProps> = ({
             <PhotoChecklist
               photos={photos}
               onChange={setPhotos}
-              osId={tempOS?.id}
+              osId={tempOS?.id ?? initialOs?.id}
             />
           </div>
 
@@ -220,7 +237,7 @@ export const OSModal: React.FC<OSModalProps> = ({
                     style={{ gap: 6 }}
                     title="Gera o documento PDF da OS e do orçamento"
                   >
-                    <FileText size={14} /> Gerar PDF
+                    <FileText size={14} /> {isEdit ? 'Ver PDF' : 'Gerar PDF'}
                   </button>
                   <button
                     type="button"
@@ -228,7 +245,7 @@ export const OSModal: React.FC<OSModalProps> = ({
                     onClick={() => handleSaveOS(false)}
                     style={{ gap: 6 }}
                   >
-                    <FileText size={14} /> Criar OS
+                    <FileText size={14} /> {isEdit ? 'Salvar alterações' : 'Criar OS'}
                   </button>
                 </>
               ) : (
@@ -241,15 +258,27 @@ export const OSModal: React.FC<OSModalProps> = ({
                   >
                     <Eye size={14} /> Ver PDF
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => handleSaveOS(true)}
-                    style={{ gap: 6, background: '#10b981', borderColor: '#059669' }}
-                    title="Salva a OS e envia o PDF no chat do cliente"
-                  >
-                    <Send size={14} /> Enviar no Chat
-                  </button>
+                  {isEdit ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => handleSaveOS(true)}
+                      style={{ gap: 6, background: '#10b981', borderColor: '#059669' }}
+                      title="Salva as alterações, regenera o PDF (substituindo o antigo) e envia ao cliente no chat"
+                    >
+                      <Send size={14} /> Salvar e Reenviar PDF
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => handleSaveOS(true)}
+                      style={{ gap: 6, background: '#10b981', borderColor: '#059669' }}
+                      title="Salva a OS e envia o PDF no chat do cliente"
+                    >
+                      <Send size={14} /> Enviar no Chat
+                    </button>
+                  )}
                 </>
               )}
             </div>

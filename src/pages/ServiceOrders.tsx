@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, User, Search, Printer, MessageCircle, Settings, Bell, Trash2 } from 'lucide-react';
+import { Plus, User, Search, Printer, MessageCircle, Settings, Bell, Trash2, Edit2 } from 'lucide-react';
 import { SolidActionPrint, SolidActionSearch } from '@/components/SolidActionIcons';
 import type { ServiceOrderStatus } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -65,6 +65,31 @@ export const ServiceOrders: React.FC = () => {
   const [configStage, setConfigStage] = useState<ServiceOrderStatus | null>(null);
   const [savingAutoMsg, setSavingAutoMsg] = useState(false);
   const [confirmDeleteOS, setConfirmDeleteOS] = useState<OSRow | null>(null);
+  const [editingOs, setEditingOs] = useState<OSRow | null>(null);
+
+  // Salva alterações de uma OS existente; resendPdf regenera o documento e reenvia ao cliente
+  const handleUpdateOS = async (o: OSRow, resendPdf?: boolean) => {
+    try {
+      const repo = new ServiceOrderRepository();
+      await repo.update(o.id, {
+        subject: o.subject,
+        description: o.description,
+        budget_amount: o.budget_amount ?? undefined,
+        priority: o.priority,
+        checklist_photos: o.checklist_photos,
+      });
+      setOS(prev => prev.map(x => x.id === o.id ? { ...x, ...o } : x));
+      setEditingOs(null);
+      if (resendPdf && o.customerPhone) {
+        void import('@/lib/os-pdf.service').then(m =>
+          m.sendOsPdfToLead(o.id, o.customerPhone!, 'Olá! Segue o PDF atualizado da sua OS. 📄')
+        );
+      }
+    } catch (err) {
+      console.error('Failed to update service order:', err);
+      setError('Erro ao salvar alterações da ordem de serviço');
+    }
+  };
 
   const handleDeleteOS = async () => {
     if (!confirmDeleteOS) return;
@@ -336,6 +361,14 @@ export const ServiceOrders: React.FC = () => {
                       <button
                         className="btn btn-ghost btn-sm"
                         style={{ padding: '2px 6px', color: 'var(--primary)' }}
+                        onClick={() => setEditingOs(o)}
+                        title="Alterar OS"
+                      >
+                        <Edit2 size={13} /> Alterar
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ padding: '2px 6px', color: 'var(--primary)' }}
                         onClick={() => handleOpenChat(o)}
                         title="Conversar no chat com o cliente"
                       >
@@ -469,6 +502,14 @@ export const ServiceOrders: React.FC = () => {
                           <button
                             className="btn btn-ghost btn-sm"
                             style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary)' }}
+                            onClick={() => setEditingOs(o)}
+                            title="Alterar OS"
+                          >
+                            <Edit2 size={12} /> Editar
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary)' }}
                             onClick={() => handleOpenChat(o)}
                             title="Conversar no chat com o cliente"
                           >
@@ -496,6 +537,14 @@ export const ServiceOrders: React.FC = () => {
       )}
 
       {showModal && <OSModal onClose={() => setShowModal(false)} onSave={handleSave} />}
+
+      {editingOs && (
+        <OSModal
+          initialOs={editingOs}
+          onClose={() => setEditingOs(null)}
+          onSave={handleUpdateOS}
+        />
+      )}
 
       <OSAutoMessageModal
         isOpen={configStage !== null}
