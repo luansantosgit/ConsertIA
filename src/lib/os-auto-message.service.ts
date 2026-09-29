@@ -55,15 +55,34 @@ export async function loadKanbanAutoMessages(): Promise<KanbanAutoMessages> {
   try {
     const raw = await new TenantSettingsRepository().getValue(SETTINGS_KEY);
     if (!raw) return {};
-    return JSON.parse(raw) as KanbanAutoMessages;
+    const parsed = JSON.parse(raw) as KanbanAutoMessages;
+    // Mensagem idêntica ao padrão = não é personalização: zera para manter o fallback/placeholder
+    const normalized = {} as KanbanAutoMessages;
+    for (const [status, cfg] of Object.entries(parsed)) {
+      if (cfg) normalized[status as ServiceOrderStatus] = normalizeConfig(status as ServiceOrderStatus, cfg);
+    }
+    return normalized;
   } catch (err) {
     console.error('Failed to load kanban auto messages:', err);
     return {};
   }
 }
 
+function normalizeConfig(status: ServiceOrderStatus, cfg: StageAutoMessage): StageAutoMessage {
+  const msg = cfg.message?.trim() ?? '';
+  if (!msg) return cfg;
+  const defaults = [DEFAULT_STAGE_MESSAGES[status]];
+  if (status === 'awaiting_approval') defaults.push(AWAITING_APPROVAL_WITHOUT_PDF);
+  if (defaults.some(d => d === msg)) return { ...cfg, message: '' };
+  return cfg;
+}
+
 export async function saveKanbanAutoMessages(config: KanbanAutoMessages): Promise<void> {
-  await new TenantSettingsRepository().setValue(SETTINGS_KEY, JSON.stringify(config));
+  const normalized = {} as KanbanAutoMessages;
+  for (const [status, cfg] of Object.entries(config)) {
+    if (cfg) normalized[status as ServiceOrderStatus] = normalizeConfig(status as ServiceOrderStatus, cfg);
+  }
+  await new TenantSettingsRepository().setValue(SETTINGS_KEY, JSON.stringify(normalized));
 }
 
 export interface AutoMessageTarget {
@@ -98,6 +117,18 @@ export async function scheduleStageAutoMessage(
     }
 
     const tenantId = useAuthStore.getState().user?.tenantId || '';
+
+    // Ag. Aprovação com PDF: dispara SOMENTE o PDF com a mensagem como legenda
+    // (sem mensagem de texto duplicada na sequência)
+    if (resolved.sendPdf && target.osId) {
+      window.setTimeout(() => {
+        void import('@/lib/os-pdf.service').then(m =>
+          m.sendOsPdfToLead(target.osId!, phone, resolved.message)
+        );
+      }, SEND_DELAY_MS);
+      return;
+    }
+
     const scheduledAt = new Date(Date.now() + SEND_DELAY_MS).toISOString();
     const { data: row, error } = await supabase
       .from('scheduled_messages')
@@ -123,15 +154,6 @@ export async function scheduleStageAutoMessage(
     window.setTimeout(() => {
       void processScheduledRow(row.id);
     }, SEND_DELAY_MS);
-
-    // Estágio Ag. Aprovação: envia também o PDF da OS (padrão habilitado, best-effort)
-    if (resolved.sendPdf && target.osId && phone) {
-      window.setTimeout(() => {
-        void import('@/lib/os-pdf.service').then(m =>
-          m.sendOsPdfToLead(target.osId!, phone, resolved.message)
-        );
-      }, SEND_DELAY_MS + 2_000);
-    }
   } catch (err) {
     console.error('Failed to schedule stage auto message:', err);
   }
