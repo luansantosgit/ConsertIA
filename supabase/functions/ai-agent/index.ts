@@ -210,18 +210,26 @@ async function releaseProcessingLock(ctx: AgentContext): Promise<void> {
     .eq("ai_pending", true)
     .select("id")
     .maybeSingle();
-  if (!pending) return;
-  // Chegou mensagem durante o atendimento: reprocessa com o histórico completo
-  try {
-    void fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/ai-agent`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-      },
-      body: JSON.stringify({ conversation_id: ctx.conversation.id }),
-    }).then((r) => r.text());
-  } catch { /* fire and forget */ }
+  if (pending) {
+    // Chegou mensagem durante o atendimento: reprocessa com o histórico completo
+    try {
+      void fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/ai-agent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ conversation_id: ctx.conversation.id }),
+      }).then((r) => r.text());
+    } catch { /* fire and forget */ }
+    return;
+  }
+  // Nada pendente: apenas libera o lock (o update acima não tocou a linha
+  // porque ai_pending era false — sem isso o lock ficava preso até expirar)
+  await ctx.supabase
+    .from("conversations")
+    .update({ ai_processing_until: null })
+    .eq("id", ctx.conversation.id);
 }
 
 async function handleRespondLocked(ctx: AgentContext, runMarker: string): Promise<Response> {
