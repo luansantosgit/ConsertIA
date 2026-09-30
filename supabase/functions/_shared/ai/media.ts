@@ -9,10 +9,10 @@ const DEFAULT_TRANSCRIPTION_MODEL = "google/gemini-3.1-flash-lite";
 const MAX_MEDIA_BYTES = 20 * 1024 * 1024;
 
 const MEDIA_PROMPTS: Record<string, string> = {
-  audio: "Transcreva este áudio enviado por um cliente na íntegra, em português do Brasil. Responda APENAS com a transcrição do que foi dito.",
-  image: "Um cliente de assistência técnica enviou esta imagem. Descreva objetivamente em português: aparelho (marca/modelo se legível), danos visíveis, telas, ou qualquer informação relevante. Se houver texto na imagem, transcreva.",
-  video: "Um cliente de assistência técnica enviou este vídeo. Descreva objetivamente em português o que aparece e acontece, incluindo aparelhos e danos visíveis.",
-  doc: "Um cliente enviou este documento. Extraia e resuma em português o conteúdo relevante (texto principal, dados do aparelho, problemas citados).",
+  audio: "Transcreva este áudio enviado por um cliente na íntegra, em português do Brasil. Responda APENAS com a transcrição do que foi dito, sem preâmbulos.",
+  image: "Um cliente de assistência técnica enviou esta foto do aparelho. Responda APENAS com a descrição objetiva, sem preâmbulos: aparelho (marca/modelo se legível), estado da tela e danos visíveis. Se houver texto na imagem, transcreva.",
+  video: "Um cliente de assistência técnica enviou este vídeo. Responda APENAS com a descrição objetiva, sem preâmbulos: o que aparece, aparelhos e danos visíveis.",
+  doc: "Um cliente enviou este documento. Responda APENAS com o conteúdo relevante extraído, sem preâmbulos: texto principal, dados do aparelho e problemas citados.",
 };
 
 function mediaKind(mediaType: string | null | undefined): keyof typeof MEDIA_PROMPTS {

@@ -96,16 +96,6 @@ async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessageP
         : `[Cliente enviou ${label}${content ? `: ${content}` : ""}]`;
     }
 
-    if (isLast && role === "user" && row.media_url && row.media_type === "image") {
-      out.push({
-        role,
-        content: [
-          { type: "text", text: content || "O cliente enviou uma imagem" },
-          { type: "image_url", image_url: { url: row.media_url } },
-        ],
-      });
-      continue;
-    }
     out.push({ role, content });
   }
 
