@@ -6,6 +6,7 @@ import { runAgentLoop } from "../_shared/ai/openrouter.ts";
 import { hasInvalidMoney, splitMessageParts } from "../_shared/ai/validate.ts";
 import { sendText } from "../_shared/ai/uazapi.ts";
 import { tryCaptureName } from "../_shared/ai/name-capture.ts";
+import { transcribeMedia } from "../_shared/ai/media.ts";
 import type { AgentContext, ChatMessagePayload } from "../_shared/ai/types.ts";
 
 const STALL_PATTERN = /(vou verificar|um momento|aguarde|já verifico|deixa eu conferir|verificar a disponibilidade|já vejo|conferir o valor)/i;
@@ -47,42 +48,68 @@ interface HistoryRow {
   sender_type: string | null;
   media_type: string | null;
   media_url: string | null;
+  media_transcription?: string | null;
+  role?: string;
 }
 
 async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessagePayload[]> {
   const { data: rows } = await ctx.supabase
     .from("messages")
-    .select("content, direction, sender_type, media_type, media_url")
+    .select("content, direction, sender_type, media_type, media_url, media_transcription")
     .eq("conversation_id", ctx.conversation.id)
     .order("created_at", { ascending: true })
     .limit(200);
   const recent = (rows ?? []).slice(-limit) as HistoryRow[];
   const FULL_KEEP = 6;
 
-  return recent.map((row, index) => {
+  const out: ChatMessagePayload[] = [];
+
+  for (let index = 0; index < recent.length; index++) {
+    const row = recent[index];
     const isAi = row.sender_type === "ai" || (row.sender_type === null && row.direction === "outbound");
     const role: "assistant" | "user" = isAi ? "assistant" : "user";
     const isLast = index === recent.length - 1;
     const maxChars = index >= recent.length - FULL_KEEP ? 400 : 160;
-    const content = (row.content ?? "").substring(0, maxChars);
+    let content = (row.content ?? "").substring(0, maxChars);
+
+    if (row.media_type && row.role !== "assistant") {
+      const label = row.media_type === "audio" || row.media_type === "ptt" ? "um áudio"
+        : row.media_type === "image" ? "uma imagem"
+        : row.media_type === "video" || row.media_type === "ptv" ? "um vídeo"
+        : "um documento";
+      // Última mídia do cliente: transcreve agora (consome cota do plano) e persiste.
+      // Mídias antigas: usa a transcrição já salva (se houver) — nunca re-transcreve.
+      if (isLast && role === "user" && row.media_url && !row.media_transcription) {
+        const transcription = await transcribeMedia(ctx, row.media_url, row.media_type);
+        if (transcription?.text) {
+          row.media_transcription = transcription.text;
+          await ctx.supabase
+            .from("messages")
+            .update({ media_transcription: transcription.text })
+            .eq("conversation_id", ctx.conversation.id)
+            .eq("media_url", row.media_url)
+            .is("media_transcription", "null");
+        }
+      }
+      content = row.media_transcription
+        ? `[Cliente enviou ${label}: ${row.media_transcription}]`
+        : `[Cliente enviou ${label}${content ? `: ${content}` : ""}]`;
+    }
+
     if (isLast && role === "user" && row.media_url && row.media_type === "image") {
-      return {
+      out.push({
         role,
         content: [
           { type: "text", text: content || "O cliente enviou uma imagem" },
           { type: "image_url", image_url: { url: row.media_url } },
         ],
-      };
+      });
+      continue;
     }
-    if (row.media_type) {
-      const label = row.media_type === "audio" || row.media_type === "ptt" ? "um áudio"
-        : row.media_type === "image" ? "uma imagem"
-        : row.media_type === "video" ? "um vídeo"
-        : "um documento";
-      return { role, content: `[Cliente enviou ${label}: ${content}]` };
-    }
-    return { role, content };
-  });
+    out.push({ role, content });
+  }
+
+  return out;
 }
 
 function shouldRespond(ctx: AgentContext): boolean {
