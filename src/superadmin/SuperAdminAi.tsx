@@ -22,6 +22,7 @@ export const SuperAdminAi: React.FC = () => {
   const [savedFlash, setSavedFlash] = useState(false);
   const [globalAllowed, setGlobalAllowed] = useState<string[]>([]);
   const [globalDefault, setGlobalDefault] = useState('');
+  const [transcriptionModel, setTranscriptionModel] = useState('google/gemini-3.1-flash-lite');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -39,6 +40,7 @@ export const SuperAdminAi: React.FC = () => {
         setMode(cfg.data.distribution_mode ?? 'selected');
         setGlobalAllowed(((cfg.data.allowed_models ?? []) as string[]).filter((m: any) => typeof m === 'string'));
         setGlobalDefault((cfg.data.default_model ?? '') as string);
+        setTranscriptionModel((cfg.data.transcription_model ?? 'google/gemini-3.1-flash-lite') as string);
       }
       setTenants(tenantRows.data ?? []);
       setPlans(planRows.data ?? []);
@@ -63,6 +65,7 @@ export const SuperAdminAi: React.FC = () => {
       const payload = {
         openrouter_token: token,
         distribution_mode: mode,
+        transcription_model: transcriptionModel || 'google/gemini-3.1-flash-lite',
         // Config global só vale no modo "all"; no modo "selected" cada empresa define a sua
         allowed_models: mode === 'all' ? (globalAllowed.length > 0 ? globalAllowed : null) : null,
         default_model: mode === 'all' ? (globalAllowed.includes(globalDefault) ? globalDefault : globalAllowed[0] ?? null) : null,
@@ -196,6 +199,24 @@ export const SuperAdminAi: React.FC = () => {
             </button>
             {savedFlash && <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#16a34a', fontSize: '0.8125rem' }}><Check size={14} /> {t('Salvo!')}</span>}
           </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">{t('Modelo de transcrição de mídias')}</label>
+          <select
+            className="select"
+            value={transcriptionModel}
+            onChange={e => setTranscriptionModel(e.target.value)}
+            style={{ maxWidth: 420 }}
+          >
+            <option value="google/gemini-3.1-flash-lite">Gemini 3.1 Flash Lite — padrão (áudio, imagem, vídeo, docs)</option>
+            <option value="google/gemini-flash-1.5">Gemini Flash 1.5 — multimodal</option>
+            <option value="openai/gpt-4o">GPT-4o — multimodal</option>
+            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet — multimodal</option>
+          </select>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>
+            {t('Usado pelo agente para transcrever áudios e entender imagens/vídeos/documentos enviados pelo lead. O consumo entra na cota de tokens da empresa.')}
+          </p>
         </div>
 
         <div>

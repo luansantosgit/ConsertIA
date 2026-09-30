@@ -112,6 +112,7 @@ export interface AgentContext {
   apiKey: string | null;
   tokenLimit: number;
   effectiveModel?: string;
+  transcriptionModel?: string;
   period: string;
   timezone: string;
   businessHours: BusinessHoursConfig;
