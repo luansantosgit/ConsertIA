@@ -157,6 +157,57 @@ function json(body: Record<string, any>, status = 200): Response {
 async function handleRespond(ctx: AgentContext): Promise<Response> {
   if (!ctx.agent.active) return json({ ok: true, skipped: "agent_inactive" });
   if (!shouldRespond(ctx)) return json({ ok: true, skipped: `state_${ctx.conversation.ai_state}` });
+
+  // Lock de execução por conversa: uma resposta por vez. Mensagens que chegam
+  // durante um atendimento em andamento ficam "pending" e são reprocessadas
+  // ao final, com o histórico completo — elimina respostas duplicadas.
+  const nowIso = new Date().toISOString();
+  const lockUntil = new Date(Date.now() + 120_000).toISOString();
+  const { data: claimed } = await ctx.supabase
+    .from("conversations")
+    .update({ ai_processing_until: lockUntil })
+    .eq("id", ctx.conversation.id)
+    .or(`ai_processing_until.is.null,ai_processing_until.lt.${nowIso}`)
+    .select("id")
+    .maybeSingle();
+  if (!claimed) {
+    await ctx.supabase
+      .from("conversations")
+      .update({ ai_pending: true })
+      .eq("id", ctx.conversation.id);
+    return json({ ok: true, skipped: "already_processing" });
+  }
+
+  try {
+    return await handleRespondLocked(ctx);
+  } finally {
+    await releaseProcessingLock(ctx);
+  }
+}
+
+async function releaseProcessingLock(ctx: AgentContext): Promise<void> {
+  const { data: pending } = await ctx.supabase
+    .from("conversations")
+    .update({ ai_processing_until: null, ai_pending: false })
+    .eq("id", ctx.conversation.id)
+    .eq("ai_pending", true)
+    .select("id")
+    .maybeSingle();
+  if (!pending) return;
+  // Chegou mensagem durante o atendimento: reprocessa com o histórico completo
+  try {
+    void fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/ai-agent`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({ conversation_id: ctx.conversation.id }),
+    }).then((r) => r.text());
+  } catch { /* fire and forget */ }
+}
+
+async function handleRespondLocked(ctx: AgentContext): Promise<Response> {
   if (!ctx.apiKey) {
     await logAi(ctx, { success: false, error_message: "Sem token OpenRouter configurado" });
     return json({ ok: true, skipped: "no_api_key" });
