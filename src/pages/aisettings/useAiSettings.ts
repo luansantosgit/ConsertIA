@@ -62,8 +62,10 @@ export function useAiSettings() {
         setDiagnosis(diagnosisData);
         setTemplates(templateData);
         setUsesPlatformToken(entitlement?.use_platform_token !== false);
-        setAllowedModels((entitlement?.allowed_models ?? []) as string[]);
-        setDefaultModel(entitlement?.default_model ?? '');
+        entitlementRepo.getEffectiveModels().then(m => {
+          setAllowedModels(m.allowedModels);
+          setDefaultModel(m.defaultModel);
+        }).catch(() => {});
         setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
         setTokenLimit(entitlement?.token_limit_override ?? planLimit);
         setAiLogs(logs);

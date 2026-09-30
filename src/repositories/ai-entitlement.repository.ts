@@ -48,4 +48,22 @@ export class AiEntitlementRepository {
     if (planError) throw planError;
     return plan?.ai_token_limit ?? 0;
   }
+
+  async getEffectiveModels(): Promise<{ allowedModels: string[]; defaultModel: string }> {
+    try {
+      const [{ data: globalCfg }, entitlement] = await Promise.all([
+        supabase.from('v_ai_model_options').select('distribution_mode, allowed_models, default_model').limit(1).maybeSingle(),
+        this.getEntitlement(),
+      ]);
+      const source = globalCfg?.distribution_mode === 'all' ? globalCfg : entitlement;
+      const allowed = (source?.allowed_models ?? []) as string[];
+      const defaultModel = (source?.default_model ?? '') as string;
+      return {
+        allowedModels: allowed.filter((m): m is string => typeof m === 'string'),
+        defaultModel: allowed.includes(defaultModel) ? defaultModel : allowed[0] ?? '',
+      };
+    } catch {
+      return { allowedModels: [], defaultModel: '' };
+    }
+  }
 }
