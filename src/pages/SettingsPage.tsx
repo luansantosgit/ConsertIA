@@ -18,6 +18,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { DeviceCoverageSection } from '@/pages/settings/DeviceCoverageSection';
 import { BusinessHoursSection } from '@/pages/settings/BusinessHoursSection';
 import { AppearanceSection } from '@/pages/settings/AppearanceSection';
+import { UsersSection } from '@/pages/settings/UsersSection';
 
 type Section = 'aparencia' | 'empresa' | 'horario' | 'notificacoes' | 'aparelhos' | 'usuarios' | 'seguranca' | 'integracao' | 'conexoes';
 
@@ -504,6 +505,9 @@ export const SettingsPage: React.FC = () => {
             </div>
           )}
 
+          {/* ── USUÁRIOS ── */}
+          {activeSection === 'usuarios' && <UsersSection />}
+
           {/* ── APARELHOS ATENDIDOS ── */}
           {activeSection === 'aparelhos' && <DeviceCoverageSection />}
 
@@ -667,7 +671,7 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {/* ── Placeholder for other sections ── */}
-          {!['aparencia', 'empresa', 'horario', 'notificacoes', 'conexoes', 'aparelhos'].includes(activeSection) && (
+          {!['aparencia', 'empresa', 'horario', 'conexoes', 'aparelhos', 'usuarios'].includes(activeSection) && (
             <div className="card card-p">
               <div className="empty-state">
                 <div className="empty-state-icon">

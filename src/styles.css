@@ -1687,3 +1687,12 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   .dash-ai-banner { flex-direction: column; align-items: flex-start; }
   .dash-ai-stats { margin-left: 0; }
 }
+
+/* -- Badge de alerta de assinatura (menu lateral) -- */
+.nav-alert-dot {
+  animation: navDotPulse 1.4s ease-in-out infinite;
+}
+@keyframes navDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.7); }
+}

@@ -13,6 +13,7 @@ export interface AuthUser {
   tenantId: string;
   tenantName: string;
   avatar?: string;
+  permissions?: string[];
 }
 
 interface AuthState {
@@ -35,6 +36,7 @@ function mapUser(profile: Awaited<ReturnType<typeof fetchUserProfile>>): AuthUse
     tenantId: profile.tenant_id,
     tenantName: profile.tenant_name ?? '',
     avatar: profile.avatar,
+    permissions: Array.isArray(profile.permissions) ? profile.permissions : undefined,
   };
 }
 

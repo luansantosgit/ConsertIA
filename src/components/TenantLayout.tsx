@@ -1,13 +1,26 @@
 import React, { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { SubscriptionAlert } from './SubscriptionAlert';
+import { useSubscriptionAlert } from '@/stores/subscription.store';
 
 export const TenantLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const showFloatingFooter = !location.pathname.startsWith('/atendimento');
+
+  // Carência expirada: o sistema só abre na página de Assinatura.
+  // Re-verifica a cada 5 min: o balão de vencimento aparece/desaparece
+  // sozinho conforme o pagamento.
+  const { blocked, checked, check } = useSubscriptionAlert();
+  React.useEffect(() => {
+    check();
+    const id = setInterval(check, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [check]);
+  const subscriptionBlocked = checked && blocked && location.pathname !== '/assinatura';
 
   return (
     <div className="app-layout">
@@ -23,7 +36,7 @@ export const TenantLayout: React.FC = () => {
           onToggleCollapse={() => setCollapsed((v) => !v)}
         />
         <main style={{ flex: 1, overflow: 'auto' }}>
-          <Outlet />
+          {subscriptionBlocked ? <Navigate to="/assinatura" replace /> : <Outlet />}
         </main>
         {showFloatingFooter && (
           <div
@@ -51,6 +64,7 @@ export const TenantLayout: React.FC = () => {
           Feito com carinho por Grupo LS Soluções ❤
         </div>
         )}
+        <SubscriptionAlert />
       </div>
     </div>
   );
