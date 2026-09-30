@@ -203,7 +203,7 @@ export const ConversationCard = React.memo(function ConversationCard({
               ? 'Com atendente — clique para devolver ao agente de IA'
               : conv.ai_state === 'attending'
                 ? 'IA atendendo — clique para assumir o atendimento'
-                : 'Transferida para atendente — clique para assumir'}
+                : 'Transferida pelo agente de IA — clique para devolver ao agente'}
             onClick={e => { e.stopPropagation(); onAiClick(conv); }}
             style={{
               width: 26, height: 26, padding: 0, flexShrink: 0,

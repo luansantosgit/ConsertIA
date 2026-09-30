@@ -92,7 +92,9 @@ export const Attendance: React.FC = () => {
   const [dontShowAgain, setDontShowAgain] = React.useState(false);
 
   const executeAiToggle = (convId: string, aiState?: string) => {
-    if (aiState === 'paused') {
+    // IA pausada por humano OU já transferida pela IA (check verde): devolver ao agente.
+    // Só "assumir" quando a IA está atendendo e o humano decide intervir.
+    if (aiState === 'paused' || aiState === 'handed_off') {
       void handleReleaseAi(convId);
     } else {
       const conv = conversations.find(c => c.id === convId);
@@ -291,11 +293,11 @@ export const Attendance: React.FC = () => {
         checkboxLabel="Não mostrar novamente"
         checkboxChecked={dontShowAgain}
         onCheckboxChange={setDontShowAgain}
-        title={confirmClaimAi.aiState === 'paused' ? 'Devolver ao agente de IA' : 'Assumir atendimento'}
-        message={confirmClaimAi.aiState === 'paused'
-          ? `Você vai devolver a conversa com "${confirmClaimAi.convName}" para o agente de IA, que volta a atender automaticamente.`
-          : `Você vai assumir a conversa com "${confirmClaimAi.convName}". O agente de IA vai avisar o cliente que um atendente humano entrará em contato e ficará pausado até a conversa ser encerrada.`}
-        confirmLabel={confirmClaimAi.aiState === 'paused' ? 'Devolver ao agente de IA' : 'Assumir atendimento'}
+        title={confirmClaimAi.aiState === 'attending' ? 'Assumir atendimento' : 'Devolver ao agente de IA'}
+        message={confirmClaimAi.aiState === 'attending'
+          ? `Você vai assumir a conversa com "${confirmClaimAi.convName}". O agente de IA vai avisar o cliente que um atendente humano entrará em contato e ficará pausado até a conversa ser encerrada.`
+          : `Você vai devolver a conversa com "${confirmClaimAi.convName}" para o agente de IA, que volta a atender automaticamente a partir da próxima mensagem do cliente.`}
+        confirmLabel={confirmClaimAi.aiState === 'attending' ? 'Assumir atendimento' : 'Devolver ao agente de IA'}
         variant="info"
       />
     </div>
