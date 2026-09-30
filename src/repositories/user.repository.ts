@@ -8,12 +8,13 @@ export interface UserProfile {
   tenant_id: string;
   tenant_name?: string;
   avatar?: string;
+  permissions?: string[];
 }
 
 export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('id, email, name, role, tenant_id, avatar_url')
+    .select('id, email, name, role, tenant_id, avatar_url, permissions')
     .eq('id', userId)
     .single();
 

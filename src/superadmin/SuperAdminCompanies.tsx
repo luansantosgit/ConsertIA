@@ -16,6 +16,8 @@ interface DbTenant {
   created_at: string;
   theme_color?: string;
   admin_email?: string;
+  subscription_due_date?: string | null;
+  subscription_extra_days?: number | null;
 }
 
 interface DbPlan {
@@ -40,6 +42,8 @@ interface Company {
   plan_id?: string;
   slug?: string;
   theme_color?: string;
+  subscription_due_date?: string | null;
+  subscription_extra_days?: number;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -100,6 +104,8 @@ export const SuperAdminCompanies: React.FC = () => {
         plan_id: t.plan_id,
         slug: t.slug,
         theme_color: t.theme_color,
+        subscription_due_date: t.subscription_due_date ?? null,
+        subscription_extra_days: t.subscription_extra_days ?? 0,
       }));
 
       setCompanies(mapped);
@@ -142,6 +148,8 @@ export const SuperAdminCompanies: React.FC = () => {
             theme_color: form.primaryColor,
             admin_email: form.adminEmail,
             active: isActive,
+            subscription_due_date: form.subscription_due_date || null,
+            subscription_extra_days: Number(form.subscription_extra_days) || 0,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingCompany.id);
@@ -163,6 +171,8 @@ export const SuperAdminCompanies: React.FC = () => {
           theme_color: form.primaryColor || '#2563eb',
           admin_email: form.adminEmail || '',
           active: isActive,
+          subscription_due_date: form.subscription_due_date || null,
+          subscription_extra_days: Number(form.subscription_extra_days) || 0,
         });
         if (error) throw error;
         const tenantId = slug;
@@ -366,6 +376,31 @@ export const SuperAdminCompanies: React.FC = () => {
                     <option>Inativo</option>
                     <option>Inadimplente</option>
                   </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Vencimento da assinatura</label>
+                  <input
+                    className="input"
+                    type="date"
+                    value={form.subscription_due_date || ''}
+                    onChange={(e) => setForm((f) => ({ ...f, subscription_due_date: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Prazo extra (dias)</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min={0}
+                    value={form.subscription_extra_days ?? 0}
+                    onChange={(e) => setForm((f) => ({ ...f, subscription_extra_days: Number(e.target.value) }))}
+                    title="Dias extras além da carência global, para empresas com fatura vencida"
+                  />
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 4, margin: 0 }}>
+                    Some-se à carência global. Use para conceder mais tempo a empresas inadimplentes.
+                  </p>
                 </div>
               </div>
               <div className="form-row">

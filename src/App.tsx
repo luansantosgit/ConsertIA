@@ -2,6 +2,7 @@ import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
+import { canAccess, firstAllowedPath } from '@/lib/permissions';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Tenant (eager — layout crítico)
@@ -19,6 +20,7 @@ const Schedule      = lazy(() => import('@/pages/Schedule').then(m => ({ default
 const Reports       = lazy(() => import('@/pages/Reports').then(m => ({ default: m.Reports })));
 const Settings      = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const AiSettings    = lazy(() => import('@/pages/AiSettings').then(m => ({ default: m.AiSettings })));
+const SubscriptionPage = lazy(() => import('@/pages/subscription/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
 const ChecklistPage = lazy(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })));
 
 // Superadmin
@@ -54,6 +56,29 @@ const RequireAuth: React.FC<{ role?: 'superadmin' | 'tenant'; children: React.Re
   if (role === 'superadmin' && user?.role !== 'superadmin') return <Navigate to="/" replace />;
   if (role === 'tenant' && user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
   return <>{children}</>;
+};
+
+/* Bloqueia rota de módulo não liberado para o usuário (visível no menu + URL direta) */
+const RequirePermission: React.FC<{ perm: string; children: React.ReactNode }> = ({ perm, children }) => {
+  const { user } = useAuthStore();
+  if (canAccess(user, perm)) return <>{children}</>;
+  const fallback = firstAllowedPath(user);
+  if (fallback) return <Navigate to={fallback} replace />;
+  return <NoAccess />;
+};
+
+/* Usuário sem nenhum módulo atribuído */
+const NoAccess: React.FC = () => {
+  const { logout } = useAuthStore();
+  return (
+    <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center', gap: 12 }}>
+      <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Nenhuma permissão atribuída</h3>
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', maxWidth: 380 }}>
+        Sua conta não tem acesso a nenhum módulo do sistema. Contate o administrador da empresa.
+      </p>
+      <button className="btn btn-secondary" onClick={logout}>Sair</button>
+    </div>
+  );
 };
 
 const App: React.FC = () => {
@@ -131,16 +156,17 @@ const App: React.FC = () => {
             </RequireAuth>
           }
         >
-          <Route index element={<Dashboard />} />
-          <Route path="clientes" element={<Customers />} />
-          <Route path="atendimento" element={<Suspense fallback={<PageLoader />}><Attendance /></Suspense>} />
-          <Route path="ordens" element={<Suspense fallback={<PageLoader />}><ServiceOrders /></Suspense>} />
-          <Route path="estoque" element={<Suspense fallback={<PageLoader />}><Inventory /></Suspense>} />
-          <Route path="financeiro" element={<Suspense fallback={<PageLoader />}><Financial /></Suspense>} />
-          <Route path="agenda" element={<Suspense fallback={<PageLoader />}><Schedule /></Suspense>} />
-          <Route path="relatorios" element={<Suspense fallback={<PageLoader />}><Reports /></Suspense>} />
-          <Route path="configuracoes" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
-          <Route path="agente-ia" element={<Suspense fallback={<PageLoader />}><AiSettings /></Suspense>} />
+          <Route index element={<RequirePermission perm="dashboard"><Dashboard /></RequirePermission>} />
+          <Route path="clientes" element={<RequirePermission perm="clientes"><Customers /></RequirePermission>} />
+          <Route path="atendimento" element={<RequirePermission perm="atendimento"><Suspense fallback={<PageLoader />}><Attendance /></Suspense></RequirePermission>} />
+          <Route path="ordens" element={<RequirePermission perm="ordens"><Suspense fallback={<PageLoader />}><ServiceOrders /></Suspense></RequirePermission>} />
+          <Route path="estoque" element={<RequirePermission perm="estoque"><Suspense fallback={<PageLoader />}><Inventory /></Suspense></RequirePermission>} />
+          <Route path="financeiro" element={<RequirePermission perm="financeiro"><Suspense fallback={<PageLoader />}><Financial /></Suspense></RequirePermission>} />
+          <Route path="assinatura" element={<RequirePermission perm="financeiro"><Suspense fallback={<PageLoader />}><SubscriptionPage /></Suspense></RequirePermission>} />
+          <Route path="agenda" element={<RequirePermission perm="agenda"><Suspense fallback={<PageLoader />}><Schedule /></Suspense></RequirePermission>} />
+          <Route path="relatorios" element={<RequirePermission perm="relatorios"><Suspense fallback={<PageLoader />}><Reports /></Suspense></RequirePermission>} />
+          <Route path="configuracoes" element={<RequirePermission perm="configuracoes"><Suspense fallback={<PageLoader />}><Settings /></Suspense></RequirePermission>} />
+          <Route path="agente-ia" element={<RequirePermission perm="agente-ia"><Suspense fallback={<PageLoader />}><AiSettings /></Suspense></RequirePermission>} />
         </Route>
 
         {/* ── Checklist público ── */}

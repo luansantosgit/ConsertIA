@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Eye, EyeOff, Loader2, Check, Copy } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { AsaasConfigSection } from '@/superadmin/AsaasConfigSection';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const WEBHOOK_URL_UAZAPI = `${SUPABASE_URL}/functions/v1/uazapi-direct`;
@@ -31,7 +32,7 @@ export const SuperAdminIntegracoes: React.FC = () => {
   const [showToken, setShowToken] = useState(false);
   const [showBspPassword, setShowBspPassword] = useState(false);
   const [copied, setCopied] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<'uazapi' | 'bsp'>('uazapi');
+  const [activeTab, setActiveTab] = useState<'uazapi' | 'bsp' | 'asaas'>('uazapi');
 
   useEffect(() => {
     const load = async () => {
@@ -105,6 +106,7 @@ export const SuperAdminIntegracoes: React.FC = () => {
         {([
           { key: 'uazapi' as const, label: 'API Alternativa (Uazapi)' },
           { key: 'bsp' as const, label: 'API Oficial (BSP Pontaltech)' },
+          { key: 'asaas' as const, label: 'Assinaturas (Asaas)' },
         ]).map(tab => (
           <button
             key={tab.key}
@@ -121,6 +123,9 @@ export const SuperAdminIntegracoes: React.FC = () => {
           </button>
         ))}
       </div>
+
+      {/* Assinaturas Asaas */}
+      {activeTab === 'asaas' && <AsaasConfigSection />}
 
       {/* API Alternativa */}
       {activeTab === 'uazapi' && (
@@ -257,13 +262,15 @@ export const SuperAdminIntegracoes: React.FC = () => {
         </div>
       )}
 
-      {/* Save button */}
-      <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ gap: 6 }}>
-          {saving ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : saved ? <Check size={15} /> : <Save size={15} />}
-          {saving ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar configurações'}
-        </button>
-      </div>
+      {/* Save button (WhatsApp — aba Asaas tem o próprio) */}
+      {activeTab !== 'asaas' && (
+        <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ gap: 6 }}>
+            {saving ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : saved ? <Check size={15} /> : <Save size={15} />}
+            {saving ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar configurações'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

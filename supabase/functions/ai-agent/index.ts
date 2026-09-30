@@ -163,26 +163,43 @@ async function handleRespond(ctx: AgentContext): Promise<Response> {
   // ao final, com o histórico completo — elimina respostas duplicadas.
   const nowIso = new Date().toISOString();
   const lockUntil = new Date(Date.now() + 120_000).toISOString();
+  const runMarker = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   const { data: claimed } = await ctx.supabase
     .from("conversations")
-    .update({ ai_processing_until: lockUntil })
+    .update({ ai_processing_until: lockUntil, ai_run_marker: runMarker })
     .eq("id", ctx.conversation.id)
     .or(`ai_processing_until.is.null,ai_processing_until.lt.${nowIso}`)
     .select("id")
     .maybeSingle();
   if (!claimed) {
+    // Atendimento em andamento: invalida a execução corrente (interrupt) e
+    // agenda o reprocessamento com TODAS as mensagens num turno único.
     await ctx.supabase
       .from("conversations")
-      .update({ ai_pending: true })
+      .update({
+        ai_pending: true,
+        ai_run_marker: `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+      })
       .eq("id", ctx.conversation.id);
     return json({ ok: true, skipped: "already_processing" });
   }
 
   try {
-    return await handleRespondLocked(ctx);
+    return await handleRespondLocked(ctx, runMarker);
   } finally {
     await releaseProcessingLock(ctx);
   }
+}
+
+/** Execução foi superada por mensagem mais recente? (interrupt & merge) */
+async function isRunStale(ctx: AgentContext, marker: string): Promise<boolean> {
+  const { data: c } = await ctx.supabase
+    .from("conversations")
+    .select("ai_run_marker")
+    .eq("id", ctx.conversation.id)
+    .limit(1)
+    .maybeSingle();
+  return (c?.ai_run_marker ?? marker) !== marker;
 }
 
 async function releaseProcessingLock(ctx: AgentContext): Promise<void> {
@@ -207,7 +224,7 @@ async function releaseProcessingLock(ctx: AgentContext): Promise<void> {
   } catch { /* fire and forget */ }
 }
 
-async function handleRespondLocked(ctx: AgentContext): Promise<Response> {
+async function handleRespondLocked(ctx: AgentContext, runMarker: string): Promise<Response> {
   if (!ctx.apiKey) {
     await logAi(ctx, { success: false, error_message: "Sem token OpenRouter configurado" });
     return json({ ok: true, skipped: "no_api_key" });
@@ -221,7 +238,27 @@ async function handleRespondLocked(ctx: AgentContext): Promise<Response> {
   await tryCaptureName(ctx);
   const systemPrompt = buildSystemPrompt(ctx);
   const history = await buildHistory(ctx);
+
+  // Interrupt: mensagem nova chegou durante o histórico/transcrição — descarta
+  // este turno ANTES de gastar LLM; o reprocessamento envia a resposta única.
+  if (await isRunStale(ctx, runMarker)) {
+    await logAi(ctx, { success: true, error_message: "superseded_antes_do_llm", response_time_ms: Date.now() - startedAt });
+    return json({ ok: true, skipped: "superseded_before_llm" });
+  }
+
   let result = await runWithStallRecovery(ctx, systemPrompt, history, await runAgentLoop(ctx, systemPrompt, history));
+
+  // Interrupt: resposta gerada mas mensagem nova chegou — descarta sem enviar
+  if (await isRunStale(ctx, runMarker)) {
+    await logAi(ctx, {
+      success: true,
+      error_message: "superseded_resposta_descartada",
+      input_tokens: result.inputTokens,
+      output_tokens: result.outputTokens,
+      response_time_ms: Date.now() - startedAt,
+    });
+    return json({ ok: true, skipped: "superseded_after_llm" });
+  }
 
   if (result.error) {
     await logAi(ctx, {
@@ -253,6 +290,17 @@ async function handleRespondLocked(ctx: AgentContext): Promise<Response> {
 
   const parts = splitMessageParts(finalText);
   let sent = 0;
+  // Interrupt: última chance antes de enviar — nunca entrega resposta superada
+  if (await isRunStale(ctx, runMarker)) {
+    await logAi(ctx, {
+      success: true,
+      error_message: "superseded_resposta_descartada",
+      input_tokens: 0,
+      output_tokens: 0,
+      response_time_ms: Date.now() - startedAt,
+    });
+    return json({ ok: true, skipped: "superseded_before_send" });
+  }
   for (const part of parts) {
     try {
       await sendText(ctx, part);
@@ -341,6 +389,27 @@ serve(async (req) => {
         .limit(1)
         .maybeSingle();
       if (userProfile?.tenant_id !== ctx.tenantId) return json({ error: "Forbidden" }, 403);
+    }
+
+    // Bloqueio de assinatura: vencimento + carência global + prazo extra
+    // da empresa — agente de IA não responde até o pagamento ser confirmado
+    const { data: subTenant } = await supabase
+      .from("tenants")
+      .select("subscription_due_date, subscription_extra_days")
+      .eq("id", ctx.tenantId)
+      .maybeSingle();
+    if (subTenant?.subscription_due_date) {
+      const { data: asaasCfg } = await supabase
+        .from("asaas_config")
+        .select("subscription_grace_days")
+        .limit(1)
+        .maybeSingle();
+      const grace =
+        (asaasCfg?.subscription_grace_days ?? 7) + (subTenant.subscription_extra_days ?? 0);
+      const deadline = new Date(subTenant.subscription_due_date).getTime() + grace * 86400000;
+      if (Date.now() > deadline) {
+        return json({ ok: true, blocked: "subscription_overdue" });
+      }
     }
 
     return await handleRespond(ctx);
