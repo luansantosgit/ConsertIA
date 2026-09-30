@@ -77,9 +77,9 @@ async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessageP
         : row.media_type === "image" ? "uma imagem"
         : row.media_type === "video" || row.media_type === "ptv" ? "um vídeo"
         : "um documento";
-      // Última mídia do cliente: transcreve agora (consome cota do plano) e persiste.
-      // Mídias antigas: usa a transcrição já salva (se houver) — nunca re-transcreve.
-      if (isLast && role === "user" && row.media_url && !row.media_transcription) {
+      // Mídias recentes sem transcrição: transcreve agora (consome cota) e persiste.
+      // Mídias antigas: usa a transcrição já salva — nunca re-transcreve.
+      if (index >= recent.length - FULL_KEEP && role === "user" && row.media_url && row.media_type && !row.media_transcription) {
         const transcription = await transcribeMedia(ctx, row.media_url, row.media_type);
         if (transcription?.text) {
           row.media_transcription = transcription.text;
