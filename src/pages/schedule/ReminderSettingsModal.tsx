@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth.store';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { CalendarEventType } from '@/types';
-
 const ALL_EVENT_TYPES: CalendarEventType[] = ['os', 'delivery', 'meeting', 'reminder', 'other'];
 
 const TYPE_LABELS: Record<CalendarEventType, string> = {
@@ -20,14 +19,16 @@ const HOUR_OPTIONS = [0, 1, 2, 4, 12, 24];
 interface ReminderSettingsModalProps {
   hours: number;
   eventTypes: CalendarEventType[];
+  durationMinutes: number;
   onClose: () => void;
-  onSaved: (hours: number, eventTypes: CalendarEventType[]) => void;
+  onSaved: (hours: number, eventTypes: CalendarEventType[], durationMinutes: number) => void;
 }
 
-export const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ hours, eventTypes, onClose, onSaved }) => {
+export const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ hours, eventTypes, durationMinutes, onClose, onSaved }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const [leadHours, setLeadHours] = useState(hours);
+  const [duration, setDuration] = useState(durationMinutes || 60);
   const [types, setTypes] = useState<CalendarEventType[]>(
     eventTypes.length > 0 ? eventTypes : [...ALL_EVENT_TYPES]
   );
@@ -45,10 +46,14 @@ export const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ ho
       const active = types.length > 0 ? types : [...ALL_EVENT_TYPES];
       const { error: upsertError } = await supabase
         .from('tenant_settings')
-        .update({ schedule_confirmation_hours: leadHours || null, confirmation_event_types: active })
+        .update({
+          schedule_confirmation_hours: leadHours || null,
+          confirmation_event_types: active,
+          appointment_duration_minutes: duration,
+        })
         .eq('tenant_id', user?.tenantId ?? '');
       if (upsertError) throw upsertError;
-      onSaved(leadHours, active);
+      onSaved(leadHours, active, duration);
       onClose();
     } catch (err) {
       console.error('Failed to save reminder settings:', err);
@@ -84,7 +89,7 @@ export const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ ho
 
           <div className="form-group">
             <label className="form-label">{t('Quais eventos disparam o lembrete')}</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 4 }}>
               {ALL_EVENT_TYPES.map(type => {
                 const checked = types.includes(type);
                 return (
@@ -95,6 +100,22 @@ export const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ ho
                 );
               })}
             </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">{t('Duração da janela de manutenção')}</label>
+            <select
+              className="select"
+              value={duration}
+              onChange={e => setDuration(Number(e.target.value))}
+            >
+              {[15, 30, 60, 90, 120].map(m => (
+                <option key={m} value={m}>{m < 60 ? `${m} minutos` : m === 60 ? '1 hora' : `${m / 60} horas`}</option>
+              ))}
+            </select>
+            <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 6 }}>
+              {t('Tempo reservado na agenda para cada manutenção (a IA e a remarcação usam esta janela). Padrão: 1 hora.')}
+            </p>
           </div>
 
           {error && <p style={{ fontSize: '0.8125rem', color: 'var(--danger)' }}>{error}</p>}

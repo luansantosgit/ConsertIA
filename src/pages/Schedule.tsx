@@ -32,6 +32,9 @@ interface CalEvent {
   type: CalendarEventType;
   color: string;
   status?: AppointmentStatus;
+  problem?: string;
+  equipment?: string;
+  budget?: number | null;
 }
 
 function localDateStr(d: Date): string {
@@ -53,6 +56,11 @@ function toCalEvent(ev: CalendarEvent): CalEvent {
     type: ev.type,
     color: ev.color || EVENT_COLORS[ev.type] || '#6b7280',
     status: ev.status,
+    problem: ev.os?.subject,
+    equipment: ev.os?.equipment
+      ? [ev.os.equipment.brand, ev.os.equipment.model].filter(Boolean).join(' ') || ev.os.equipment.type || ''
+      : '',
+    budget: ev.os?.budget_amount ?? null,
   };
 }
 
@@ -79,6 +87,7 @@ export const Schedule: React.FC = () => {
   const [showReminderSettings, setShowReminderSettings] = useState(false);
   const [reminderHours, setReminderHours] = useState(0);
   const [reminderTypes, setReminderTypes] = useState<CalendarEventType[]>([]);
+  const [durationMin, setDurationMin] = useState(60);
   const [selected, setSelected] = useState<AppointmentTarget | null>(null);
   const [form, setForm] = useState<EventFormState>({ title: '', customer: '', technician: '', date: todayStr, startTime: '09:00', endTime: '10:00', type: 'os' });
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -118,11 +127,12 @@ export const Schedule: React.FC = () => {
       try {
         const { data } = await supabase
           .from('tenant_settings')
-          .select('schedule_confirmation_hours, confirmation_event_types')
+          .select('schedule_confirmation_hours, confirmation_event_types, appointment_duration_minutes')
           .eq('tenant_id', user?.tenantId ?? '')
           .maybeSingle();
         setReminderHours(data?.schedule_confirmation_hours ?? 0);
         setReminderTypes((data?.confirmation_event_types ?? []) as CalendarEventType[]);
+        setDurationMin(data?.appointment_duration_minutes ?? 60);
       } catch (err) {
         console.error('Failed to load reminder settings:', err);
       }
@@ -166,14 +176,24 @@ export const Schedule: React.FC = () => {
 
   const handleReschedule = async (eventId: string, date: string, startTime: string) => {
     const [h, m] = startTime.split(':').map(Number);
-    const endMin = ((h * 60 + m + 60) % 1440);
+    const endMin = (h * 60 + m + durationMin) % 1440;
     const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
     await repository.update(eventId, { date, start_time: startTime, end_time: endTime, status: 'rescheduled' });
     await fetchEvents();
   };
 
   const openActions = (ev: CalEvent) => {
-    setSelected({ id: ev.id, title: ev.title, customer: ev.customer, date: ev.date, startTime: ev.startTime, status: ev.status });
+    setSelected({
+      id: ev.id,
+      title: ev.title,
+      customer: ev.customer,
+      date: ev.date,
+      startTime: ev.startTime,
+      status: ev.status,
+      problem: ev.problem,
+      equipment: ev.equipment,
+      budget: ev.budget,
+    });
   };
 
   const todayEvents = eventsOnDay(TODAY);
@@ -252,6 +272,11 @@ export const Schedule: React.FC = () => {
                       >
                         <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: c, marginBottom: 1 }}>{ev.startTime} – {ev.endTime}</p>
                         <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
+                        {(ev.equipment || ev.problem) && (
+                          <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {ev.equipment}{ev.equipment && ev.problem ? ' · ' : ''}{ev.problem}
+                          </p>
+                        )}
                         {ev.customer && <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{ev.customer}</p>}
                       </div>
                     );
@@ -298,6 +323,7 @@ export const Schedule: React.FC = () => {
       {showModal && (
         <EventFormModal
           form={form}
+          durationMinutes={durationMin}
           onChange={patch => setForm(f => ({ ...f, ...patch }))}
           onClose={() => setShowModal(false)}
           onSave={handleSave}
@@ -317,8 +343,9 @@ export const Schedule: React.FC = () => {
         <ReminderSettingsModal
           hours={reminderHours}
           eventTypes={reminderTypes}
+          durationMinutes={durationMin}
           onClose={() => setShowReminderSettings(false)}
-          onSaved={(h, types) => { setReminderHours(h); setReminderTypes(types); }}
+          onSaved={(h, types, dur) => { setReminderHours(h); setReminderTypes(types); setDurationMin(dur); }}
         />
       )}
       </>

@@ -150,7 +150,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     supabase.from("ai_diagnosis_settings").select("*").eq("tenant_id", tenantId).limit(1).maybeSingle(),
     supabase.from("ai_device_coverage").select("device_type, brands, active").eq("tenant_id", tenantId).eq("active", true),
     supabase.from("ai_pre_quote_templates").select("id, title, type, content, media_url, sort_order").eq("tenant_id", tenantId).eq("active", true).order("sort_order"),
-    supabase.from("tenant_settings").select("company_name, timezone, language, business_hours, address, phone").eq("tenant_id", tenantId).limit(1).maybeSingle(),
+    supabase.from("tenant_settings").select("company_name, timezone, language, business_hours, address, phone, appointment_duration_minutes").eq("tenant_id", tenantId).limit(1).maybeSingle(),
   ]);
 
   if (!agentRes.data) return null;
@@ -254,6 +254,9 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     period: currentPeriod(settingsRes.data?.timezone || "America/Sao_Paulo"),
     timezone: settingsRes.data?.timezone || "America/Sao_Paulo",
     businessHours: normalizeBusinessHours(settingsRes.data?.business_hours),
+    appointmentDurationMinutes: Number(settingsRes.data?.appointment_duration_minutes) > 0
+      ? Number(settingsRes.data.appointment_duration_minutes)
+      : 60,
     uazapiBase,
     connectionToken,
     allowedValues: new Set<number>(),
