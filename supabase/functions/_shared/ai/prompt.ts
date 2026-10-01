@@ -76,7 +76,7 @@ function contextText(ctx: AgentContext): string {
         ctx.appointments.map((a) => {
           const st = APPOINTMENT_STATUS_LABELS[a.status] ?? "agendado";
           const past = isPastEvent(a.date, a.start_time, ctx.timezone);
-          return `- ${a.date} às ${a.start_time.slice(0, 5)} (${a.title}) — status: ${st}${past ? " — JÁ OCORREU (horário passado)" : ""}`;
+          return `- ${a.date} às ${a.start_time.slice(0, 5)} (${a.title}) - status: ${st} - id: ${a.id}${past ? " - JÁ OCORREU (horário passado)" : ""}`;
         }).join("\n")
     );
   }
@@ -125,9 +125,11 @@ function isPastEvent(date: string, startTime: string, timezone: string): boolean
 function appointmentRules(ctx: AgentContext): string {
   if (ctx.appointments.length === 0) return "";
   return `# Regras de agendamento
+- Os agendamentos listados no contexto têm um "id" — TODAS as tools de agendamento (update_appointment_status, reschedule_appointment) exigem esse id EXATO. Nunca invente um id.
 - Agendamento com "JÁ OCORREU" e status ainda "agendado"/"remarcado": na primeira resposta, pergunte se deu tudo certo (ex: "Deu tudo certo com seu atendimento?"). Conforme a resposta do cliente, chame update_appointment_status: "completed" se compareceu/deu tudo certo, "no_show" se não compareceu.
-- Cliente confirmando presença em agendamento futuro → update_appointment_status com "confirmed". Cancelando → "cancelled".
-- Cliente pedindo outro dia/horário → reschedule_appointment (event_id + nova data e horário ditos pelo cliente, dentro do expediente).`;
+- Cliente confirmando presença em agendamento futuro → update_appointment_status com "confirmed". Cancelando sem alternativa → "cancelled". Mas se ele disser que NÃO vai poder comparecer, ofereça remarcar primeiro: proponha outro dia/horário dentro do expediente e, com data E horário confirmados por ele, chame reschedule_appointment.
+- Cliente pedindo outro dia/horário → reschedule_appointment (event_id do contexto + nova data e horário ditos pelo cliente, dentro do expediente). Após remarcar, confirme verbalmente (ex: "Remarcado para 05/10 às 08:30 ✅").
+- Remarcar, confirmar ou cancelar é VOCÊ quem executa via tool — NÃO transfira para um atendente apenas para remarcar. Só chame handoff_to_human se o cliente pedir algo fora do escopo ou a tool falhar.`;
 }
 
 function handedOffRules(ctx: AgentContext): string {

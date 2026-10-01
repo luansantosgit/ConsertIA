@@ -460,7 +460,7 @@ async function updateAppointmentStatus(ctx: AgentContext, args: any): Promise<To
     .eq("tenant_id", ctx.tenantId)
     .select("id, date, start_time")
     .maybeSingle();
-  if (error || !ev) return { ok: false, error: "Agendamento não encontrado." };
+  if (error || !ev) return { ok: false, error: "Agendamento não encontrado: use o campo id EXATO listado no contexto (Agendamentos). Não tente outros ids." };
   return {
     ok: true,
     status,
@@ -494,7 +494,7 @@ async function rescheduleAppointment(ctx: AgentContext, args: any): Promise<Tool
     .eq("tenant_id", ctx.tenantId)
     .select("id, title")
     .maybeSingle();
-  if (error || !ev) return { ok: false, error: "Agendamento não encontrado." };
+  if (error || !ev) return { ok: false, error: "Agendamento não encontrado: use o campo id EXATO listado no contexto (Agendamentos). Não tente outros ids." };
 
   const [y, m, d] = date.split("-");
   const brDate = `${d}/${m}/${y}`;
