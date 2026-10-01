@@ -62,13 +62,39 @@ async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessageP
   const recent = (rows ?? []).slice(-limit) as HistoryRow[];
   const FULL_KEEP = 6;
 
+  // Transcreve em PARALELO todas as mídias recentes sem transcrição (cada uma
+  // persistida — antigas nunca re-transcrevem). Ganha tempo na rajada de mídias.
+  const pendingMedias = recent
+    .map((row, index) => ({ row, index }))
+    .filter(({ row, index }) =>
+      index >= recent.length - FULL_KEEP &&
+      !(row.sender_type === "ai" || (row.sender_type === null && row.direction === "outbound")) &&
+      row.media_url && row.media_type && !row.media_transcription);
+  if (pendingMedias.length > 0) {
+    const settled = await Promise.all(
+      pendingMedias.map(async ({ row }) => ({
+        row,
+        t: await transcribeMedia(ctx, row.media_url!, row.media_type),
+      }))
+    );
+    await Promise.all(settled.map(async ({ row, t }) => {
+      if (!t?.text) return;
+      row.media_transcription = t.text;
+      await ctx.supabase
+        .from("messages")
+        .update({ media_transcription: t.text })
+        .eq("conversation_id", ctx.conversation.id)
+        .eq("media_url", row.media_url!)
+        .is("media_transcription", "null");
+    }));
+  }
+
   const out: ChatMessagePayload[] = [];
 
   for (let index = 0; index < recent.length; index++) {
     const row = recent[index];
     const isAi = row.sender_type === "ai" || (row.sender_type === null && row.direction === "outbound");
     const role: "assistant" | "user" = isAi ? "assistant" : "user";
-    const isLast = index === recent.length - 1;
     const maxChars = index >= recent.length - FULL_KEEP ? 400 : 160;
     let content = (row.content ?? "").substring(0, maxChars);
 
@@ -77,20 +103,6 @@ async function buildHistory(ctx: AgentContext, limit = 12): Promise<ChatMessageP
         : row.media_type === "image" ? "uma imagem"
         : row.media_type === "video" || row.media_type === "ptv" ? "um vídeo"
         : "um documento";
-      // Mídias recentes sem transcrição: transcreve agora (consome cota) e persiste.
-      // Mídias antigas: usa a transcrição já salva — nunca re-transcreve.
-      if (index >= recent.length - FULL_KEEP && role === "user" && row.media_url && row.media_type && !row.media_transcription) {
-        const transcription = await transcribeMedia(ctx, row.media_url, row.media_type);
-        if (transcription?.text) {
-          row.media_transcription = transcription.text;
-          await ctx.supabase
-            .from("messages")
-            .update({ media_transcription: transcription.text })
-            .eq("conversation_id", ctx.conversation.id)
-            .eq("media_url", row.media_url)
-            .is("media_transcription", "null");
-        }
-      }
       content = row.media_transcription
         ? `[Cliente enviou ${label}: ${row.media_transcription}]`
         : `[Cliente enviou ${label}${content ? `: ${content}` : ""}]`;
