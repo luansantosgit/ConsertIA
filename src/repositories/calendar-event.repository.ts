@@ -26,7 +26,7 @@ export class CalendarEventRepository extends BaseSupabaseRepository<CalendarEven
   async getAll(filters?: CalendarEventFilters): Promise<CalendarEvent[]> {
     let query = supabase
       .from(this.tableName)
-      .select('*')
+      .select('*, os:service_orders(subject, description, budget_amount, equipment:equipment(type, brand, model))')
       .eq('tenant_id', this.tenantId);
 
     if (filters?.search) {

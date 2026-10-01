@@ -12,6 +12,9 @@ export interface AppointmentTarget {
   date: string;
   startTime: string;
   status?: AppointmentStatus;
+  problem?: string;
+  equipment?: string;
+  budget?: number | null;
 }
 
 interface EventActionsModalProps {
@@ -59,6 +62,36 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({ event, onC
             {event.customer ? ` · ${event.customer}` : ''}
           </div>
           {statusBadge}
+
+          {(event.problem || event.equipment || event.budget != null) && (
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 6,
+              padding: '10px 14px', borderRadius: 10,
+              background: 'var(--input-bg, #f8fafc)', border: '1px solid var(--border)',
+              fontSize: '0.8125rem',
+            }}>
+              {event.problem && (
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Problema: </span>
+                  <span style={{ color: 'var(--text-primary)' }}>{event.problem}</span>
+                </div>
+              )}
+              {event.equipment && (
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Aparelho: </span>
+                  <span style={{ color: 'var(--text-primary)' }}>{event.equipment}</span>
+                </div>
+              )}
+              {event.budget != null && (
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Valor: </span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
+                    R$ {event.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <button className="btn btn-secondary btn-sm" disabled={loading || event.status === 'confirmed'} onClick={() => run(() => onUpdateStatus(event.id, 'confirmed'))}>

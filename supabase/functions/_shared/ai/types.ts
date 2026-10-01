@@ -113,6 +113,7 @@ export interface AgentContext {
   tokenLimit: number;
   effectiveModel?: string;
   transcriptionModel?: string;
+  appointmentDurationMinutes?: number;
   period: string;
   timezone: string;
   businessHours: BusinessHoursConfig;

@@ -227,6 +227,13 @@ export interface CalendarEvent {
   status?: AppointmentStatus;
   confirmation_asked_at?: string;
   created_at: string;
+  /** Detalhes da OS vinculada (join na leitura — não é coluna) */
+  os?: {
+    subject?: string;
+    description?: string;
+    budget_amount?: number | null;
+    equipment?: { type?: string; brand?: string; model?: string } | null;
+  } | null;
 }
 
 export type CalendarEventType = 'os' | 'delivery' | 'meeting' | 'reminder' | 'other';

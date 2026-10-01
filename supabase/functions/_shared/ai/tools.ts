@@ -381,9 +381,9 @@ function normalizeTime(value: string): string {
   return value.toString().slice(0, 5);
 }
 
-function addHour(hhmm: string): string {
+function addMinutes(hhmm: string, minutes: number): string {
   const [h, m] = hhmm.split(":").map(Number);
-  const total = (h * 60 + m + 60) % (24 * 60);
+  const total = (h * 60 + m + minutes) % (24 * 60);
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
@@ -408,7 +408,7 @@ async function scheduleEvent(ctx: AgentContext, args: any): Promise<ToolResult> 
     };
   }
 
-  const endTime = addHour(startTime);
+  const endTime = addMinutes(startTime, ctx.appointmentDurationMinutes ?? 60);
 
   const { data: event, error } = await ctx.supabase
     .from("calendar_events")
@@ -486,7 +486,7 @@ async function rescheduleAppointment(ctx: AgentContext, args: any): Promise<Tool
     };
   }
 
-  const endTime = addHour(startTime);
+  const endTime = addMinutes(startTime, ctx.appointmentDurationMinutes ?? 60);
   const { data: ev, error } = await ctx.supabase
     .from("calendar_events")
     .update({ date, start_time: startTime, end_time: endTime, status: "rescheduled", confirmation_asked_at: null })

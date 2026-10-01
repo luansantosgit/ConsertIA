@@ -15,13 +15,27 @@ export interface EventFormState {
 
 interface EventFormModalProps {
   form: EventFormState;
+  durationMinutes?: number;
   onChange: (patch: Partial<EventFormState>) => void;
   onClose: () => void;
   onSave: () => void;
 }
 
-export const EventFormModal: React.FC<EventFormModalProps> = ({ form, onChange, onClose, onSave }) => {
+export const EventFormModal: React.FC<EventFormModalProps> = ({ form, durationMinutes = 60, onChange, onClose, onSave }) => {
   const { t } = useTranslation();
+
+  const handleStartChange = (value: string) => {
+    const [h, m] = value.split(':').map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) {
+      onChange({ startTime: value });
+      return;
+    }
+    const end = (h * 60 + m + durationMinutes) % 1440;
+    onChange({
+      startTime: value,
+      endTime: `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`,
+    });
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -58,7 +72,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ form, onChange, 
             </div>
             <div className="form-group">
               <label className="form-label">{t('Início')}</label>
-              <input className="input" type="time" value={form.startTime} onChange={e => onChange({ startTime: e.target.value })} />
+              <input className="input" type="time" value={form.startTime} onChange={e => handleStartChange(e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">{t('Fim')}</label>
