@@ -60,12 +60,12 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     expect(prompt).toContain('NÃO pule a recepção');
   });
 
-  it('cliente retornado (histórico) também recebe a saudação com nome e empresa', () => {
+  it('retomada na mesma conversa nao repete a apresentacao', () => {
     const prompt = buildSystemPrompt(mockCtx({ isFirstContact: false }));
     expect(prompt).toContain('assistente de suporte da TechFix');
     expect(prompt).toContain('Ana');
-    expect(prompt).toContain('novamente da TechFix');
-    expect(prompt).toContain('que bom ter você de volta');
+    expect(prompt).toContain('VOCÊ JÁ ATENDEU ESTA CONVERSA');
+    expect(prompt).not.toContain('novamente da TechFix');
   });
 
   it('saudação usa a frase exata do período atual', () => {
