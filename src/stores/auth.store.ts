@@ -20,6 +20,9 @@ interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  // true quando initSession terminou (boot) — gates evitam queries com
+  // tenantId vazio antes da sessao restaurar
+  authReady: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -46,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      authReady: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });
@@ -72,7 +76,7 @@ export const useAuthStore = create<AuthState>()(
         }
 
         const user = mapUser(profile);
-        set({ user, isAuthenticated: true, isLoading: false });
+        set({ user, isAuthenticated: true, isLoading: false, authReady: true });
         return { success: true };
       },
 
@@ -90,7 +94,7 @@ export const useAuthStore = create<AuthState>()(
         if (!profile) return;
 
         const user = mapUser(profile);
-        set({ user, isAuthenticated: true });
+        set({ user, isAuthenticated: true, authReady: true });
       },
 
       initSession: async () => {
@@ -99,18 +103,19 @@ export const useAuthStore = create<AuthState>()(
         const sessionUser = sessionData.session?.user;
 
         if (!sessionUser) {
-          set({ isLoading: false });
+          // Sem sessao valida: descarta usuario persistido (token expirado)
+          set({ isLoading: false, authReady: true, user: null, isAuthenticated: false });
           return;
         }
 
         const profile = await fetchUserProfile(sessionUser.id);
         if (!profile) {
-          set({ isLoading: false });
+          set({ isLoading: false, authReady: true, user: null, isAuthenticated: false });
           return;
         }
 
         const user = mapUser(profile);
-        set({ user, isAuthenticated: true, isLoading: false });
+        set({ user, isAuthenticated: true, isLoading: false, authReady: true });
       },
     }),
     {

@@ -7,10 +7,12 @@ import { MessageActions } from './MessageActions';
 import { StatusCheck } from './StatusCheck';
 import { MediaContent } from './MediaContent';
 import { MessageOSCard } from './MessageOSCard';
+import { highlightText } from './highlight';
 
 interface MessageBubbleProps {
   msg: ChatMessage;
   hovered: boolean;
+  highlight?: string;
   quoted?: ChatMessage;
   contactAvatar?: string;
   osList: OSRow[];
@@ -27,6 +29,7 @@ interface MessageBubbleProps {
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   msg,
   hovered,
+  highlight = '',
   quoted,
   contactAvatar,
   osList,
@@ -55,7 +58,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     setEditing(false);
   };
 
-  const actionsNode = (
+  const actionsNode = msg.deleted ? null : (
     <MessageActions
       msg={msg}
       hovered={hovered}
@@ -140,11 +143,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
           )}
 
-          {msg.deleted ? (
-            <p style={{ fontSize: '0.8125rem', lineHeight: 1.5, fontStyle: 'italic', opacity: 0.6 }}>
-              Mensagem apagada
+          {msg.deleted && (
+            <p style={{
+              fontSize: '0.625rem', fontWeight: 700, fontStyle: 'italic',
+              color: 'var(--danger)', margin: '0 0 4px',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              🚫 Mensagem apagada — conteúdo preservado para auditoria
             </p>
-          ) : editing ? (
+          )}
+          {editing ? (
             <div>
               <input
                 className="input"
@@ -164,7 +172,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               {isMedia && <MediaContent msg={msg} onFetchMedia={onFetchMedia} />}
               {showText && (
                 <p style={{ fontSize: '0.875rem', lineHeight: 1.5 }}>
-                  {msg.text}
+                  {highlightText(msg.text, highlight)}
                   {msg.edited && <span style={{ fontSize: '0.6875rem', opacity: 0.6, marginLeft: 4 }}>(editada)</span>}
                 </p>
               )}

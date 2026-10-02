@@ -2,10 +2,15 @@ import React, { useState } from 'react';
 import { Zap, X, Reply, Paperclip } from 'lucide-react';
 import type { OSRow } from '@/components/OSModal';
 import type { ChatMessage, ConvRow } from './types';
+import type { QuickReply } from '@/repositories/quick-reply.repository';
 import { ChatHeader } from './ChatHeader';
+import { ChatSearchBar } from './ChatSearchBar';
+import { useChatSearch } from './useChatSearch';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { ChatEmptyState } from './ChatEmptyState';
+import { QuickReplyPicker } from './QuickReplyPicker';
+import { OSPickerModal } from './OSPickerModal';
 
 interface ChatAreaProps {
   selected: ConvRow | undefined;
@@ -33,6 +38,10 @@ interface ChatAreaProps {
   onDelete: (messageId: string) => void;
   onForward: (message: ChatMessage) => void;
   onFetchMedia: (messageId: string) => void;
+  quickReplies: QuickReply[];
+  onSendQuickReply: (reply: QuickReply) => void;
+  onSendOSCard: (os: OSRow) => void;
+  onAttachMedia: (files: File[], caption?: string) => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -61,9 +70,43 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onDelete,
   onForward,
   onFetchMedia,
+  quickReplies,
+  onSendQuickReply,
+  onSendOSCard,
+  onAttachMedia,
 }) => {
   const [dragOver, setDragOver] = useState(false);
   const dragDepthRef = React.useRef(0);
+
+  // Respostas rápidas: "/" no início do input abre o picker
+  const [osPickerOpen, setOsPickerOpen] = useState(false);
+  const slashQuery = inputText.startsWith('/') ? inputText.slice(1) : null;
+
+  // Como no WhatsApp: resposta ÚNICA vai para o input conferir antes de
+  // enviar; sequências (2+ partes) saem direto com cadência de 1,5s
+  const pickQuickReply = (reply: QuickReply) => {
+    onInputChange('');
+    const single = reply.parts.length === 1 ? reply.parts[0] : null;
+    if (single?.type === 'text') {
+      onInputChange(single.text);
+      return;
+    }
+    if (single?.type === 'media' && single.url) {
+      const part = single;
+      fetch(part.url)
+        .then(r => r.blob())
+        .then(blob => {
+          const ext = part.url.split('.').pop()?.split('?')[0] || 'bin';
+          onAttachMedia([new File([blob], `midia.${ext}`, { type: blob.type || 'application/octet-stream' })], part.caption);
+        })
+        .catch(() => {});
+      return;
+    }
+    onSendQuickReply(reply);
+  };
+
+  // Busca na conversa (ocorrências + navegação)
+  const search = useChatSearch(currentMessages, selected?.id);
 
   const extractFiles = (dt: DataTransfer | null): File[] =>
     dt ? Array.from(dt.files || []) : [];
@@ -106,9 +149,23 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       <ChatHeader
         selected={selected}
         isRightPanelOpen={isRightPanelOpen}
+        searchOpen={search.searchOpen}
+        onToggleSearch={search.toggleSearch}
         onOpenOSModal={onOpenOSModal}
         onToggleRightPanel={onToggleRightPanel}
       />
+
+      {search.searchOpen && (
+        <ChatSearchBar
+          query={search.searchQuery}
+          onQueryChange={search.setSearchQuery}
+          matchCount={search.matchCount}
+          matchIndex={search.matchIndex}
+          onPrev={search.prevMatch}
+          onNext={search.nextMatch}
+          onClose={search.closeSearch}
+        />
+      )}
 
       {selected?.aiSuggestion && !suggestionDismissed && (
         <div style={{
@@ -142,6 +199,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         loadingMessages={loadingMessages}
         selectedId={selected?.id || ''}
         contactAvatar={selected?.contactAvatar}
+        highlight={search.searchOpen ? search.searchQuery : ''}
+        activeMessageId={search.searchOpen ? search.activeMatchId : null}
         onViewPdfOS={onViewPdfOS}
         onReact={onReact}
         onMention={onMention}
@@ -150,6 +209,16 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         onForward={onForward}
         onFetchMedia={onFetchMedia}
       />
+
+      {slashQuery !== null && (
+        <QuickReplyPicker
+          query={slashQuery}
+          replies={quickReplies}
+          onPick={pickQuickReply}
+          onPickOS={() => { onInputChange(''); setOsPickerOpen(true); }}
+          onClose={() => onInputChange('')}
+        />
+      )}
 
       {quotedMessage && (
         <div style={{
@@ -190,6 +259,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         onSendFile={onSendFile}
         onSendAudio={onSendAudio}
         onFilesAdded={onFilesAdded}
+      />
+
+      <OSPickerModal
+        open={osPickerOpen}
+        osList={currentClientOSList}
+        onClose={() => setOsPickerOpen(false)}
+        onSendOS={onSendOSCard}
       />
 
       {dragOver && (

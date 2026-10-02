@@ -6,6 +6,7 @@ interface MediaSendModalProps {
   files: File[];
   onSend: (files: File[], caption?: string) => void;
   onClose: () => void;
+  initialCaption?: string;
 }
 
 function previewFor(file: File): { url: string; kind: 'image' | 'video' | 'other' } {
@@ -19,6 +20,7 @@ export const MediaSendModal: React.FC<MediaSendModalProps> = ({
   files,
   onSend,
   onClose,
+  initialCaption,
 }) => {
   const [working, setWorking] = useState<File[]>([]);
   const [caption, setCaption] = useState('');
@@ -26,9 +28,10 @@ export const MediaSendModal: React.FC<MediaSendModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setWorking(files);
-      setCaption('');
+      // Resposta rápida com legenda: pré-preenche para conferência
+      setCaption(initialCaption ?? '');
     }
-  }, [isOpen, files]);
+  }, [isOpen, files, initialCaption]);
 
   if (!isOpen || working.length === 0) return null;
 

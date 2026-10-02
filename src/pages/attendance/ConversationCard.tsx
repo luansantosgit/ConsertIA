@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Pin, PinOff, MailX, MailOpen, Users, Bot, UserCheck } from 'lucide-react';
+import React from 'react';
+import { Pin, Users, Bot, UserCheck } from 'lucide-react';
 import type { ConvRow } from './types';
 import { timeAgo } from './types';
+import { ConversationMenu } from './ConversationMenu';
 
 // React.memo: com 500/1000+ chats, re-renderiza apenas a card cuja row mudou
 // (callbacks do pai sao estaveis via useCallback e a identidade da row so muda
@@ -21,33 +22,6 @@ export const ConversationCard = React.memo(function ConversationCard({
   onTogglePin: (convId: string) => void;
   onAiClick: (conv: ConvRow) => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
-
-  const markUnread = (toUnread: boolean) => {
-    if (!toUnread) return;
-    onMarkUnread(conv.id);
-    setMenuOpen(false);
-  };
-
-  const itemStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-    padding: '8px 12px', background: 'none', border: 'none',
-    cursor: 'pointer', fontSize: '0.75rem', color: 'var(--text-primary)',
-    whiteSpace: 'nowrap', textAlign: 'left',
-  };
-
   return (
     <div
       onClick={() => onSelect(conv)}
@@ -143,59 +117,9 @@ export const ConversationCard = React.memo(function ConversationCard({
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-          <button
-            onClick={() => setMenuOpen(v => !v)}
-            title="Opções da conversa"
-            aria-label="Opções da conversa"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 2,
-              borderRadius: 6, color: 'var(--text-muted)', opacity: menuOpen ? 1 : 0.35,
-              transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = menuOpen ? '1' : '0.35')}
-          >
-            <Settings size={14} />
-          </button>
-
-        {menuOpen && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            background: '#fff',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            zIndex: 30,
-            minWidth: 190,
-            overflow: 'hidden',
-            marginTop: 4,
-          }}>
-            <button
-              onClick={() => markUnread(conv.unread_count === 0)}
-              style={itemStyle}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-            >
-              {conv.unread_count > 0
-                ? <><MailOpen size={13} /> Marcar como lida</>
-                : <><MailX size={13} /> Marcar como não lida</>}
-            </button>
-            <button
-              onClick={() => { onTogglePin(conv.id); setMenuOpen(false); }}
-              style={itemStyle}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-            >
-              {conv.pinned
-                ? <><PinOff size={13} /> Desafixar do topo</>
-                : <><Pin size={13} /> Fixar no topo</>}
-            </button>
-          </div>
-        )}
-        </div>
+        {/* Portal + fixed: imune ao clipping da lista e aos stacking contexts
+            dos cards com content-visibility */}
+        <ConversationMenu conv={conv} onMarkUnread={onMarkUnread} onTogglePin={onTogglePin} />
 
         {conv.ai_state && conv.ai_state !== 'off' && (
           <button

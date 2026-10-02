@@ -12,6 +12,8 @@ interface MessageListProps {
   selectedId: string;
   contactAvatar?: string;
   agentName?: string;
+  highlight?: string;
+  activeMessageId?: string | null;
   onViewPdfOS: (os: OSRow) => void;
   onReact: (messageId: string, emoji: string) => void;
   onMention: (msg: ChatMessage) => void;
@@ -28,6 +30,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   selectedId,
   contactAvatar,
   agentName,
+  highlight = '',
+  activeMessageId = null,
   onViewPdfOS,
   onReact,
   onMention,
@@ -50,6 +54,14 @@ export const MessageList: React.FC<MessageListProps> = ({
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
   }, [selectedId, loadingMessages]);
+
+  // Busca: rola a lista até a ocorrência ativa (centralizada)
+  useEffect(() => {
+    if (!activeMessageId) return;
+    listRef.current
+      ?.querySelector(`[data-msg-id="${activeMessageId}"]`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [activeMessageId]);
 
   useEffect(() => {
     if (isNearBottom()) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -80,10 +92,17 @@ export const MessageList: React.FC<MessageListProps> = ({
         </div>
       )}
       {!loadingMessages && messages.map(msg => (
-        <div key={msg.id} onMouseEnter={() => setHoveredId(msg.id)} onMouseLeave={() => setHoveredId(null)}>
+        <div
+          key={msg.id}
+          data-msg-id={msg.id}
+          style={activeMessageId === msg.id ? { outline: '2px solid var(--primary)', outlineOffset: 2, borderRadius: 12 } : undefined}
+          onMouseEnter={() => setHoveredId(msg.id)}
+          onMouseLeave={() => setHoveredId(null)}
+        >
           <MessageBubble
             msg={msg}
             hovered={hoveredId === msg.id}
+            highlight={highlight}
             quoted={msg.replyTo ? quoteMap.get(msg.replyTo) : undefined}
             contactAvatar={contactAvatar}
             osList={currentClientOSList}

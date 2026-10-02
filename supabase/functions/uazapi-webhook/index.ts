@@ -178,6 +178,8 @@ serve(async (req) => {
         const phoneWith55 = phone.startsWith("55") ? phone : `55${phone}`;
 
         // Grupos: busca direta pelo JID. Individuais: busca pelas variantes do telefone
+        // SEMPRE dentro do tenant da conexao — sem isso, mensagens podem
+        // cair numa conversa de OUTRA empresa com o mesmo telefone
         const convFilter = isGroup
           ? `contact_phone.eq.${phone},remote_jid.eq.${chatId}`
           : `contact_phone.eq.${phone},contact_phone.eq.${phoneWithout55},contact_phone.eq.${phoneWith55}`;
@@ -186,6 +188,7 @@ serve(async (req) => {
           .from("conversations")
           .select("id, tenant_id, contact_name, contact_avatar")
           .or(convFilter)
+          .eq("tenant_id", connectionTenantId)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -209,6 +212,7 @@ serve(async (req) => {
               .from("customers")
               .select("id, name, tenant_id")
               .or(`phone.ilike.%${phoneWithout55}%,mobile.ilike.%${phoneWithout55}%`)
+              .eq("tenant_id", connectionTenantId)
               .limit(1)
               .maybeSingle();
 

@@ -7,6 +7,8 @@
 // ============================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { finalizeOnboarding, type OnboardingSession } from "../_shared/onboarding.ts";
+import { finalizeOnboarding, type OnboardingSession } from "../_shared/onboarding.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -101,6 +103,19 @@ serve(async (req) => {
             date: paidAt ?? new Date().toISOString().slice(0, 10),
           });
         }
+      }
+    }
+
+    // Onboarding público (/comece-agora): pagamento confirmado →
+    // ativa a empresa, cria o admin e libera o painel
+    {
+      const { data: onb } = await admin
+        .from("onboarding_sessions")
+        .select("*")
+        .eq("asaas_payment_id", String(payment.id))
+        .maybeSingle();
+      if (onb && onb.status !== "paid" && String(payment.status ?? "") !== "DELETED") {
+        await finalizeOnboarding(admin, onb as OnboardingSession, payment.paymentDate ?? null);
       }
     }
     return json({ received: true });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Palette, Bell, Shield, Users, Wrench, Clock,
-  Check, ChevronRight, Smartphone, MessageSquare, MonitorSmartphone, Bot
+  Check, ChevronRight, Smartphone, MessageSquare, MonitorSmartphone, Bot, Zap
 } from 'lucide-react';
 import { useThemeStore } from '@/stores/theme.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -19,8 +19,9 @@ import { DeviceCoverageSection } from '@/pages/settings/DeviceCoverageSection';
 import { BusinessHoursSection } from '@/pages/settings/BusinessHoursSection';
 import { AppearanceSection } from '@/pages/settings/AppearanceSection';
 import { UsersSection } from '@/pages/settings/UsersSection';
+import { QuickRepliesSection } from '@/pages/settings/QuickRepliesSection';
 
-type Section = 'aparencia' | 'empresa' | 'horario' | 'notificacoes' | 'aparelhos' | 'usuarios' | 'seguranca' | 'integracao' | 'conexoes';
+type Section = 'aparencia' | 'empresa' | 'horario' | 'notificacoes' | 'aparelhos' | 'usuarios' | 'respostas' | 'seguranca' | 'integracao' | 'conexoes';
 
 const NAV: { key: Section; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
   { key: 'aparencia', label: 'Aparência', icon: Palette },
@@ -28,6 +29,7 @@ const NAV: { key: Section; label: string; icon: React.ComponentType<{ size?: num
   { key: 'horario', label: 'Horário de Atendimento', icon: Clock },
   { key: 'aparelhos', label: 'Aparelhos Atendidos', icon: MonitorSmartphone },
   { key: 'usuarios', label: 'Usuários', icon: Users },
+  { key: 'respostas', label: 'Respostas Rápidas', icon: Zap },
   { key: 'notificacoes', label: 'Notificações', icon: Bell },
   { key: 'seguranca', label: 'Segurança', icon: Shield },
   { key: 'integracao', label: 'Integrações', icon: Smartphone },
@@ -270,7 +272,21 @@ export const SettingsPage: React.FC = () => {
           const { deleteInstance } = await import('@/lib/api-alternativa.service');
           await deleteInstance(conn.id);
           const repo = new ConnectionRepository();
-          await repo.delete(conn.id);
+          try {
+            await repo.delete(conn.id);
+          } catch (err) {
+            // 23503: conversas vinculadas — desvincula e repete
+            const e = err as { code?: string; message?: string };
+            if (e?.code === '23503' || /still referenced/i.test(e?.message ?? '')) {
+              await supabase
+                .from('conversations')
+                .update({ connection_id: null })
+                .eq('connection_id', conn.id);
+              await repo.delete(conn.id);
+            } else {
+              throw err;
+            }
+          }
           setConnections(prev => prev.filter(c => c.id !== conn.id));
         } catch (err) {
           console.error('Failed to delete connection:', err);
@@ -508,6 +524,9 @@ export const SettingsPage: React.FC = () => {
           {/* ── USUÁRIOS ── */}
           {activeSection === 'usuarios' && <UsersSection />}
 
+          {/* ── RESPOSTAS RÁPIDAS ── */}
+          {activeSection === 'respostas' && <QuickRepliesSection />}
+
           {/* ── APARELHOS ATENDIDOS ── */}
           {activeSection === 'aparelhos' && <DeviceCoverageSection />}
 
@@ -621,10 +640,10 @@ export const SettingsPage: React.FC = () => {
                           ) : (
                             <button
                               className="btn btn-ghost btn-sm"
-                              style={{ color: 'var(--danger)' }}
-                              onClick={() => handleDisconnect(conn)}
+                              style={{ color: '#16a34a' }}
+                              onClick={() => handleGenerateQR(conn)}
                             >
-                              {t('Desconectar')}
+                              {t('Reconectar')}
                             </button>
                           )}
                           <button
@@ -671,7 +690,7 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {/* ── Placeholder for other sections ── */}
-          {!['aparencia', 'empresa', 'horario', 'conexoes', 'aparelhos', 'usuarios'].includes(activeSection) && (
+          {!['aparencia', 'empresa', 'horario', 'conexoes', 'aparelhos', 'usuarios', 'respostas'].includes(activeSection) && (
             <div className="card card-p">
               <div className="empty-state">
                 <div className="empty-state-icon">

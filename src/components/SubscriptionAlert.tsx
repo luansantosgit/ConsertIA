@@ -12,7 +12,8 @@ export const SubscriptionAlert: React.FC = () => {
   useEffect(() => { check(); }, [check]);
 
   if (!checked || !hasOverdue) return null;
-  if (location.pathname === '/assinatura') return null;
+  // Na página de assinatura nada a notificar; no chat o alerta sobe pro header
+  if (location.pathname === '/assinatura' || location.pathname.startsWith('/atendimento')) return null;
 
   return (
     <Link

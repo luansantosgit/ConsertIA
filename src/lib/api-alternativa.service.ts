@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { useThemeStore } from '@/stores/theme.store';
 
 interface GenerateQRResult {
   success: boolean;
@@ -90,10 +91,47 @@ export async function generateQRCode(connectionId: string): Promise<GenerateQRRe
       return { success: false, error: 'Token admin da API Alternativa nao configurado.' };
     }
 
-    // Step 1: Create instance (or get existing)
-    let instanceToken = connection.instance_token;
+    const extractQr = (data: unknown) => {
+      const d = data as Record<string, unknown> | null;
+      const inst = d?.instance as Record<string, unknown> | undefined;
+      return (d?.qrcode || d?.qrCode || d?.qr || d?.base64 || inst?.qrcode || inst?.qrCode) as string | null | undefined ?? null;
+    };
+    const connectInstance = async (token: string) => {
+      // systemName: nome exibido no celular em "aparelhos conectados" —
+      // sem isso o WhatsApp mostra o navegador + nome do provedor (uazapiGO).
+      // Usa o NOME DO SISTEMA registrado pelo superadmin (tema global).
+      const brand = useThemeStore.getState().globalTheme?.logoText || 'DeeperIA';
+      const res = await fetch(`${baseUrl}/instance/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', token },
+        body: JSON.stringify({ browser: 'auto', systemName: brand }),
+      });
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, data };
+    };
 
-    if (!instanceToken) {
+    let instanceToken = connection.instance_token;
+    let instanceData = connection.instance_data;
+    let qrCode: string | null = null;
+
+    // Step 1: tenta o QR na instancia existente
+    if (instanceToken) {
+      const res = await connectInstance(instanceToken);
+      if (res.ok) {
+        qrCode = extractQr(res.data);
+        if (!qrCode) {
+          return { success: false, error: 'Falha ao gerar QR Code. Tente novamente em instantes.' };
+        }
+      } else if (res.status !== 401) {
+        // Ex.: ja conectada — nao recria a instancia por engano
+        return { success: false, error: (res.data as { message?: string })?.message || 'Falha ao gerar QR Code.' };
+      }
+      // 401 → token nao pertence a este subdominio (instancia legada):
+      // cai no Step 2 e recria com o token admin atual
+    }
+
+    // Step 2: sem token ou token invalido → cria nova instancia
+    if (!qrCode) {
       const createResp = await fetch(`${baseUrl}/instance/create`, {
         method: 'POST',
         headers: {
@@ -103,7 +141,7 @@ export async function generateQRCode(connectionId: string): Promise<GenerateQRRe
         body: JSON.stringify({ name: instanceName }),
       });
 
-      const createData = await createResp.json();
+      const createData = await createResp.json().catch(() => ({}));
 
       if (!createResp.ok) {
         return { success: false, error: createData?.message || 'Falha ao criar instancia.' };
@@ -114,36 +152,25 @@ export async function generateQRCode(connectionId: string): Promise<GenerateQRRe
       if (!instanceToken) {
         return { success: false, error: 'Token da instancia nao retornado.' };
       }
+      instanceData = createData;
 
-      await supabase
-        .from('connections')
-        .update({
-          instance_name: instanceName,
-          instance_token: instanceToken,
-          instance_data: createData,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', connectionId);
+      const res = await connectInstance(instanceToken);
+      qrCode = extractQr(res.data);
+      if (!res.ok || !qrCode) {
+        return { success: false, error: 'Falha ao gerar QR Code. Tente novamente em instantes.' };
+      }
     }
 
-    // Step 2: Connect instance (generates QR code)
-    const connectResp = await fetch(`${baseUrl}/instance/connect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'token': instanceToken,
-      },
-      body: JSON.stringify({}),
-    });
-
-    const connectData = await connectResp.json();
-
-    if (!connectResp.ok) {
-      return { success: false, error: connectData?.message || 'Falha ao gerar QR Code.' };
-    }
-
-    const qrCode = connectData?.qrcode || connectData?.qrCode || connectData?.qr || connectData?.base64
-      || connectData?.instance?.qrcode || connectData?.instance?.qrCode || null;
+    await supabase
+      .from('connections')
+      .update({
+        instance_name: instanceName,
+        instance_token: instanceToken,
+        instance_data: instanceData,
+        status: 'waiting',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', connectionId);
 
     await supabase
       .from('connections')
@@ -155,7 +182,7 @@ export async function generateQRCode(connectionId: string): Promise<GenerateQRRe
 
     return {
       success: true,
-      qrCode: qrCode || undefined,
+      qrCode: (qrCode as string) || undefined,
       instanceName,
     };
   } catch (error) {
@@ -239,7 +266,9 @@ export async function disconnectInstance(connectionId: string): Promise<{ succes
       return { success: false, error: 'Token nao disponivel.' };
     }
 
-    await fetch(`${baseUrl}/instance/logout`, {
+    // Endpoint correto: POST /instance/disconnect (logout nao existe → 405).
+    // 401 = instancia morta (numero conectado em outro QR): já está desconectada.
+    const res = await fetch(`${baseUrl}/instance/disconnect`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -247,6 +276,9 @@ export async function disconnectInstance(connectionId: string): Promise<{ succes
       },
       body: JSON.stringify({}),
     });
+    if (res.status !== 401) {
+      void await res.text();
+    }
 
     await supabase
       .from('connections')
@@ -280,14 +312,26 @@ export async function deleteInstance(connectionId: string): Promise<{ success: b
     const token = connection.instance_token;
 
     if (token) {
-      await fetch(`${baseUrl}/instance`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'token': token,
-        },
-      });
+      // Melhor esforço no subdominio atual: instancias legadas de outro
+      // dominio nao sao acessiveis do browser (CORS) — a exclusao do
+      // registro e o que importa
+      try {
+        await fetch(`${baseUrl}/instance`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'token': token,
+          },
+        });
+      } catch { /* ignora */ }
     }
+
+    // Conversas pertencem ao contato (historico), nao a conexao:
+    // desvincula antes de excluir para nao violar a FK
+    await supabase
+      .from('conversations')
+      .update({ connection_id: null })
+      .eq('connection_id', connectionId);
 
     return { success: true };
   } catch (error) {

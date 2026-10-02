@@ -21,6 +21,7 @@ const Reports       = lazy(() => import('@/pages/Reports').then(m => ({ default:
 const Settings      = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const AiSettings    = lazy(() => import('@/pages/AiSettings').then(m => ({ default: m.AiSettings })));
 const SubscriptionPage = lazy(() => import('@/pages/subscription/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
+const OnboardingPage = lazy(() => import('@/pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const ChecklistPage = lazy(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })));
 
 // Superadmin
@@ -33,6 +34,7 @@ import { SuperAdminIntegracoes } from '@/superadmin/SuperAdminIntegracoes';
 import { SuperAdminAi } from '@/superadmin/SuperAdminAi';
 import { SuperAdminLeads } from '@/superadmin/SuperAdminLeads';
 import { SuperAdminSettings } from '@/superadmin/SuperAdminSettings';
+import { SuperAdminWizard } from '@/superadmin/SuperAdminWizard';
 
 import './i18n/config';
 import './styles.css';
@@ -51,7 +53,10 @@ const PageLoader: React.FC = () => (
 const RequireAuth: React.FC<{ role?: 'superadmin' | 'tenant'; children: React.ReactNode }> = ({
   role, children,
 }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, authReady } = useAuthStore();
+  // Boot: espera initSession resolver antes de renderizar páginas —
+  // evita queries com tenantId vazio (400) em cold boot
+  if (!authReady) return <PageLoader />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role === 'superadmin' && user?.role !== 'superadmin') return <Navigate to="/" replace />;
   if (role === 'tenant' && user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
@@ -142,6 +147,7 @@ const App: React.FC = () => {
           <Route path="planos" element={<SuperAdminPlans />} />
           <Route path="tema" element={<SuperAdminTheme />} />
           <Route path="integracoes" element={<SuperAdminIntegracoes />} />
+          <Route path="wizard" element={<SuperAdminWizard />} />
           <Route path="configuracoes" element={<SuperAdminSettings />} />
           <Route path="provedor-ia" element={<SuperAdminAi />} />
         </Route>
@@ -171,6 +177,9 @@ const App: React.FC = () => {
 
         {/* ── Checklist público ── */}
         <Route path="/checklist/:osId" element={<Suspense fallback={<PageLoader />}><ChecklistPage /></Suspense>} />
+
+        {/* ── Cadastro rápido público ── */}
+        <Route path="/comece-agora" element={<Suspense fallback={<PageLoader />}><OnboardingPage /></Suspense>} />
 
         {/* ── Redirect padrão ── */}
         {/* Em produção o vercel.json serve o site institucional em "/" apenas

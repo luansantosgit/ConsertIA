@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen, AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSubscriptionAlert } from '@/stores/subscription.store';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -33,12 +34,15 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
   const { user } = useAuthStore();
   const location = useLocation();
   const { language, changeLanguage, t } = useTranslation();
+  const { hasOverdue } = useSubscriptionAlert();
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
   const meta = pageMeta[location.pathname] ?? { title: location.pathname.replace('/', ''), addLabel: '' };
   const initial = (user?.name || 'A').charAt(0).toUpperCase();
   const currentLang = LANGS.find(l => l.code === language) ?? LANGS[0];
+  // No chat o balão flutuante cobre o input: o alerta sobe para o header
+  const showSubscriptionAlert = location.pathname.startsWith('/atendimento') && hasOverdue;
 
   // Fecha dropdown ao clicar fora
   useEffect(() => {
@@ -71,6 +75,24 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
 
       {/* Right — add button + language switcher + avatar */}
       <div className="header-right">
+        {/* Alerta de assinatura vencida (no chat, substitui o balão flutuante) */}
+        {showSubscriptionAlert && (
+          <Link
+            to="/assinatura"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 999, textDecoration: 'none',
+              background: 'var(--danger)', color: '#fff',
+              fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap',
+              animation: 'navDotPulse 1.4s ease-in-out infinite',
+            }}
+            title="Pagar assinatura"
+          >
+            <AlertTriangle size={13} />
+            Assinatura vencida
+          </Link>
+        )}
+
         {/* Add button — só se a página tiver ação */}
         {meta.addLabel && (
           <button

@@ -17,6 +17,7 @@ interface AsaasConfig {
   environment: 'sandbox' | 'production';
   enabled_methods: string[];
   subscription_grace_days: number;
+  onboarding_enabled_methods: string[] | null;
 }
 
 const defaultConfig: AsaasConfig = {
@@ -24,6 +25,7 @@ const defaultConfig: AsaasConfig = {
   environment: 'sandbox',
   enabled_methods: ['PIX', 'BOLETO', 'CREDIT_CARD'],
   subscription_grace_days: 7,
+  onboarding_enabled_methods: null,
 };
 
 // Credenciais globais do gateway Asaas (assinaturas dos tenants).
@@ -51,6 +53,7 @@ export const AsaasConfigSection: React.FC = () => {
             environment: data.environment || 'sandbox',
             enabled_methods: data.enabled_methods ?? ['PIX', 'BOLETO', 'CREDIT_CARD'],
             subscription_grace_days: data.subscription_grace_days ?? 7,
+            onboarding_enabled_methods: data.onboarding_enabled_methods ?? null,
           });
         }
       } catch (err) {
@@ -80,13 +83,24 @@ export const AsaasConfigSection: React.FC = () => {
     }
   };
 
-  const toggleMethod = (key: string) => {
-    setConfig(prev => ({
-      ...prev,
-      enabled_methods: prev.enabled_methods.includes(key)
-        ? prev.enabled_methods.filter(m => m !== key)
-        : [...prev.enabled_methods, key],
-    }));
+  const toggleMethod = (key: string, field: 'enabled_methods' | 'onboarding_enabled_methods') => {
+    setConfig(prev => {
+      if (field === 'enabled_methods') {
+        return {
+          ...prev,
+          enabled_methods: prev.enabled_methods.includes(key)
+            ? prev.enabled_methods.filter(m => m !== key)
+            : [...prev.enabled_methods, key],
+        };
+      }
+      const current = prev.onboarding_enabled_methods ?? [];
+      return {
+        ...prev,
+        onboarding_enabled_methods: current.includes(key)
+          ? current.filter(m => m !== key)
+          : [...current, key],
+      };
+    });
   };
 
   const copyWebhook = () => {
@@ -177,13 +191,47 @@ export const AsaasConfigSection: React.FC = () => {
               <input
                 type="checkbox"
                 checked={config.enabled_methods.includes(m.key)}
-                onChange={() => toggleMethod(m.key)}
+                onChange={() => toggleMethod(m.key, 'enabled_methods')}
                 style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
               />
               <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{m.label}</span>
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">
+          Formas de pagamento no wizard de cadastro (/comece-agora)
+        </label>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+          {METHODS.map(m => {
+            const active = (config.onboarding_enabled_methods ?? []).includes(m.key);
+            return (
+              <label
+                key={m.key}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                  padding: '8px 14px', borderRadius: 99,
+                  border: `1px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
+                  background: active ? 'var(--primary-light)' : 'transparent',
+                  transition: 'background 0.12s, border-color 0.12s',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => toggleMethod(m.key, 'onboarding_enabled_methods')}
+                  style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                />
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{m.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>
+          Definidas separadamente das formas globais. Nenhuma marcada = usa as formas globais.
+        </p>
       </div>
 
       <div style={{ padding: 14, background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>

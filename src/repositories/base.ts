@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/stores/auth.store';
 import type { PostgrestSingleResponse, PostgrestResponse } from '@supabase/supabase-js';
 
 export interface BaseRepository<T> {
@@ -10,11 +11,17 @@ export interface BaseRepository<T> {
 
 export abstract class BaseSupabaseRepository<T> implements BaseRepository<T> {
   protected tableName: string;
-  protected tenantId: string;
 
-  constructor(tableName: string, tenantId: string) {
+  constructor(tableName: string, _legacyTenantId?: string) {
     this.tableName = tableName;
-    this.tenantId = tenantId;
+    void _legacyTenantId;
+  }
+
+  // TenantId VIVO, lido no momento de cada query. Repos criados antes da
+  // sessao restaurar (chunk lazy em cold boot) nao podem congelar '' —
+  // isso causava 400 (tenant_id=eq.) ate a pagina ser recarregada.
+  protected get tenantId(): string {
+    return useAuthStore.getState().user?.tenantId ?? '';
   }
 
   protected async fetchSingle<R>(promise: PromiseLike<PostgrestSingleResponse<R>>): Promise<R | null> {

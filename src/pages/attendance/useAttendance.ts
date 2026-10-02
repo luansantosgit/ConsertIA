@@ -5,6 +5,8 @@ import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { CustomerRepository } from '@/repositories/customer.repository';
 import { AiAgentSettingsRepository } from '@/repositories/ai-agent-settings.repository';
+import { QuickReplyRepository, type QuickReply } from '@/repositories/quick-reply.repository';
+import { fetchSystemQuickReplies } from '@/lib/system-quick-replies';
 import { useAuthStore } from '@/stores/auth.store';
 import { supabase } from '@/lib/supabase';
 import type { Message, Conversation } from '@/types';
@@ -552,6 +554,9 @@ export function useAttendance() {
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       status: 'pending',
       replyTo: replyingTo?.id,
+      // Timestamp desde a criação: ordena corretamente contra as demais
+      // (otimistas sem createdAt iam parar no fim da lista e "pulinavam")
+      createdAt: new Date().toISOString(),
     };
 
     setChatMessages(prev => ({
@@ -637,6 +642,7 @@ export function useAttendance() {
       text: osText,
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       status: 'pending',
+      createdAt: new Date().toISOString(),
       osCard: {
         osId: os.id,
         equipment: os.equipmentLabel,
@@ -1007,7 +1013,8 @@ export function useAttendance() {
         next[key] = next[key].map(m => {
           if (m.id === messageId) {
             previousMsg = m;
-            return { ...m, deleted: true, text: '' };
+            // Auditoria: marca como apagada mas MANTÉM o conteúdo original
+            return { ...m, deleted: true };
           }
           return m;
         });
@@ -1021,7 +1028,8 @@ export function useAttendance() {
       if (!msg?.waMessageId || !connId) return;
       const { deleteMessageApi } = await import('@/lib/api-alternativa.service');
       await deleteMessageApi(connId, msg.waMessageId);
-      await messageRepo.update(messageId, { deleted: true, content: '' });
+      // O conteúdo permanece no banco para auditoria — apenas a flag deleted
+      await messageRepo.update(messageId, { deleted: true });
     } catch (err) {
       console.error('Failed to delete:', err);
       // Rollback se falhar
@@ -1127,6 +1135,7 @@ export function useAttendance() {
         mediaType: sendType,
         mediaUrl: URL.createObjectURL(file),
         replyTo: replyToId,
+        createdAt: new Date().toISOString(),
       };
     });
 
@@ -1229,6 +1238,40 @@ export function useAttendance() {
   const handleSendMedia = useCallback((file: File, caption?: string) => {
     handleSendMediaFiles([file], caption);
   }, [handleSendMediaFiles]);
+
+  // ── Respostas rapidas: envio sequencial com cadencia de 1,5s ──
+  // ── Respostas rapidas: sistema (dinamicas) + cadastradas ──
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
+  useEffect(() => {
+    const tenantId = useAuthStore.getState().user?.tenantId;
+    if (!tenantId) return;
+    Promise.all([
+      new QuickReplyRepository().getAll().catch(() => [] as QuickReply[]),
+      fetchSystemQuickReplies(tenantId).catch(() => [] as QuickReply[]),
+    ]).then(([rows, system]) => setQuickReplies([...system, ...rows]));
+  }, []);
+
+  const handleSendQuickReply = async (reply: QuickReply) => {
+    for (const [i, part] of reply.parts.entries()) {
+      if (part.type === 'text') {
+        handleSendMessage(part.text);
+      } else if (part.type === 'media' && part.url) {
+        try {
+          const res = await fetch(part.url);
+          const blob = await res.blob();
+          const ext = part.url.split('.').pop()?.split('?')[0] || 'bin';
+          const file = new File([blob], `midia.${ext}`, { type: blob.type || 'application/octet-stream' });
+          handleSendMedia(file, part.caption);
+        } catch (err) {
+          console.error('QuickReply: falha ao enviar midia:', err);
+        }
+      }
+      // Cadência apenas ENTRE as partes — nada após a última
+      if (i < reply.parts.length - 1) {
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+  };
 
   // ── Midia: enviar audio gravado (PTT) ──
   const handleSendAudio = useCallback((blob: Blob) => {
@@ -1352,6 +1395,8 @@ export function useAttendance() {
     handleSaveClient,
     handleSendMessage,
     handleSendOSCardToChat,
+    handleSendQuickReply,
+    quickReplies,
     handleSaveNewOS,
     handleNewConversation,
     handleConfirmNewConversation,

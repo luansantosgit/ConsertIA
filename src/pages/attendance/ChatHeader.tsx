@@ -1,10 +1,12 @@
 import React from 'react';
-import { Phone, FileText, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Phone, FileText, PanelRightClose, PanelRightOpen, Search } from 'lucide-react';
 import type { ConvRow } from './types';
 
 interface ChatHeaderProps {
   selected: ConvRow | undefined;
   isRightPanelOpen: boolean;
+  searchOpen: boolean;
+  onToggleSearch: () => void;
   onOpenOSModal: () => void;
   onToggleRightPanel: () => void;
 }
@@ -12,6 +14,8 @@ interface ChatHeaderProps {
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   selected,
   isRightPanelOpen,
+  searchOpen,
+  onToggleSearch,
   onOpenOSModal,
   onToggleRightPanel,
 }) => {
@@ -75,6 +79,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         >
           <Phone size={13} />Ligar
         </a>
+        <button
+          className={searchOpen ? 'btn btn-primary btn-icon' : 'btn btn-secondary btn-icon'}
+          onClick={onToggleSearch}
+          title={searchOpen ? 'Fechar busca' : 'Buscar na conversa'}
+          style={{ borderRadius: 8, width: 34, height: 34 }}
+        >
+          <Search size={15} />
+        </button>
         <button className="btn btn-primary btn-sm" onClick={onOpenOSModal}>
           <FileText size={13} />Abrir OS
         </button>

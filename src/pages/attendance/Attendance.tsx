@@ -75,6 +75,8 @@ export const Attendance: React.FC = () => {
     handleSendMediaFiles,
     handleSendAudio,
     handleFetchMedia,
+quickReplies,
+handleSendQuickReply,
     quotedMessage,
     forwardingMessage,
     setForwardingMessage,
@@ -86,6 +88,7 @@ export const Attendance: React.FC = () => {
     isOpen: false, convId: '', convName: '',
   });
   const [pendingFiles, setPendingFiles] = React.useState<File[] | null>(null);
+  const [pendingCaption, setPendingCaption] = React.useState<string | undefined>(undefined);
   const [confirmClaimAi, setConfirmClaimAi] = React.useState<{ isOpen: boolean; convId: string; convName: string; aiState?: string }>({
     isOpen: false, convId: '', convName: '', aiState: undefined,
   });
@@ -168,6 +171,13 @@ export const Attendance: React.FC = () => {
           onDelete={handleDeleteMessage}
           onForward={handleForwardMessage}
           onFetchMedia={handleFetchMedia}
+          quickReplies={quickReplies}
+          onSendQuickReply={handleSendQuickReply}
+          onSendOSCard={handleSendOSCardToChat}
+          onAttachMedia={(files, caption) => {
+            setPendingCaption(caption);
+            setPendingFiles(files);
+          }}
         />
         {isRightPanelOpen && selected && (
           <ClientDetailsPanel
@@ -252,11 +262,13 @@ export const Attendance: React.FC = () => {
       <MediaSendModal
         isOpen={pendingFiles !== null}
         files={pendingFiles || []}
+        initialCaption={pendingCaption}
         onSend={(files, caption) => {
           handleSendMediaFiles(files, caption);
           setPendingFiles(null);
+          setPendingCaption(undefined);
         }}
-        onClose={() => setPendingFiles(null)}
+        onClose={() => { setPendingFiles(null); setPendingCaption(undefined); }}
       />
 
       <ForwardModal

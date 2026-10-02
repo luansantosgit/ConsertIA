@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   LayoutDashboard, Building2, CreditCard, Palette, Link2,
-  LogOut, Shield, PanelLeftClose, PanelLeftOpen, Bot, Filter, Settings,
+  LogOut, Shield, PanelLeftClose, PanelLeftOpen, Bot, Filter, Settings, Rocket,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -14,6 +14,7 @@ const navItems = [
   { icon: CreditCard, label: 'Planos', path: '/superadmin/planos' },
   { icon: Palette, label: 'Temas & Marcas', path: '/superadmin/tema' },
   { icon: Link2, label: 'Integrações', path: '/superadmin/integracoes' },
+  { icon: Rocket, label: 'Wizard de Cadastro', path: '/superadmin/wizard' },
   { icon: Settings, label: 'Configurações', path: '/superadmin/configuracoes' },
   { icon: Bot, label: 'Provedor de IA', path: '/superadmin/provedor-ia' },
 ];
