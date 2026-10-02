@@ -17,9 +17,12 @@ function glassText(ctx: AgentContext): string {
 function businessHoursText(ctx: AgentContext): string {
   const openNow = isOpenNow(ctx.businessHours, ctx.timezone);
   const nextOpen = openNow ? "" : nextOpenDayText(ctx.businessHours, ctx.timezone);
+  const nowTime = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: ctx.timezone, hour: "2-digit", minute: "2-digit", hour12: false,
+  }).format(new Date());
   const statusLine = openNow
-    ? `AGORA: empresa ABERTA — confirme com naturalidade se o cliente perguntar.`
-    : `AGORA: empresa FECHADA — seja sincero se perguntarem${nextOpen ? ` e diga que abre ${nextOpen}` : ""}. Continue atendendo (orçamento/dúvidas), mas NÃO agende fora do expediente.`;
+    ? `AGORA: empresa ABERTA (são ${nowTime}) — confirme com naturalidade se o cliente perguntar.`
+    : `AGORA: empresa FECHADA (são ${nowTime}) — seja sincero se perguntarem${nextOpen ? ` e diga que abre ${nextOpen}` : ""}. Continue atendendo (orçamento/dúvidas), mas NÃO agende nem proponha horários para hoje fora do expediente — horários de hoje iguais ou anteriores a ${nowTime} já passaram.`;
   return `- Expediente: ${businessHoursSummary(ctx.businessHours)}.
 - ${statusLine}
 - Só agende dentro do expediente; pedido fora → proponha o próximo horário válido.`;
@@ -58,8 +61,12 @@ export function dateContext(timezone: string): string {
   const tomorrowIso = isoPlusDays(todayIso, 1);
   const afterTomorrowIso = isoPlusDays(todayIso, 2);
   const brDate = `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
-  return `- Hoje é ${weekday}, ${brDate} (${todayIso}). Amanhã: ${tomorrowIso}. Depois de amanhã: ${afterTomorrowIso}.
-- Converta datas relativas ("hoje", "amanhã") para YYYY-MM-DD antes de chamar schedule_event.`;
+  const nowTime = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: timezone, hour: "2-digit", minute: "2-digit", hour12: false,
+  }).format(now);
+  return `- Hoje é ${weekday}, ${brDate} (${todayIso}). AGORA SÃO ${nowTime} (horário local da empresa). Amanhã: ${tomorrowIso}. Depois de amanhã: ${afterTomorrowIso}.
+- Converta datas relativas ("hoje", "amanhã") para YYYY-MM-DD antes de chamar schedule_event.
+- ANTES de propor um horário para HOJE, compare com a hora atual: horários iguais ou anteriores a ${nowTime} JÁ PASSARAM. Se a hora atual já passou do fim do expediente, NÃO ofereça hoje — ofereça amanhã ou próximos dias.`;
 }
 
 function contextText(ctx: AgentContext): string {
