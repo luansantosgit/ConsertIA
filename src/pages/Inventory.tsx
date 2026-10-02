@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, AlertTriangle, Package, X, ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
+import { Search, AlertTriangle, Package, X, ArrowDown, ArrowUp, Trash2, Pencil, FileSpreadsheet } from 'lucide-react';
 import type { Product } from '@/types';
 import { ProductRepository } from '@/repositories/product.repository';
 import { StockMovementRepository } from '@/repositories/stock-movement.repository';
 import { SkeletonStats, SkeletonTable } from '@/components/Skeleton';
-import { CurrencyInput } from '@/components/CurrencyInput';
 import { formatCurrency } from '@/lib/format';
 import EmptyState from '@/components/EmptyState';
 import ErrorMessage from '@/components/ErrorMessage';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useTranslation } from '@/hooks/useTranslation';
+import { ProductFormModal } from './inventory/ProductFormModal';
+import { ImportProductsModal } from './inventory/ImportProductsModal';
 
 interface StockItem extends Product {
   location?: string;
@@ -30,16 +31,16 @@ export const Inventory: React.FC = () => {
   const [movQty, setMovQty] = useState('1');
   const [movRef, setMovRef] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [newForm, setNewForm] = useState({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '', partType: '', deviceBrand: '', deviceModel: '' });
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<StockItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; item: StockItem | null; bulk: boolean }>({ isOpen: false, item: null, bulk: false });
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const products = await productRepo.getAll();
       const stockItems: StockItem[] = products.map(p => ({
         ...p,
@@ -52,7 +53,7 @@ export const Inventory: React.FC = () => {
       console.error('Failed to fetch products:', error);
       setError('Erro ao carregar produtos');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -103,42 +104,6 @@ export const Inventory: React.FC = () => {
     setMovRef('');
   };
 
-  const handleAdd = async () => {
-    if (adding || !newForm.name) return;
-    setAdding(true);
-
-    try {
-      const created = await productRepo.create({
-        name: newForm.name,
-        sku: newForm.sku || `SKU-${Date.now()}`,
-        price: parseFloat(newForm.price) || 0,
-        cost: parseFloat(newForm.cost) || 0,
-        stock_quantity: 0,
-        min_stock_quantity: parseInt(newForm.min_stock_quantity) || 2,
-        category: newForm.category,
-        part_type: newForm.partType || null,
-        device_brand: newForm.deviceBrand || null,
-        device_model: newForm.deviceModel || null,
-        active: true,
-      } as Partial<Product>);
-
-      const newItem: StockItem = {
-        ...created,
-        category: newForm.category,
-        location: newForm.location,
-        movements: [],
-      };
-
-      setItems(prev => [newItem, ...prev]);
-      setShowAddModal(false);
-      setNewForm({ name: '', sku: '', price: '', cost: '', min_stock_quantity: '2', category: 'Displays', location: '', partType: '', deviceBrand: '', deviceModel: '' });
-    } catch (error) {
-      console.error('Failed to create product:', error);
-    } finally {
-      setAdding(false);
-    }
-  };
-
   const handleDeleteSingle = async () => {
     if (!confirmDelete.item) return;
     try {
@@ -187,7 +152,7 @@ export const Inventory: React.FC = () => {
   };
 
   React.useEffect(() => {
-    const handler = () => setShowAddModal(true);
+    const handler = () => { setEditingItem(null); setShowAddModal(true); };
     window.addEventListener('header-action-click', handler);
     return () => window.removeEventListener('header-action-click', handler);
   }, []);
@@ -244,6 +209,9 @@ export const Inventory: React.FC = () => {
             Excluir {selectedIds.size} {selectedIds.size === 1 ? 'item' : 'itens'}
           </button>
         )}
+        <button className="btn btn-secondary" onClick={() => setShowImportModal(true)}>
+          <FileSpreadsheet size={15} /> Importar planilha
+        </button>
       </div>
 
       <div className="table-wrapper">
@@ -292,15 +260,18 @@ export const Inventory: React.FC = () => {
                   </td>
                   <td><span className={'badge ' + st.badge}>{st.label}</span></td>
                   <td style={{ textAlign: 'right', paddingRight: 20 }}>
-                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                      <button className="btn btn-sm" style={{ background: '#ecfdf5', color: '#10b981', border: '1px solid #6ee7b7', borderRadius: 8, gap: 4 }} onClick={() => setMovModal({ item, type: 'in' })}>
-                        <ArrowDown size={12} />Entrada
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                      <button className="btn btn-sm btn-icon" style={{ background: '#ecfdf5', color: '#10b981', border: '1px solid #6ee7b7', borderRadius: 8 }} onClick={() => setMovModal({ item, type: 'in' })} title="Entrada de estoque">
+                        <ArrowDown size={14} />
                       </button>
-                      <button className="btn btn-sm" style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: 8, gap: 4 }} onClick={() => setMovModal({ item, type: 'out' })}>
-                        <ArrowUp size={12} />Saída
+                      <button className="btn btn-sm btn-icon" style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: 8 }} onClick={() => setMovModal({ item, type: 'out' })} title="Saída de estoque">
+                        <ArrowUp size={14} />
                       </button>
-                      <button className="btn btn-sm btn-ghost" style={{ color: 'var(--text-muted)', gap: 4 }} onClick={() => setConfirmDelete({ isOpen: true, item, bulk: false })} title="Excluir produto">
-                        <Trash2 size={13} />
+                      <button className="btn btn-sm btn-icon btn-ghost" style={{ color: 'var(--primary)', borderRadius: 8 }} onClick={() => { setEditingItem(item); setShowAddModal(true); }} title="Editar produto">
+                        <Pencil size={14} />
+                      </button>
+                      <button className="btn btn-sm btn-icon btn-ghost" style={{ color: 'var(--text-muted)', borderRadius: 8 }} onClick={() => setConfirmDelete({ isOpen: true, item, bulk: false })} title="Excluir produto">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -360,81 +331,27 @@ export const Inventory: React.FC = () => {
       )}
 
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Novo Item de Estoque</h3>
-              <button className="btn btn-ghost btn-icon" onClick={() => setShowAddModal(false)}><X size={16} /></button>
-            </div>
-            <div className="modal-body">
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Nome do produto *</label>
-                  <input className="input" value={newForm.name} onChange={e => setNewForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Display iPhone 14 Pro" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">SKU</label>
-                  <input className="input" value={newForm.sku} onChange={e => setNewForm(f => ({ ...f, sku: e.target.value }))} placeholder="DIP14P-001" />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Preço de venda</label>
-                  <CurrencyInput
-                    value={Number(newForm.price) || 0}
-                    onChange={v => setNewForm(f => ({ ...f, price: String(v) }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Custo</label>
-                  <CurrencyInput
-                    value={Number(newForm.cost) || 0}
-                    onChange={v => setNewForm(f => ({ ...f, cost: String(v) }))}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Tipo de peça</label>
-                  <input className="input" value={newForm.partType} onChange={e => setNewForm(f => ({ ...f, partType: e.target.value }))} placeholder="Ex: tela, vidro, bateria" />
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                    Usado pelo agente de IA para localizar a peça nos orçamentos.
-                  </p>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Marca do aparelho</label>
-                  <input className="input" value={newForm.deviceBrand} onChange={e => setNewForm(f => ({ ...f, deviceBrand: e.target.value }))} placeholder="Ex: Samsung" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Modelo do aparelho</label>
-                  <input className="input" value={newForm.deviceModel} onChange={e => setNewForm(f => ({ ...f, deviceModel: e.target.value }))} placeholder="Ex: Galaxy S22" />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Categoria</label>
-                  <select className="select" value={newForm.category} onChange={e => setNewForm(f => ({ ...f, category: e.target.value }))}>
-                    {['Displays', 'Baterias', 'Conectores', 'Armazenamento', 'Carcaças', 'Outros'].map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Estoque mínimo</label>
-                  <input className="input" type="number" value={newForm.min_stock_quantity} onChange={e => setNewForm(f => ({ ...f, min_stock_quantity: e.target.value }))} />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Localização</label>
-                <input className="input" value={newForm.location} onChange={e => setNewForm(f => ({ ...f, location: e.target.value }))} placeholder="Ex: Prateleira A1" />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowAddModal(false)} disabled={adding}>Cancelar</button>
-              <button className="btn btn-primary" onClick={handleAdd} disabled={adding || !newForm.name.trim()}>
-                {adding ? 'Adicionando...' : <><Plus size={15} />Adicionar item</>}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProductFormModal
+          editing={editingItem}
+          onClose={() => { setShowAddModal(false); setEditingItem(null); }}
+          onSaved={(saved, isNew) => {
+            if (isNew) {
+              setItems(prev => [saved as StockItem, ...prev]);
+            } else {
+              setItems(prev => prev.map(i => (i.id === saved.id ? { ...i, ...saved } as StockItem : i)));
+            }
+            setShowAddModal(false);
+            setEditingItem(null);
+          }}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportProductsModal
+          existingItems={items}
+          onClose={() => setShowImportModal(false)}
+          onImported={() => fetchProducts(true)}
+        />
       )}
       </>
       )}
