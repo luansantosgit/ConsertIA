@@ -225,13 +225,15 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
     if (conn?.instance_token) connectionToken = conn.instance_token;
   }
 
-  const { data: lastInbound } = await supabase
+  // Primeiro contato = a IA ainda não respondeu NADA nesta conversa.
+  // (Contar mensagens do cliente quebrava em rajadas: 6 msgs antes da 1ª resposta
+  // finjava "retomada" e a IA não se apresentava no contato real.)
+  const { count: aiReplies } = await supabase
     .from("messages")
-    .select("id")
+    .select("id", { count: "exact", head: true })
     .eq("conversation_id", conversationId)
-    .eq("direction", "inbound")
-    .limit(2);
-  const isFirstContact = (lastInbound ?? []).length <= 1;
+    .eq("direction", "outbound");
+  const isFirstContact = (aiReplies ?? 0) === 0;
 
   const partial: Partial<AgentContext> = {
     supabase,
