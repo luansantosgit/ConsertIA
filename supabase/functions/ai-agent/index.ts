@@ -178,7 +178,7 @@ async function handleRespond(ctx: AgentContext): Promise<Response> {
   const runMarker = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   const { data: claimed } = await ctx.supabase
     .from("conversations")
-    .update({ ai_processing_until: lockUntil, ai_run_marker: runMarker })
+    .update({ ai_processing_until: lockUntil, ai_run_marker: runMarker, ai_pending: false })
     .eq("id", ctx.conversation.id)
     .or(`ai_processing_until.is.null,ai_processing_until.lt.${nowIso}`)
     .select("id")
@@ -254,7 +254,22 @@ async function handleRespondLocked(ctx: AgentContext, runMarker: string): Promis
     return json({ ok: true, skipped: "quota_exceeded" });
   }
 
-  const startedAt = Date.now();
+  
+  // Nada novo a responder: se a última mensagem da conversa é OUTBOUND (a IA ou
+  // um atendente já respondeu por último), não há mensagem do cliente pendente.
+  // Evita re-respostas de reprocessamentos/re-disparos redundantes.
+  const { data: lastMsg } = await ctx.supabase
+    .from("messages")
+    .select("direction")
+    .eq("conversation_id", ctx.conversation.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (lastMsg?.direction === "outbound") {
+    return json({ ok: true, skipped: "nothing_new" });
+  }
+
+const startedAt = Date.now();
   await tryCaptureName(ctx);
   const systemPrompt = buildSystemPrompt(ctx);
   const history = await buildHistory(ctx);
