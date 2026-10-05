@@ -154,54 +154,35 @@ export function coreModelTerm(model: string): string {
     .trim();
 }
 
-interface SearchTerms {
-  brand?: string;
-  model?: string;
-  part?: string;
-}
-
-const PART_COLUMNS = "id, name, price, stock_quantity, part_type, device_brand, device_model";
-
-async function searchProducts(ctx: AgentContext, terms: SearchTerms): Promise<PartRow[]> {
-  let query = ctx.supabase
-    .from("products")
-    .select(PART_COLUMNS)
-    .eq("tenant_id", ctx.tenantId)
-    .eq("active", true);
-  if (terms.brand) query = query.ilike("device_brand", `%${terms.brand}%`);
-  if (terms.model) query = query.or(`device_model.ilike.%${terms.model}%,name.ilike.%${terms.model}%`);
-  if (terms.part) query = query.or(`part_type.ilike.%${terms.part}%,name.ilike.%${terms.part}%`);
-  const { data, error } = await query.limit(5);
-  if (error) throw new Error(error.message);
-  return (data ?? []) as PartRow[];
+interface FindPartsRow {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  part_type: string | null;
+  device_brand: string | null;
+  device_model: string | null;
+  score: number;
+  match_level: string;
 }
 
 async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
-  const part = stripAccents((args.part_type ?? "").toString().toLowerCase());
-  const brand = stripAccents((args.brand ?? "").toString().toLowerCase());
-  const model = stripAccents((args.model ?? "").toString().toLowerCase());
-  const core = coreModelTerm((args.model ?? "").toString());
-
-  const strategies: SearchTerms[] = [
-    { brand, model, part },
-    { brand, model: core, part },
-    { brand, part },
-    { model: core, part },
-    { part },
-  ];
-
-  let rows: PartRow[] = [];
-  for (const terms of strategies) {
-    if (!terms.brand && !terms.model && !terms.part) continue;
-    try {
-      rows = await searchProducts(ctx, terms);
-    } catch {
-      rows = [];
-    }
-    if (rows.length > 0) break;
+  const model = (args.model ?? "").toString().trim();
+  const part = (args.part_type ?? "").toString().trim();
+  if (!model && !part) {
+    return { ok: false, error: "Informe o modelo do aparelho (model) e o tipo de peça (part_type)." };
   }
 
-  if (rows.length === 0) {
+  const { data: rows, error } = await ctx.supabase.rpc("ai_find_parts", {
+    p_tenant: ctx.tenantId,
+    p_brand: (args.brand ?? "").toString().trim() || null,
+    p_model: model || null,
+    p_part: part || null,
+  });
+  if (error) return { ok: false, error: "Falha ao buscar peça: " + error.message };
+
+  const list = (rows ?? []) as unknown as FindPartsRow[];
+  if (list.length === 0) {
     return {
       ok: true,
       found: false,
@@ -209,17 +190,25 @@ async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
     };
   }
 
-  for (const row of rows) ctx.allowedValues.add(normalizeMoney(Number(row.price)));
+  const exact = list.filter((r) => r.match_level === "exato");
+  const chosen = exact.length > 0 ? exact : list;
+  for (const r of chosen) ctx.allowedValues.add(normalizeMoney(Number(r.price)));
+
   return {
     ok: true,
     found: true,
-    parts: rows.map((r: PartRow) => ({
+    match: exact.length > 0 ? "exato" : "aproximado",
+    parts: chosen.map((r) => ({
       id: r.id,
       name: r.name,
       price: normalizeMoney(Number(r.price)),
-      stock: r.stock_quantity,
+      stock: r.stock,
       type: r.part_type,
+      device_model: r.device_model,
     })),
+    message: exact.length > 0
+      ? undefined
+      : "ATENÇÃO: match APROXIMADO — a peça pode ser de um modelo parecido, não do exato pedido. Confirme com o cliente o modelo exato do aparelho antes de orçar; se divergir, NÃO orce e encaminhe ao time técnico.",
   };
 }
 
@@ -230,12 +219,23 @@ function formatMoney(value: number): string {
 async function buildQuote(ctx: AgentContext, args: any): Promise<ToolResult> {
   const { data: part, error } = await ctx.supabase
     .from("products")
-    .select("id, name, price")
+    .select("id, name, price, device_model")
     .eq("id", args.part_id)
     .eq("tenant_id", ctx.tenantId)
     .limit(1)
     .maybeSingle();
   if (error || !part) return { ok: false, error: "Peça não encontrada" };
+
+  // Trava de integridade: nunca orçar peça de um modelo diferente do pedido
+  const partModel = (part.device_model ?? "").toString().toLowerCase().trim();
+  const askedModel = (args.device_model ?? "").toString().toLowerCase().trim();
+  if (partModel && askedModel && askedModel.length >= 3
+    && !partModel.includes(askedModel) && !askedModel.includes(partModel)) {
+    return {
+      ok: false,
+      error: 'A peça "' + part.name + '" é do modelo "' + part.device_model + '", mas o cliente pediu "' + args.device_model + '". NÃO orce esta peça: refaça find_part com o modelo exato. Se não houver peça do modelo certo, encaminhe ao time técnico.',
+    };
+  }
 
   const partPrice = normalizeMoney(Number(part.price));
   const labor = ctx.quote.labor_enabled
