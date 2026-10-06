@@ -8,6 +8,8 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { CustomerModal } from './customers/CustomerModal';
 import { StartChatModal } from './customers/StartChatModal';
 import { CustomerTable } from './customers/CustomerTable';
+import { Pagination } from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 
 const customerRepo = new CustomerRepository();
 
@@ -24,6 +26,8 @@ export const Customers: React.FC = () => {
   const [deleteChatInfo, setDeleteChatInfo] = useState<{ hasChat: boolean; messageCount: number }>({
     hasChat: false, messageCount: 0,
   });
+
+  const paginatedCustomers = usePagination(customers, 20, searchTerm);
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
@@ -110,12 +114,19 @@ export const Customers: React.FC = () => {
 
           <div className="table-wrapper">
             <CustomerTable
-              customers={customers}
+              customers={paginatedCustomers.items}
               loading={loading}
               onStartChat={c => setChatCustomer(c)}
               onEdit={c => { setEditingCustomer(c); setModalOpen(true); }}
               onDelete={handleRequestDelete}
               onNewCustomer={() => { setEditingCustomer(null); setModalOpen(true); }}
+            />
+            <Pagination
+              page={paginatedCustomers.page}
+              totalItems={paginatedCustomers.totalItems}
+              pageSize={20}
+              onPageChange={paginatedCustomers.setPage}
+              label="clientes"
             />
           </div>
 

@@ -11,6 +11,8 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ProductFormModal } from './inventory/ProductFormModal';
 import { ImportProductsModal } from './inventory/ImportProductsModal';
+import { Pagination } from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 
 interface StockItem extends Product {
   location?: string;
@@ -66,6 +68,7 @@ export const Inventory: React.FC = () => {
     i.sku.toLowerCase().includes(search.toLowerCase()) ||
     i.category.toLowerCase().includes(search.toLowerCase())
   );
+  const paginatedItems = usePagination(filtered, 20, search);
 
   const lowStock = items.filter(i => i.stock_quantity <= (i.min_stock_quantity ?? 0));
   const outOfStock = items.filter(i => i.stock_quantity === 0);
@@ -219,7 +222,7 @@ export const Inventory: React.FC = () => {
           <thead>
             <tr>
               <th style={{ paddingLeft: 20, width: 40 }}>
-                <input type="checkbox" checked={selectedIds.size === filtered.length && filtered.length > 0} onChange={toggleSelectAll} />
+                    <input type="checkbox" checked={selectedIds.size === paginatedItems.items.length && paginatedItems.items.length > 0} onChange={toggleSelectAll} />
               </th>
               <th>Produto / SKU</th>
               <th>{t('Categoria')}</th>
@@ -232,7 +235,7 @@ export const Inventory: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(item => {
+              {paginatedItems.items.map(item => {
               const st = stockStatus(item);
               return (
                 <tr key={item.id}>
@@ -280,6 +283,13 @@ export const Inventory: React.FC = () => {
             })}
           </tbody>
         </table>
+        <Pagination
+          page={paginatedItems.page}
+          totalItems={paginatedItems.totalItems}
+          pageSize={20}
+          onPageChange={paginatedItems.setPage}
+          label="produtos"
+        />
         {filtered.length === 0 && (
           <EmptyState
             icon={Package}

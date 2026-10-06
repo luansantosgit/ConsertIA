@@ -3,6 +3,7 @@ import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { SubscriptionAlert } from './SubscriptionAlert';
+import { AiQuotaAlert } from './AiQuotaAlert';
 import { useSubscriptionAlert } from '@/stores/subscription.store';
 
 export const TenantLayout: React.FC = () => {
@@ -65,6 +66,7 @@ export const TenantLayout: React.FC = () => {
         </div>
         )}
         <SubscriptionAlert />
+        <AiQuotaAlert />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Filter } from 'lucide-react';
+import { Check, ArrowUpDown } from 'lucide-react';
 
 export type ConvSortMode = 'recent' | 'unread' | 'oldest';
 
@@ -55,7 +55,7 @@ export const ConversationSortMenu: React.FC<ConversationSortMenuProps> = ({ sort
         onMouseEnter={e => { if (!open) e.currentTarget.style.color = 'var(--primary)'; }}
         onMouseLeave={e => { if (!open && !isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
       >
-        <Filter size={14} />
+        <ArrowUpDown size={14} />
       </button>
 
       {open && (

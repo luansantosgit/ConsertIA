@@ -112,7 +112,7 @@ export function useAttendance() {
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [quotedMessage, setQuotedMessage] = useState<ChatMessage | null>(null);
   const [forwardingMessage, setForwardingMessage] = useState<ChatMessage | null>(null);
-  const [chatFilter, setChatFilter] = useState<'all' | 'chats' | 'groups'>('all');
+  const [chatFilter, setChatFilter] = useState<'all' | 'chats' | 'groups' | 'transferred_chats' | 'transferred_groups'>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'unread' | 'oldest'>('recent');
 
   // Espelho de conversations p/ leitura segura dentro de callbacks sem re-render
@@ -486,6 +486,9 @@ export function useAttendance() {
       .filter(c => {
         if (chatFilter === 'chats' && c.is_group) return false;
         if (chatFilter === 'groups' && !c.is_group) return false;
+        // Transferidos pela IA: ai_state = 'paused' (IA passou pro atendente)
+        if (chatFilter === 'transferred_chats' && (c.is_group || c.ai_state !== 'paused')) return false;
+        if (chatFilter === 'transferred_groups' && (!c.is_group || c.ai_state !== 'paused')) return false;
         return c.contactName.toLowerCase().includes(search.toLowerCase()) ||
           c.lastMessage.toLowerCase().includes(search.toLowerCase()) ||
           c.deviceInfo.toLowerCase().includes(search.toLowerCase());
@@ -634,7 +637,9 @@ export function useAttendance() {
     if (!selected) return;
     const convId = selected.id;
     const contactPhone = selected.contact_phone;
-    const osText = `📄 Ordem de Serviço & Orçamento #${os.id} anexado para visualização e aprovação.`;
+    const tenantId = useAuthStore.getState().user?.tenantId;
+    const osCode = os.id.replace(/-/g, '').slice(0, 6).toUpperCase();
+    const osText = `Ordem de Serviço *OS-${osCode}*\n\nServiço: *${os.subject}*\n${os.equipmentLabel ? `Aparelho: ${os.equipmentLabel}\n` : ''}Valor: *R$ ${(os.budget_amount ?? 0).toFixed(2)}*\nStatus: ${os.status}`;
 
     const optimisticMsg: ChatMessage = {
       id: `msg-os-${Date.now()}`,
@@ -659,7 +664,7 @@ export function useAttendance() {
 
     setConversations(prev => prev.map(c => {
       if (c.id === convId) {
-        return { ...c, lastMessage: `OS #${os.id} enviada`, last_message: `OS #${os.id} enviada`, last_message_at: new Date().toISOString() };
+        return { ...c, lastMessage: `OS #${osCode} enviada`, last_message: `OS #${osCode} enviada`, last_message_at: new Date().toISOString() };
       }
       return c;
     }));
@@ -668,20 +673,63 @@ export function useAttendance() {
 
     enqueueOutboundTask(convId, async () => {
       try {
+        // 1. Envia o TEXTO via WhatsApp
+        const { data: conn } = await supabase
+          .from('connections')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .eq('status', 'connected')
+          .limit(1)
+          .single();
+
+        let waMessageId: string | undefined;
+        let msgStatus: string = 'sent';
+
+        if (conn) {
+          const { sendTextMessage } = await import('@/lib/api-alternativa.service');
+          const result = await sendTextMessage(conn.id, contactPhone, osText);
+          if (result.success) {
+            waMessageId = result.messageId;
+            msgStatus = result.status || 'sent';
+          } else {
+            msgStatus = 'error';
+            console.error('Failed to send OS text via WhatsApp:', result.error);
+          }
+        }
+
+        // 2. Salva no banco COM o os_card
         const saved = await messageRepo.create({
           conversation_id: convId,
           contact_phone: contactPhone,
           content: osText,
           direction: 'outbound',
           read: true,
-          status: 'sent',
-        });
+          status: msgStatus as 'pending' | 'sent' | 'delivered' | 'read' | 'error',
+          wa_message_id: waMessageId,
+          os_card: {
+            osId: os.id,
+            equipment: os.equipmentLabel,
+            subject: os.subject,
+            budget: os.budget_amount,
+            status: os.status,
+          },
+        } as Parameters<typeof messageRepo.create>[0]);
+
         setChatMessages(prev => ({
           ...prev,
           [convId]: (prev[convId] || []).map(m =>
-            m.id === optimisticMsg.id ? { ...m, id: saved.id, status: 'sent' } : m
+            m.id === optimisticMsg.id
+              ? { ...m, id: saved.id, status: msgStatus as ChatMessage['status'], waMessageId }
+              : m
           )
         }));
+
+        // 3. Gera e envia o PDF da OS via WhatsApp (best-effort)
+        const { sendOsPdfToLead } = await import('@/lib/os-pdf.service');
+        const pdfSent = await sendOsPdfToLead(os.id, contactPhone, `OS #${osCode} - ${os.subject}`);
+        if (!pdfSent) {
+          console.warn('[os-send] PDF não enviado — apenas o texto chegou');
+        }
       } catch (err) {
         console.error('Failed to send OS card to chat:', err);
         setChatMessages(prev => ({
@@ -705,8 +753,10 @@ export function useAttendance() {
         subject: newOS.subject,
         description: newOS.description,
         budgetAmount: newOS.budget_amount,
+        budgetItems: newOS.budget_items,
         priority: newOS.priority,
         checklistPhotos: newOS.checklist_photos,
+        serialNumber: newOS.serialNumber,
       });
 
       const row: OSRow = {

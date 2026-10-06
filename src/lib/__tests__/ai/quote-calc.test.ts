@@ -58,6 +58,8 @@ describe('build_quote (cálculo de orçamento em código)', () => {
     const ctx = mockCtx();
     const result = await executeTool(ctx, 'build_quote', { part_id: 'part-1', service_type: 'Troca de tela' });
     expect(result.ok).toBe(true);
+    expect(result.part_price).toBe(349.9);
+    expect(result.labor).toBe(50);
     expect(result.total).toBe(399.9);
     expect(result.quote_text).toContain('R$ 399,90');
   });
@@ -71,6 +73,7 @@ describe('build_quote (cálculo de orçamento em código)', () => {
   it('calcula mão de obra percentual sobre a peça', async () => {
     const ctx = mockCtx({ quote: { labor_enabled: true, labor_mode: 'included', labor_type: 'percent', labor_value: 10, quote_template: '{valor_total}' } });
     const result = await executeTool(ctx, 'build_quote', { part_id: 'part-1', service_type: 'Troca de tela' });
+    expect(result.labor).toBe(34.99);
     expect(result.total).toBe(384.89);
   });
 
@@ -78,6 +81,7 @@ describe('build_quote (cálculo de orçamento em código)', () => {
     const ctx = mockCtx({ quote: { labor_enabled: false, labor_mode: 'included', labor_type: 'fixed', labor_value: 0, quote_template: '{valor_total}' } });
     const result = await executeTool(ctx, 'build_quote', { part_id: 'part-1', service_type: 'Troca de tela' });
     expect(result.total).toBe(349.9);
+    expect(result.labor).toBe(0);
   });
 
   it('registra valores permitidos no validador (nunca inventar preço)', async () => {

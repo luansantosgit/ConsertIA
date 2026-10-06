@@ -1,5 +1,6 @@
 // Confirmação automática de agendamentos (Issue #22)
 // Chamado pelo worker process-scheduled-messages (pg_cron a cada 30s).
+// Retorna o count + linhas de debug para diagnóstico via HTTP.
 
 function toMinutes(hhmm: string): number {
   const [h, m] = (hhmm ?? "00:00").split(":").map(Number);
@@ -18,7 +19,6 @@ function tzNow(tz: string): { date: string; time: string } {
   };
 }
 
-/** Pergunta final adaptada ao tipo do agendamento, evitando "comparecimento" para entregas etc. */
 const CONFIRMATION_ASK: Record<string, string> = {
   os: "Podemos confirmar seu comparecimento?",
   delivery: "Podemos confirmar a entrega?",
@@ -67,13 +67,18 @@ async function findConversation(supabase: any, ev: Record<string, any>) {
 
 const ALL_EVENT_TYPES = ["os", "delivery", "meeting", "reminder", "other"];
 
-export async function processAppointmentConfirmations(supabase: any, baseUrl: string): Promise<number> {
+export async function processAppointmentConfirmations(
+  supabase: any,
+  baseUrl: string,
+): Promise<{ sent: number; debug: string[] }> {
+  const debug: string[] = [];
   const { data: tenants } = await supabase
     .from("tenant_settings")
     .select("tenant_id, schedule_confirmation_hours, confirmation_event_types, timezone")
     .not("schedule_confirmation_hours", "is", null)
     .gt("schedule_confirmation_hours", 0);
-  if (!tenants?.length) return 0;
+  debug.push(`tenants: ${tenants?.length ?? 0}`);
+  if (!tenants?.length) return { sent: 0, debug };
 
   let sent = 0;
 
@@ -87,10 +92,12 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
       : ALL_EVENT_TYPES;
 
     const now = tzNow(tz);
+    debug.push(`tz=${tz} hours=${hours} now=${now.date}T${now.time}`);
     const nowDate = new Date(`${now.date}T00:00:00Z`);
     const dateTo = new Date(nowDate.getTime() + (hours * 60 + 1440) * 60_000).toISOString().slice(0, 10);
+    debug.push(`dateRange: ${now.date}..${dateTo}`);
 
-    const { data: events } = await supabase
+    const { data: events, error: evErr } = await supabase
       .from("calendar_events")
       .select("id, tenant_id, title, customer, date, start_time, os_id, type, status, confirmation_asked_at")
       .eq("tenant_id", ts.tenant_id)
@@ -100,6 +107,7 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
       .gte("date", now.date)
       .lte("date", dateTo)
       .limit(50);
+    debug.push(`events: ${events?.length ?? 0}${evErr ? ` ERR=${evErr.message}` : ''}`);
     if (!events?.length) continue;
 
     const { data: conn } = await supabase
@@ -109,16 +117,23 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
       .eq("status", "connected")
       .limit(1)
       .maybeSingle();
+    debug.push(`conn: ${conn ? 'found' : 'NONE'}`);
     if (!conn?.instance_token) continue;
 
     const nowMinutes = toMinutes(now.time);
+    debug.push(`nowMinutes=${nowMinutes}`);
 
     for (const ev of events) {
       const evMinutes = Math.round((new Date(`${ev.date}T00:00:00Z`).getTime() - nowDate.getTime()) / 60_000) + toMinutes(ev.start_time);
       const diffMin = evMinutes - nowMinutes;
-      if (diffMin < 0 || diffMin > hours * 60) continue;
+      debug.push(`ev "${ev.title}" start=${ev.start_time} evMin=${evMinutes} diff=${diffMin} window=0-${hours * 60}`);
+      if (diffMin < 0 || diffMin > hours * 60) {
+        debug.push(`  SKIP (diff out of window)`);
+        continue;
+      }
 
       const conv = await findConversation(supabase, ev);
+      debug.push(`  conv: ${conv ? conv.contact_phone : 'NOT FOUND'}`);
       if (!conv) continue;
 
       const firstName = (conv.contact_name || ev.customer || "").split(" ")[0];
@@ -137,6 +152,7 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
         headers: { "Content-Type": "application/json", token: conn.instance_token },
         body: JSON.stringify({ number: conv.contact_phone, text }),
       });
+      debug.push(`  send: HTTP ${resp.status}`);
       if (!resp.ok) continue;
 
       await supabase.from("messages").insert({
@@ -157,10 +173,10 @@ export async function processAppointmentConfirmations(supabase: any, baseUrl: st
         .from("calendar_events")
         .update({ confirmation_asked_at: new Date().toISOString() })
         .eq("id", ev.id);
-
+      debug.push(`  SENT ✓`);
       sent++;
     }
   }
 
-  return sent;
+  return { sent, debug };
 }

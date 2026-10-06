@@ -31,7 +31,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   const effectiveDefault = defaultModel && allowedModels.includes(defaultModel) ? defaultModel : allowedModels[0];
   const isDefaultChoice = restricted && agent.openrouter_model === effectiveDefault;
 
-  const usagePercent = tokenLimit && tokenLimit > 0 ? Math.min(100, Math.round((usageTokens / tokenLimit) * 100)) : 0;
+  const usagePercent = tokenLimit && tokenLimit > 0 ? Math.round((usageTokens / tokenLimit) * 100) : 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -106,14 +106,14 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             overflow: 'hidden', border: '1px solid var(--border)',
           }}>
             <div style={{
-              width: `${usagePercent}%`, height: '100%', borderRadius: 99,
-              background: usagePercent >= 90 ? 'var(--danger)' : 'var(--primary)',
+              width: `${Math.min(100, usagePercent)}%`, height: '100%', borderRadius: 99,
+              background: usagePercent >= 110 ? 'var(--danger)' : usagePercent >= 90 ? 'var(--warning, #f59e0b)' : 'var(--primary)',
               transition: 'width 0.3s',
             }} />
           </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>
             {usageTokens.toLocaleString('pt-BR')} tokens {tokenLimit && tokenLimit > 0 ? `de ${tokenLimit.toLocaleString('pt-BR')} (${usagePercent}%)` : ''}
-            {(!tokenLimit || tokenLimit <= 0) ? ` — ${t('sem limite configurado')}` : usagePercent >= 100 ? ` — ${t('cota esgotada, fale com o administrador')}` : ''}
+            {(!tokenLimit || tokenLimit <= 0) ? ` — ${t('sem limite configurado')}` : usagePercent >= 110 ? ` — ${t('IA pausada: tokens esgotados')}` : usagePercent >= 100 ? ` — ${t('cota esgotada')}` : ''}
           </p>
         </div>
 

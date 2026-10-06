@@ -20,6 +20,7 @@ import { BusinessHoursSection } from '@/pages/settings/BusinessHoursSection';
 import { AppearanceSection } from '@/pages/settings/AppearanceSection';
 import { UsersSection } from '@/pages/settings/UsersSection';
 import { QuickRepliesSection } from '@/pages/settings/QuickRepliesSection';
+import { PdfLogoUpload } from '@/pages/settings/PdfLogoUpload';
 
 type Section = 'aparencia' | 'empresa' | 'horario' | 'notificacoes' | 'aparelhos' | 'usuarios' | 'respostas' | 'seguranca' | 'integracao' | 'conexoes';
 
@@ -426,25 +427,30 @@ export const SettingsPage: React.FC = () => {
                 <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{t('Dados da Empresa')}</h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{t('Informações que aparecem nas OS, orçamentos e notas fiscais.')}</p>
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">{t('Razão Social')}</label>
-                  <input className="input" value={companyName} onChange={e => setCompanyName(e.target.value)} />
+              <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">{t('Razão Social')}</label>
+                      <input className="input" value={companyName} onChange={e => setCompanyName(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">CNPJ</label>
+                      <input className="input" value={companyCnpj} onChange={e => setCompanyCnpj(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">{t('Telefone')}</label>
+                      <input className="input" value={companyPhone} onChange={e => setCompanyPhone(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">WhatsApp</label>
+                      <input className="input" value={companyWhatsapp} onChange={e => setCompanyWhatsapp(e.target.value)} />
+                    </div>
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">CNPJ</label>
-                  <input className="input" value={companyCnpj} onChange={e => setCompanyCnpj(e.target.value)} />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">{t('Telefone')}</label>
-                  <input className="input" value={companyPhone} onChange={e => setCompanyPhone(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">WhatsApp</label>
-                  <input className="input" value={companyWhatsapp} onChange={e => setCompanyWhatsapp(e.target.value)} />
-                </div>
+                <PdfLogoUpload />
               </div>
               <div className="form-group">
                 <label className="form-label">{t('Endereço')}</label>

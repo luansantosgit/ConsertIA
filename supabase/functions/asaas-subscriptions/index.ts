@@ -70,6 +70,20 @@ const today = () => new Date().toISOString().slice(0, 10);
 const plusDays = (d: number) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
 const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "");
 
+// Credenciais Asaas para handlers fora do GET (compra de tokens etc.)
+async function getAsaas(admin: ReturnType<typeof createClient>): Promise<AsaasConfig> {
+  const { data } = await admin
+    .from("asaas_config")
+    .select("access_token, environment, enabled_methods")
+    .limit(1)
+    .maybeSingle();
+  return {
+    access_token: data?.access_token ?? "",
+    environment: data?.environment ?? "sandbox",
+    enabled_methods: data?.enabled_methods ?? [],
+  };
+}
+
 // Pagamento confirmado: avanca o vencimento +30 dias (a partir do
 // maior entre vencimento e hoje) e zera o prazo extra concedido
 async function advanceDueDate(admin: ReturnType<typeof createClient>, tenantId: string) {
@@ -409,6 +423,144 @@ serve(async (req) => {
         await admin.from("subscription_invoices").update({ pix_payload: pix.payload }).eq("id", invoice.id);
       }
       return json({ encoded_image: pix.encodedImage, payload: pix.payload });
+    }
+
+    // ── POST tokens: compra de pacote de tokens de IA ──
+    if (action === "buy_tokens") {
+      if (!asaasCfg.access_token) return json({ error: "asaas_not_configured" }, 400);
+      const packageId = String(body.package_id ?? "");
+
+      const { data: pkg } = await admin
+        .from("token_packages")
+        .select("id, name, tokens, price")
+        .eq("id", packageId)
+        .eq("active", true)
+        .maybeSingle();
+      if (!pkg) return json({ error: "invalid_package" }, 400);
+
+      // Cliente Asaas do tenant (reusa o da assinatura)
+      const { data: tenant } = await admin
+        .from("tenants")
+        .select("asaas_customer_id")
+        .eq("id", tenantId)
+        .single();
+      let customerId = tenant?.asaas_customer_id ?? "";
+      const { data: settings } = await admin
+        .from("tenant_settings")
+        .select("company_name, cnpj, phone, whatsapp")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (!customerId) {
+        const cnpj = digits(settings?.cnpj);
+        if (!cnpj) return json({ error: "cnpj_missing" }, 400);
+        const customer = await asaas<{ id: string }>(asaasCfg, "/customers", {
+          method: "POST",
+          body: JSON.stringify({
+            name: settings?.company_name || tenant?.name,
+            cpfCnpj: cnpj,
+            mobilePhone: digits(settings?.whatsapp || settings?.phone) || undefined,
+            externalReference: tenantId,
+          }),
+        });
+        customerId = customer.id;
+        await admin.from("tenants").update({ asaas_customer_id: customerId }).eq("id", tenantId);
+      }
+
+      const purchaseId = crypto.randomUUID();
+      const payment = await asaas<{ id: string; invoiceUrl: string; bankSlipUrl: string | null }>(
+        asaasCfg, "/payments", {
+          method: "POST",
+          body: JSON.stringify({
+            customer: customerId,
+            billingType: "PIX",
+            value: Number(pkg.price),
+            dueDate: today(),
+            description: `Pacote de tokens: ${pkg.name} (${pkg.tokens} tokens)`,
+            externalReference: `tokens:${purchaseId}`,
+          }),
+        },
+      );
+
+      let pixImage: string | null = null;
+      let pixPayload: string | null = null;
+      try {
+        const qr = await asaas<{ encodedImage: string; payload: string }>(
+          asaasCfg, `/payments/${payment.id}/pixQrCode`,
+        );
+        pixImage = qr.encodedImage ?? null;
+        pixPayload = qr.payload ?? null;
+      } catch { /* melhor esforço */ }
+
+      const { error: insErr } = await admin.from("token_purchases").insert({
+        id: purchaseId,
+        tenant_id: tenantId,
+        package_id: pkg.id,
+        package_name: pkg.name,
+        tokens: pkg.tokens,
+        amount: Number(pkg.price),
+        status: "pending",
+        asaas_payment_id: payment.id,
+        invoice_url: payment.invoiceUrl,
+        bank_slip_url: payment.bankSlipUrl,
+      });
+      if (insErr) return json({ error: "purchase_failed" }, 500);
+
+      return json({
+        purchase: {
+          id: purchaseId,
+          package_name: pkg.name,
+          tokens: pkg.tokens,
+          amount: Number(pkg.price),
+          invoice_url: payment.invoiceUrl,
+          pix_payload: pixPayload,
+        },
+        pix_encoded_image: pixImage,
+      });
+    }
+
+    // ── POST poll_tokens: status de compra de tokens ──
+    if (action === "poll_tokens") {
+      const { data: purchase } = await admin
+        .from("token_purchases")
+        .select("*")
+        .eq("id", String(body.purchase_id ?? ""))
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (!purchase) return json({ error: "not_found" }, 404);
+      if (purchase.status === "paid") return json({ paid: true, tokens: purchase.tokens });
+      if (!purchase.asaas_payment_id) return json({ paid: false });
+
+      const asaasPollCfg = asaasCfg;
+      try {
+        const p = await asaas<{ status: string; deleted?: boolean; paymentDate: string | null }>(
+          asaasPollCfg, `/payments/${purchase.asaas_payment_id}`,
+        );
+        const paid = p.deleted !== true && ["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(p.status);
+        if (paid) {
+          // Credita o saldo e conclui a compra
+          const { data: ent } = await admin
+            .from("tenant_ai_entitlements")
+            .select("id, extra_tokens")
+            .eq("tenant_id", tenantId)
+            .maybeSingle();
+          if (ent) {
+            await admin
+              .from("tenant_ai_entitlements")
+              .update({ extra_tokens: (ent.extra_tokens ?? 0) + purchase.tokens, updated_at: new Date().toISOString() })
+              .eq("id", ent.id);
+          } else {
+            await admin
+              .from("tenant_ai_entitlements")
+              .insert({ tenant_id: tenantId, extra_tokens: purchase.tokens });
+          }
+          await admin
+            .from("token_purchases")
+            .update({ status: "paid" })
+            .eq("id", purchase.id);
+          return json({ paid: true, tokens: purchase.tokens });
+        }
+      } catch { /* segue nao-pago */ }
+      return json({ paid: false });
     }
 
     return json({ error: "invalid_action" }, 400);

@@ -18,8 +18,10 @@ export interface ServiceOrderForm {
   subject: string;
   description?: string;
   budgetAmount?: number;
+  budgetItems?: Array<{ name: string; value: number }>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   checklistPhotos?: ChecklistPhoto[];
+  serialNumber?: string;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -125,8 +127,10 @@ export class ServiceOrderRepository extends BaseSupabaseRepository<ServiceOrder>
         subject: form.subject,
         description: form.description || null,
         budget_amount: form.budgetAmount ?? null,
+        budget_items: form.budgetItems || [],
         priority: form.priority,
         checklist_photos: form.checklistPhotos || [],
+        serial_number: form.serialNumber || null,
       })
       .select()
       .single();

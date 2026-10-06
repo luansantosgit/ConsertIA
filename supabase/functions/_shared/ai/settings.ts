@@ -70,15 +70,27 @@ export function resolveEffectiveModel(agentModel: string, isGlobalMode: boolean,
 export async function quotaExceeded(supabase: any, tenantId: string, limit: number): Promise<boolean> {
   if (!limit || limit <= 0) return false;
   const period = new Date().toISOString().slice(0, 7);
-  const { data: usage } = await supabase
-    .from("ai_token_usage")
-    .select("tokens_in, tokens_out")
-    .eq("tenant_id", tenantId)
-    .eq("period", period)
-    .limit(1)
-    .maybeSingle();
-  const used = (usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0);
-  return used >= limit;
+  const [usageRes, extraRes] = await Promise.all([
+    supabase
+      .from("ai_token_usage")
+      .select("tokens_in, tokens_out")
+      .eq("tenant_id", tenantId)
+      .eq("period", period)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("tenant_ai_entitlements")
+      .select("extra_tokens")
+      .eq("tenant_id", tenantId)
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  const used = (usageRes.data?.tokens_in ?? 0) + (usageRes.data?.tokens_out ?? 0);
+  // Tokens comprados viram saldo: o limite efetivo cresce com extras
+  const extraTokens = extraRes.data?.extra_tokens ?? 0;
+  const effectiveLimit = limit + extraTokens;
+  // 110%: tolerancia para a resposta em curso antes de pausar a IA
+  return used >= effectiveLimit * 1.1;
 }
 
 export async function trackUsage(supabase: any, tenantId: string, tokensIn: number, tokensOut: number, cost: number): Promise<void> {

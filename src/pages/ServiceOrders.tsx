@@ -12,6 +12,8 @@ import { formatOSCode, formatCurrency } from '@/lib/format';
 import { loadKanbanAutoMessages, saveKanbanAutoMessages, scheduleStageAutoMessage, type KanbanAutoMessages, type StageAutoMessage } from '@/lib/os-auto-message.service';
 import { SkeletonStats, SkeletonTable } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
+import { Pagination } from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import ErrorMessage from '@/components/ErrorMessage';
 import { OSAutoMessageModal } from '@/components/OSAutoMessageModal';
@@ -132,6 +134,8 @@ export const ServiceOrders: React.FC = () => {
      (o.equipmentLabel || '').toLowerCase().includes(search.toLowerCase()) ||
      (o.id || '').toLowerCase().includes(search.toLowerCase()))
   );
+
+  const paginatedOS = usePagination(filtered, 20, search + statusFilter);
 
   const handleSave = async (newOS: OSRow) => {
     try {
@@ -326,7 +330,7 @@ export const ServiceOrders: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(o => {
+              {paginatedOS.items.map(o => {
                 const sm = STATUS_META[o.status];
                 const pm = PRIORITY_META[o.priority];
                 return (
@@ -396,6 +400,13 @@ export const ServiceOrders: React.FC = () => {
               })}
             </tbody>
           </table>
+          <Pagination
+            page={paginatedOS.page}
+            totalItems={paginatedOS.totalItems}
+            pageSize={20}
+            onPageChange={paginatedOS.setPage}
+            label="ordens"
+          />
           {filtered.length === 0 && (
             <EmptyState
               icon={Search}

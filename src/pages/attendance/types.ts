@@ -80,6 +80,7 @@ export function toChatMessage(msg: Message): ChatMessage {
     edited: msg.edited,
     deleted: msg.deleted,
     replyTo: msg.reply_to,
+    osCard: msg.os_card as ChatMessage['osCard'],
     mediaType,
     mediaUrl,
   };

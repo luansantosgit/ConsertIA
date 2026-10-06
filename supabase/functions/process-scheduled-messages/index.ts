@@ -19,7 +19,8 @@ serve(async () => {
     const baseUrl = `https://${settings?.uazapi_subdomain || "api"}.uazapi.com`;
 
     // Confirmações automáticas de agendamento (roda mesmo com fila vazia)
-    const confirmationsSent = await processAppointmentConfirmations(supabase, baseUrl);
+    const { sent: confirmationsSent, debug: confirmDebug } = await processAppointmentConfirmations(supabase, baseUrl);
+    console.log("[worker] confirmations:", confirmationsSent, "debug:", confirmDebug.join(' | '));
 
     const now = new Date().toISOString();
     const stale = new Date(Date.now() - 120_000).toISOString();
@@ -42,7 +43,7 @@ serve(async () => {
     }
 
     if (!rows || rows.length === 0) {
-      return new Response(JSON.stringify({ ok: true, processed: 0, confirmationsSent }), {
+      return new Response(JSON.stringify({ ok: true, processed: 0, confirmationsSent, confirmDebug }), {
         headers: { "Content-Type": "application/json" },
       });
     }

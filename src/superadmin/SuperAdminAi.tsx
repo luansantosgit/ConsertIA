@@ -3,6 +3,7 @@ import { Save, Eye, EyeOff, Bot, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/hooks/useTranslation';
 import { OPENROUTER_MODELS, modelLabel } from '@/lib/openrouter-models';
+import { TokenPackagesSection } from '@/superadmin/TokenPackagesSection';
 
 interface TenantRow { id: string; name: string; plan_id: string | null }
 interface PlanRow { id: string; name: string; ai_token_limit: number }
@@ -174,6 +175,7 @@ export const SuperAdminAi: React.FC = () => {
 
   return (
     <div className="page" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <TokenPackagesSection />
       <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
           <h3 style={{ fontWeight: 700, fontSize: '1rem', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>

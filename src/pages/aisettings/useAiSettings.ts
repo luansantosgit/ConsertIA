@@ -66,9 +66,11 @@ export function useAiSettings() {
           setAllowedModels(m.allowedModels);
           setDefaultModel(m.defaultModel);
         }).catch(() => {});
-        setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
-        setTokenLimit(entitlement?.token_limit_override ?? planLimit);
-        setAiLogs(logs);
+      setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
+      // Cota efetiva: limite do plano/override + tokens comprados
+      const extra = entitlement?.extra_tokens ?? 0;
+      setTokenLimit((entitlement?.token_limit_override ?? planLimit) + (extra || 0));
+      setAiLogs(logs);
         setTotalLogsCount(count);
         setTotalCost(cost);
       } catch (err) {
@@ -84,6 +86,20 @@ export function useAiSettings() {
   const flashSaved = useCallback(() => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  }, []);
+
+  // Recarrega cota/uso (após compra de tokens, por exemplo)
+  const refreshUsage = useCallback(async () => {
+    try {
+      const [entitlement, usage, planLimit] = await Promise.all([
+        entitlementRepo.getEntitlement(),
+        entitlementRepo.getUsage(),
+        entitlementRepo.getPlanLimit().catch(() => 0),
+      ]);
+      setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
+      const extra = entitlement?.extra_tokens ?? 0;
+      setTokenLimit((entitlement?.token_limit_override ?? planLimit) + (extra || 0));
+    } catch { /* silencioso */ }
   }, []);
 
   const savePersonality = useCallback(async (agentName: string, systemPrompt: string) => {
@@ -182,6 +198,7 @@ export function useAiSettings() {
     loading, saving, saved,
     agent, quote, diagnosis, templates,
     usesPlatformToken, usageTokens, tokenLimit, allowedModels, defaultModel,
+    refreshUsage,
     agentDesc, setAgentDesc,
     saveAgent, savePersonality, saveQuote, saveDiagnosis,
     createTemplate, updateTemplate, deleteTemplate,

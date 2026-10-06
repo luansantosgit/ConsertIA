@@ -118,6 +118,42 @@ serve(async (req) => {
         await finalizeOnboarding(admin, onb as OnboardingSession, payment.paymentDate ?? null);
       }
     }
+
+    // Compra de pacote de tokens de IA: credita o saldo do tenant
+    {
+      const paidStatus = String(payment.status ?? "");
+      if (["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(paidStatus)) {
+        const { data: purchase } = await admin
+          .from("token_purchases")
+          .select("*")
+          .eq("asaas_payment_id", String(payment.id))
+          .maybeSingle();
+        if (purchase && purchase.status !== "paid") {
+          const { data: ent } = await admin
+            .from("tenant_ai_entitlements")
+            .select("id, extra_tokens")
+            .eq("tenant_id", purchase.tenant_id)
+            .maybeSingle();
+          if (ent) {
+            await admin
+              .from("tenant_ai_entitlements")
+              .update({
+                extra_tokens: (ent.extra_tokens ?? 0) + purchase.tokens,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", ent.id);
+          } else {
+            await admin
+              .from("tenant_ai_entitlements")
+              .insert({ tenant_id: purchase.tenant_id, extra_tokens: purchase.tokens });
+          }
+          await admin
+            .from("token_purchases")
+            .update({ status: "paid" })
+            .eq("id", purchase.id);
+        }
+      }
+    }
     return json({ received: true });
   } catch {
     // Sempre 200 para o Asaas nao entrar em retry infinito

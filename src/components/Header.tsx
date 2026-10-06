@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen, AlertTriangle } from 'lucide-react';
+import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen, AlertTriangle, Bot } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSubscriptionAlert } from '@/stores/subscription.store';
+import { useAiQuotaAlert } from '@/stores/ai-quota.store';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -35,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
   const location = useLocation();
   const { language, changeLanguage, t } = useTranslation();
   const { hasOverdue } = useSubscriptionAlert();
+  const { tokensPaused } = useAiQuotaAlert();
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
   const currentLang = LANGS.find(l => l.code === language) ?? LANGS[0];
   // No chat o balão flutuante cobre o input: o alerta sobe para o header
   const showSubscriptionAlert = location.pathname.startsWith('/atendimento') && hasOverdue;
+  const showTokensAlert = location.pathname.startsWith('/atendimento') && tokensPaused;
 
   // Fecha dropdown ao clicar fora
   useEffect(() => {
@@ -90,6 +93,24 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
           >
             <AlertTriangle size={13} />
             Assinatura vencida
+          </Link>
+        )}
+
+        {/* Alerta de tokens de IA esgotados (no chat, substitui o balão flutuante) */}
+        {showTokensAlert && (
+          <Link
+            to="/agente-ia?comprar=tokens"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 999, textDecoration: 'none',
+              background: '#7c3aed', color: '#fff',
+              fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap',
+              animation: 'navDotPulse 1.4s ease-in-out infinite',
+            }}
+            title="Comprar mais tokens de IA"
+          >
+            <Bot size={13} />
+            Tokens esgotados
           </Link>
         )}
 

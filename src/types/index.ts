@@ -53,6 +53,8 @@ export interface ServiceOrder {
   completed_at?: string;
   technician_id?: string;
   origin?: string;
+  serial_number?: string;
+  budget_items?: Array<{ name: string; value: number }>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   checklist_photos: ChecklistPhoto[];
   created_at: string;
@@ -158,6 +160,13 @@ export interface Message {
   edited?: boolean;
   deleted?: boolean;
   reply_to?: string;
+  os_card?: {
+    osId: string;
+    equipment?: string;
+    subject?: string;
+    budget?: number;
+    status?: string;
+  };
   message_id_provider?: string;
   message_type?: string;
   is_internal_note?: boolean;
@@ -418,6 +427,7 @@ export interface TenantAiEntitlement {
   tenant_id: string;
   use_platform_token: boolean;
   token_limit_override?: number;
+  extra_tokens?: number;
   allowed_models?: string[] | null;
   default_model?: string | null;
   created_at: string;

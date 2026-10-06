@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, ImageIcon, Type } from 'lucide-react';
+import { Plus, Trash2, Pencil, ImageIcon, Type } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import EmptyState from '@/components/EmptyState';
@@ -19,23 +19,45 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ templates, l
   const { t } = useTranslation();
   const [form, setForm] = useState<typeof EMPTY_FORM>(EMPTY_FORM);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const closeForm = () => {
+    setForm(EMPTY_FORM);
+    setAdding(false);
+    setEditingId(null);
+  };
+
+  const openEdit = (template: AiPreQuoteTemplate) => {
+    setForm({
+      title: template.title,
+      type: template.type,
+      content: template.content ?? '',
+      media_url: template.media_url ?? '',
+      sort_order: template.sort_order ?? 0,
+    });
+    setEditingId(template.id);
+    setAdding(false);
+  };
 
   const handleSubmit = async () => {
     if (!form.title.trim()) return;
     setSaving(true);
     try {
-      await onCreate({
+      const payload: Partial<AiPreQuoteTemplate> = {
         title: form.title.trim(),
         type: form.type,
         content: form.content.trim(),
         media_url: form.type === 'media' ? form.media_url.trim() || undefined : undefined,
         sort_order: Number(form.sort_order) || 0,
-        active: true,
-      });
-      setForm(EMPTY_FORM);
-      setAdding(false);
+      };
+      if (editingId) {
+        await onUpdate(editingId, payload);
+      } else {
+        await onCreate({ ...payload, active: true });
+      }
+      closeForm();
     } finally {
       setSaving(false);
     }
@@ -55,7 +77,7 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ templates, l
         </button>
       </div>
 
-      {adding && (
+      {(adding || editingId) && (
         <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div className="form-row">
             <div className="form-group">
@@ -86,16 +108,16 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ templates, l
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-primary" onClick={handleSubmit} disabled={saving || !form.title.trim()}>
-              {t('Salvar template')}
+              {editingId ? t('Salvar alterações') : t('Salvar template')}
             </button>
-            <button className="btn btn-ghost" onClick={() => setAdding(false)}>{t('Cancelar')}</button>
+            <button className="btn btn-ghost" onClick={closeForm}>{t('Cancelar')}</button>
           </div>
         </div>
       )}
 
       {loading ? (
         <div className="card card-p">{t('Carregando templates...')}</div>
-      ) : templates.length === 0 && !adding ? (
+      ) : templates.length === 0 && !adding && !editingId ? (
         <EmptyState
           title={t('Nenhum template cadastrado')}
           description={t('Crie templates diferenciais para enviar antes dos orçamentos e aumentar a conversão.')}
@@ -122,11 +144,19 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ templates, l
                 {template.content}
               </p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               <button className="btn btn-sm btn-ghost" onClick={() => onUpdate(template.id, { active: !template.active })}>
                 {template.active ? t('Desativar') : t('Ativar')}
               </button>
-              <button className="btn btn-sm btn-danger" onClick={() => setDeleteId(template.id)}>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => openEdit(template)}
+                title={t('Editar')}
+                style={{ padding: '6px 8px' }}
+              >
+                <Pencil size={14} />
+              </button>
+              <button className="btn btn-sm btn-ghost" onClick={() => setDeleteId(template.id)} style={{ color: 'var(--danger)', padding: '6px 8px' }}>
                 <Trash2 size={14} />
               </button>
             </div>

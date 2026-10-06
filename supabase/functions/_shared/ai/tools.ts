@@ -296,7 +296,7 @@ async function buildQuote(ctx: AgentContext, args: any): Promise<ToolResult> {
     grand_total: grandTotal,
     message: items.length > 1
       ? `Orçamento do item adicionado. Total somado de TODOS os serviços orçados nesta conversa: ${formatMoney(grandTotal)}. Apresente também esse total ao cliente.`
-      : "Repasse o quote_text EXATAMENTE como está: o formato (valores detalhados ou total único) já segue a configuração da empresa. NÃO detalhe peça/mão de obra por conta própria e NÃO invente formatação.",
+      : undefined,
   };
 }
 
@@ -540,13 +540,7 @@ async function sendTemplates(ctx: AgentContext): Promise<ToolResult> {  if (ctx.
   if (skipped > 0 && sent === 0) {
     return { ok: true, sent, skipped, message: "Templates já haviam sido enviados nesta conversa — reenvio ignorado (regra de etapa única)." };
   }
-  return {
-    ok: true,
-    sent,
-    skipped,
-    titles: ctx.templates.map((t) => t.title),
-    message: "Templates informativos PADRÃO da empresa, já enviados como mensagens. Valem para TODOS os serviços — NÃO são opções/serviços extras: NÃO os ofereça como 'se tiver interesse' e NÃO os mencione depois do orçamento como escolha do cliente.",
-  };
+  return { ok: true, sent, skipped, titles: ctx.templates.map((t) => t.title) };
 }
 
 async function updateCustomerName(ctx: AgentContext, args: any): Promise<ToolResult> {

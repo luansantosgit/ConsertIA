@@ -8,6 +8,8 @@ import EmptyState from '@/components/EmptyState';
 import ErrorMessage from '@/components/ErrorMessage';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useTranslation } from '@/hooks/useTranslation';
+import { Pagination } from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 
 const STATUS_BADGE: Record<string, string> = {
   completed: 'badge-success',
@@ -146,6 +148,8 @@ export const Financial: React.FC = () => {
   };
 
   const allSelected = transactions.length > 0 && transactions.every(tx => selected.has(tx.id));
+
+  const paginatedTx = usePagination(transactions, 25);
 
   const toggleSelectAll = () => {
     setSelected(allSelected ? new Set() : new Set(transactions.map(tx => tx.id)));
@@ -311,7 +315,8 @@ export const Financial: React.FC = () => {
             onAction={() => setShowModal(true)}
           />
         ) : (
-          <table>
+          <>
+            <table>
             <thead>
               <tr>
                 <th style={{ width: 36, paddingLeft: 20 }}>
@@ -331,7 +336,7 @@ export const Financial: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {transactions.map(tx => (
+              {paginatedTx.items.map(tx => (
                 <tr key={tx.id} style={{ background: selected.has(tx.id) ? 'var(--primary-light)' : undefined }}>
                   <td style={{ paddingLeft: 20 }}>
                     <input
@@ -369,7 +374,15 @@ export const Financial: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+            <Pagination
+              page={paginatedTx.page}
+              totalItems={paginatedTx.totalItems}
+              pageSize={25}
+              onPageChange={paginatedTx.setPage}
+              label="lançamentos"
+            />
+          </>
         )}
       </div>
 

@@ -4,7 +4,7 @@ import { X, FileText, ArrowRight, Send, Eye } from 'lucide-react';
 import type { ServiceOrder, ChecklistPhoto } from '@/types';
 import { OSDocumentModal } from '@/components/OSDocumentModal';
 import { PhotoChecklist } from '@/components/PhotoChecklist';
-import { CurrencyInput } from '@/components/CurrencyInput';
+import { BudgetItemsSection, type BudgetItem } from '@/components/BudgetItemsSection';
 
 export interface OSRow extends ServiceOrder {
   customerName: string;
@@ -13,6 +13,7 @@ export interface OSRow extends ServiceOrder {
   contactAvatar?: string;
   equipmentLabel: string;
   technicianName: string;
+  serialNumber?: string;
 }
 
 interface OSModalProps {
@@ -40,10 +41,16 @@ export const OSModal: React.FC<OSModalProps> = ({
     equipmentLabel: initialOs?.equipmentLabel ?? initialEquipment,
     subject: initialOs?.subject ?? '',
     description: initialOs?.description ?? '',
-    budget_amount: initialOs?.budget_amount ?? 0,
     priority: (initialOs?.priority ?? 'medium') as 'low' | 'medium' | 'high' | 'urgent',
     technicianName: initialOs?.technicianName ?? '',
+    serialNumber: initialOs?.serialNumber ?? '',
   });
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(
+    (initialOs?.budget_items as BudgetItem[]) ??
+    (initialOs?.budget_amount
+      ? [{ name: initialOs.subject || 'Serviço', value: initialOs.budget_amount }]
+      : []),
+  );
 
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
@@ -53,17 +60,20 @@ export const OSModal: React.FC<OSModalProps> = ({
   const s = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 
   const buildOSObject = (): OSRow => {
+    const total = budgetItems.reduce((a, i) => a + (Number(i.value) || 0), 0);
     if (initialOs) {
       return {
         ...initialOs,
         subject: form.subject || initialOs.subject,
         description: form.description,
-        budget_amount: form.budget_amount > 0 ? form.budget_amount : undefined,
+        budget_amount: total > 0 ? total : undefined,
+        budget_items: budgetItems,
         priority: form.priority,
         checklist_photos: photos,
         customerName: form.customerName || 'Cliente',
         equipmentLabel: form.equipmentLabel || 'Equipamento não especificado',
         technicianName: form.technicianName,
+        serialNumber: form.serialNumber || undefined,
         updated_at: new Date().toISOString(),
       };
     }
@@ -75,7 +85,8 @@ export const OSModal: React.FC<OSModalProps> = ({
       status: 'pending',
       subject: form.subject || 'Triagem Técnica',
       description: form.description,
-      budget_amount: form.budget_amount > 0 ? form.budget_amount : undefined,
+      budget_amount: total > 0 ? total : undefined,
+      budget_items: budgetItems,
       priority: form.priority,
       checklist_photos: photos,
       created_at: new Date().toISOString(),
@@ -83,6 +94,7 @@ export const OSModal: React.FC<OSModalProps> = ({
       customerName: form.customerName || 'Cliente',
       equipmentLabel: form.equipmentLabel || 'Equipamento não especificado',
       technicianName: form.technicianName,
+      serialNumber: form.serialNumber || undefined,
     };
   };
 
@@ -134,15 +146,6 @@ export const OSModal: React.FC<OSModalProps> = ({
           <div className="modal-body">
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Cliente *</label>
-                <input
-                  className="input"
-                  value={form.customerName}
-                  onChange={e => s('customerName', e.target.value)}
-                  placeholder="Nome do cliente"
-                />
-              </div>
-              <div className="form-group">
                 <label className="form-label">Equipamento *</label>
                 <input
                   className="input"
@@ -151,26 +154,28 @@ export const OSModal: React.FC<OSModalProps> = ({
                   placeholder="Ex: iPhone 14 Pro"
                 />
               </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group" style={{ flex: 2 }}>
-                <label className="form-label">Problema relatado *</label>
+              <div className="form-group">
+                <label className="form-label">Nº de Série do Aparelho</label>
                 <input
                   className="input"
-                  value={form.subject}
-                  onChange={e => s('subject', e.target.value)}
-                  placeholder="Ex: Substituição de display"
-                />
-              </div>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label">Orçamento (R$)</label>
-                <CurrencyInput
-                  value={form.budget_amount}
-                  onChange={v => s('budget_amount', v)}
+                  value={form.serialNumber}
+                  onChange={e => s('serialNumber', e.target.value)}
+                  placeholder="Ex: F2LX9ABCDM (opcional)"
                 />
               </div>
             </div>
+
+            <div className="form-group">
+              <label className="form-label">Problema relatado *</label>
+              <input
+                className="input"
+                value={form.subject}
+                onChange={e => s('subject', e.target.value)}
+                placeholder="Ex: Tela trincada após queda"
+              />
+            </div>
+
+            <BudgetItemsSection items={budgetItems} onChange={setBudgetItems} />
 
             <div className="form-group">
               <label className="form-label">Descrição detalhada</label>

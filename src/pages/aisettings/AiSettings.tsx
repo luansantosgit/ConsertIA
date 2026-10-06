@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Activity, Brain, MessageSquare, Sparkles, Zap,
   ChevronRight, ClipboardList, Stethoscope,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import type { NavItem } from './types';
 import { useAiSettings } from './useAiSettings';
 import { ConfigTab } from './ConfigTab';
@@ -11,6 +12,7 @@ import { TemplatesSection } from './TemplatesSection';
 import { QuotesSection } from './QuotesSection';
 import { DiagnosisSection } from './DiagnosisSection';
 import { IntegrationsTab } from './IntegrationsTab';
+import { TokenQuotaAlert } from './TokenQuotaAlert';
 import { LogsTab } from './LogsTab';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -27,6 +29,18 @@ const NAV: NavItem[] = [
 export const AiSettings: React.FC = () => {
   const { t } = useTranslation();
   const h = useAiSettings();
+  const [searchParams] = useSearchParams();
+  // Balão global "comprar tokens" → abre o modal direto via ?comprar=tokens
+  const autoOpenBuy = searchParams.get('comprar') === 'tokens';
+  const [buyModalOpen] = React.useState(autoOpenBuy);
+
+  // Se veio com ?comprar=tokens, vai para a aba de integrações
+  useEffect(() => {
+    if (autoOpenBuy) {
+      h.setActiveSection('integracoes');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenBuy]);
   const agentActive = h.agent?.active === true;
 
   return (
@@ -117,17 +131,25 @@ export const AiSettings: React.FC = () => {
           )}
 
           {!h.loading && h.activeSection === 'integracoes' && (
-            <IntegrationsTab
-              agent={h.agent}
-              usesPlatformToken={h.usesPlatformToken}
-              usageTokens={h.usageTokens}
-              tokenLimit={h.tokenLimit}
-              allowedModels={h.allowedModels}
-              defaultModel={h.defaultModel}
-              saving={h.saving}
-              saved={h.saved}
-              onSave={h.saveAgent}
-            />
+            <>
+              <TokenQuotaAlert
+                usageTokens={h.usageTokens}
+                tokenLimit={h.tokenLimit}
+                onPurchased={h.refreshUsage}
+                autoOpen={buyModalOpen}
+              />
+              <IntegrationsTab
+                agent={h.agent}
+                usesPlatformToken={h.usesPlatformToken}
+                usageTokens={h.usageTokens}
+                tokenLimit={h.tokenLimit}
+                allowedModels={h.allowedModels}
+                defaultModel={h.defaultModel}
+                saving={h.saving}
+                saved={h.saved}
+                onSave={h.saveAgent}
+              />
+            </>
           )}
 
           {!h.loading && h.activeSection === 'historico' && (
