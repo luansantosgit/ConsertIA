@@ -11,6 +11,7 @@ import { MessageInput } from './MessageInput';
 import { ChatEmptyState } from './ChatEmptyState';
 import { QuickReplyPicker } from './QuickReplyPicker';
 import { OSPickerModal } from './OSPickerModal';
+import { ChatReminderModal } from './ChatReminderModal';
 
 interface ChatAreaProps {
   selected: ConvRow | undefined;
@@ -80,6 +81,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   // Respostas rápidas: "/" no início do input abre o picker
   const [osPickerOpen, setOsPickerOpen] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
   const slashQuery = inputText.startsWith('/') ? inputText.slice(1) : null;
 
   // Como no WhatsApp: resposta ÚNICA vai para o input conferir antes de
@@ -151,8 +153,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         isRightPanelOpen={isRightPanelOpen}
         searchOpen={search.searchOpen}
         onToggleSearch={search.toggleSearch}
-        onOpenOSModal={onOpenOSModal}
-        onToggleRightPanel={onToggleRightPanel}
+          onOpenOSModal={onOpenOSModal}
+          onOpenReminderModal={() => setReminderOpen(true)}
+          onToggleRightPanel={onToggleRightPanel}
       />
 
       {search.searchOpen && (
@@ -266,6 +269,27 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         osList={currentClientOSList}
         onClose={() => setOsPickerOpen(false)}
         onSendOS={onSendOSCard}
+      />
+
+      <ChatReminderModal
+        open={reminderOpen}
+        conversation={selected ?? null}
+        editing={null}
+        onClose={() => setReminderOpen(false)}
+        onSave={async draft => {
+          const { ChatReminderRepository } = await import('@/repositories/chat-reminder.repository');
+          const repo = new ChatReminderRepository();
+          await repo.create({
+            conversation_id: selected!.id,
+            contact_phone: selected!.contact_phone,
+            message: draft.message,
+            scheduled_at: draft.scheduledAt,
+          });
+        }}
+        onDelete={async id => {
+          const { ChatReminderRepository } = await import('@/repositories/chat-reminder.repository');
+          await new ChatReminderRepository().delete(id);
+        }}
       />
 
       {dragOver && (

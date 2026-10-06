@@ -12,6 +12,9 @@ import { statusColor, STATUS_BADGES, STATUS_LABELS } from './schedule/eventStatu
 import { EventFormModal, type EventFormState } from './schedule/EventFormModal';
 import { EventActionsModal, type AppointmentTarget } from './schedule/EventActionsModal';
 import { ReminderSettingsModal } from './schedule/ReminderSettingsModal';
+import { ChatRemindersTab } from './schedule/ChatRemindersTab';
+
+type ScheduleTab = 'agenda' | 'reminders';
 
 const EVENT_COLORS: Record<string, string> = {
   os: '#4f46e5',
@@ -93,6 +96,7 @@ export const Schedule: React.FC = () => {
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>('agenda');
 
   const weekDays = useMemo(() => getWeekDays(currentWeek), [currentWeek]);
 
@@ -200,6 +204,34 @@ export const Schedule: React.FC = () => {
 
   return (
     <div className="page">
+      {/* Tabs: Agenda de Serviços | Lembretes Agendados */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'var(--bg-secondary, #f1f5f9)', borderRadius: 10, padding: 4 }}>
+        {([
+          { key: 'agenda' as const, label: 'Agenda de Serviços', icon: Calendar },
+          { key: 'reminders' as const, label: 'Lembretes Agendados', icon: Bell },
+        ]).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setScheduleTab(tab.key)}
+            style={{
+              flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: scheduleTab === tab.key ? 'var(--primary)' : 'transparent',
+              color: scheduleTab === tab.key ? '#fff' : 'var(--text-secondary)',
+              fontWeight: 600, fontSize: '0.875rem', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all 0.15s',
+            }}
+          >
+            <tab.icon size={16} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {scheduleTab === 'reminders' && <ChatRemindersTab />}
+
+      {scheduleTab === 'agenda' && (
+      <>
       {error && <ErrorMessage message={error} onRetry={() => { setError(null); fetchEvents(); }} />}
       {!error && loading && <SkeletonCard />}
       {!error && !loading && (
@@ -347,6 +379,8 @@ export const Schedule: React.FC = () => {
           onClose={() => setShowReminderSettings(false)}
           onSaved={(h, types, dur) => { setReminderHours(h); setReminderTypes(types); setDurationMin(dur); }}
         />
+      )}
+      </>
       )}
       </>
       )}

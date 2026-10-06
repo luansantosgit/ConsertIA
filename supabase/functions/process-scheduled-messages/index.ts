@@ -22,6 +22,65 @@ serve(async () => {
     const { sent: confirmationsSent, debug: confirmDebug } = await processAppointmentConfirmations(supabase, baseUrl);
     console.log("[worker] confirmations:", confirmationsSent, "debug:", confirmDebug.join(' | '));
 
+    // Lembretes do chat (botão sino no chat): envia mensagens agendadas
+    let remindersSent = 0;
+    {
+      const nowISO = new Date().toISOString();
+      const { data: pending } = await supabase
+        .from("chat_reminders")
+        .select("id, tenant_id, conversation_id, contact_phone, message")
+        .eq("status", "pending")
+        .lte("scheduled_at", nowISO)
+        .limit(50);
+
+      for (const rem of pending ?? []) {
+        try {
+          const { data: conn } = await supabase
+            .from("connections")
+            .select("id, instance_token")
+            .eq("tenant_id", rem.tenant_id)
+            .eq("status", "connected")
+            .limit(1)
+            .maybeSingle();
+          if (!conn?.instance_token) continue;
+
+          const resp = await fetch(`${baseUrl}/send/text`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", token: conn.instance_token },
+            body: JSON.stringify({ number: rem.contact_phone, text: rem.message }),
+          });
+          if (!resp.ok) continue;
+
+          // Registra a mensagem no chat
+          await supabase.from("messages").insert({
+            conversation_id: rem.conversation_id,
+            tenant_id: rem.tenant_id,
+            contact_phone: rem.contact_phone,
+            content: rem.message,
+            direction: "outbound",
+            read: true,
+            status: "sent",
+            sender_type: "ai",
+          });
+          await supabase
+            .from("conversations")
+            .update({
+              last_message: rem.message.substring(0, 100),
+              last_message_at: new Date().toISOString(),
+            })
+            .eq("id", rem.conversation_id);
+          await supabase
+            .from("chat_reminders")
+            .update({ status: "sent", sent_at: new Date().toISOString() })
+            .eq("id", rem.id);
+          remindersSent++;
+        } catch (err) {
+          console.error("[worker] chat reminder failed:", (err as Error).message);
+        }
+      }
+      if (remindersSent > 0) console.log("[worker] chat reminders sent:", remindersSent);
+    }
+
     const now = new Date().toISOString();
     const stale = new Date(Date.now() - 120_000).toISOString();
 

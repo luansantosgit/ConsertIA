@@ -3,6 +3,7 @@ import { Plus, Trash2, Pencil, ImageIcon, Type } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import EmptyState from '@/components/EmptyState';
+import { MediaDropzone } from '@/components/MediaDropzone';
 import type { AiPreQuoteTemplate } from '@/types';
 
 interface TemplatesSectionProps {
@@ -97,10 +98,12 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ templates, l
             </div>
           </div>
           {form.type === 'media' && (
-            <div className="form-group">
-              <label className="form-label">{t('URL da mídia')}</label>
-              <input className="input" value={form.media_url} onChange={e => setForm(f => ({ ...f, media_url: e.target.value }))} placeholder="https://..." />
-            </div>
+            <MediaDropzone
+              value={form.media_url || null}
+              onChange={url => setForm(f => ({ ...f, media_url: url ?? '' }))}
+              label="Mídia"
+              compact
+            />
           )}
           <div className="form-group">
             <label className="form-label">{t(form.type === 'media' ? 'Legenda' : 'Conteúdo')}</label>
@@ -130,9 +133,16 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ templates, l
             <div style={{
               width: 40, height: 40, borderRadius: 10, flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden',
               background: 'var(--primary-light)', color: 'var(--primary)',
             }}>
-              {template.type === 'media' ? <ImageIcon size={20} /> : <Type size={20} />}
+              {template.type === 'media' && template.media_url ? (
+                <img src={template.media_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : template.type === 'media' ? (
+                <ImageIcon size={20} />
+              ) : (
+                <Type size={20} />
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

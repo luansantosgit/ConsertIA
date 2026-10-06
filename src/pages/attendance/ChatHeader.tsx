@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, FileText, PanelRightClose, PanelRightOpen, Search } from 'lucide-react';
+import { Bell, FileText, PanelRightClose, PanelRightOpen, Search } from 'lucide-react';
 import type { ConvRow } from './types';
 
 interface ChatHeaderProps {
@@ -8,6 +8,7 @@ interface ChatHeaderProps {
   searchOpen: boolean;
   onToggleSearch: () => void;
   onOpenOSModal: () => void;
+  onOpenReminderModal: () => void;
   onToggleRightPanel: () => void;
 }
 
@@ -17,13 +18,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   searchOpen,
   onToggleSearch,
   onOpenOSModal,
+  onOpenReminderModal,
   onToggleRightPanel,
 }) => {
   const [imgError, setImgError] = React.useState(false);
   const avatarUrl = selected?.contactAvatar || selected?.contact_avatar;
   const showAvatar = !!avatarUrl && !imgError;
 
-  // Reset img error state when selected conversation changes
   React.useEffect(() => {
     setImgError(false);
   }, [selected?.id, avatarUrl]);
@@ -72,13 +73,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <a
-          href={`tel:${selected?.contact_phone?.replace(/\D/g, '')}`}
-          className="btn btn-secondary btn-sm"
-          style={{ textDecoration: 'none' }}
+        <button
+          className="btn btn-secondary btn-icon"
+          onClick={onOpenReminderModal}
+          title="Criar lembrete automático"
+          style={{ borderRadius: 8, width: 34, height: 34 }}
         >
-          <Phone size={13} />Ligar
-        </a>
+          <Bell size={15} />
+        </button>
         <button
           className={searchOpen ? 'btn btn-primary btn-icon' : 'btn btn-secondary btn-icon'}
           onClick={onToggleSearch}
