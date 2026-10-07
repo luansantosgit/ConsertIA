@@ -747,7 +747,24 @@ export function useAttendance() {
     try {
       const { ServiceOrderRepository } = await import('@/repositories/service-order.repository');
       const repo = new ServiceOrderRepository();
-      const created = await repo.createFromForm({
+      // Se a OS já existe (rascunho criado ao copiar link do checklist),
+      // atualiza em vez de duplicar
+      const isExistingOS = newOS.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+      if (isExistingOS) {
+        await repo.update(newOS.id, {
+          subject: newOS.subject,
+          description: newOS.description,
+          budget_amount: newOS.budget_amount,
+          budget_items: newOS.budget_items,
+          priority: newOS.priority,
+          checklist_photos: newOS.checklist_photos,
+          serial_number: newOS.serialNumber,
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      const created = isExistingOS ? newOS : await repo.createFromForm({
         customerId: newOS.customer_id,
         customerName: newOS.customerName,
         subject: newOS.subject,

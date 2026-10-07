@@ -59,8 +59,35 @@ export const OSModal: React.FC<OSModalProps> = ({
 
   const s = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 
+  const [draftOsId, setDraftOsId] = useState<string | null>(null);
+
+  const handleShareChecklist = async (): Promise<string> => {
+    if (draftOsId) {
+      return `${window.location.origin}/checklist/${draftOsId}`;
+    }
+    // Salva rascunho da OS para obter ID real usado no link
+    const { ServiceOrderRepository } = await import('@/repositories/service-order.repository');
+    const repo = new ServiceOrderRepository();
+    const total = budgetItems.reduce((a, i) => a + (Number(i.value) || 0), 0);
+    const created = await repo.createFromForm({
+      customerId: initialCustomerId || undefined,
+      customerName: form.customerName || 'Cliente',
+      subject: form.subject || 'OS em abertura',
+      description: form.description || undefined,
+      budgetAmount: total > 0 ? total : undefined,
+      budgetItems,
+      priority: form.priority,
+      checklistPhotos: photos,
+      serialNumber: form.serialNumber || undefined,
+    });
+    setDraftOsId(created.id);
+    setTempOS(prev => (prev ? { ...prev, id: created.id } : prev));
+    return `${window.location.origin}/checklist/${created.id}`;
+  };
+
   const buildOSObject = (): OSRow => {
     const total = budgetItems.reduce((a, i) => a + (Number(i.value) || 0), 0);
+    const validId = draftOsId ?? tempOS?.id;
     if (initialOs) {
       return {
         ...initialOs,
@@ -77,7 +104,7 @@ export const OSModal: React.FC<OSModalProps> = ({
         updated_at: new Date().toISOString(),
       };
     }
-    const id = tempOS?.id || `OS-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    const id = validId || `OS-${String(Math.floor(Math.random() * 9000) + 1000)}`;
     return {
       id,
       tenant_id: '',
@@ -213,7 +240,8 @@ export const OSModal: React.FC<OSModalProps> = ({
             <PhotoChecklist
               photos={photos}
               onChange={setPhotos}
-              osId={tempOS?.id ?? initialOs?.id}
+              osId={initialOs?.id ?? draftOsId ?? undefined}
+              onShareChecklist={handleShareChecklist}
             />
           </div>
 
