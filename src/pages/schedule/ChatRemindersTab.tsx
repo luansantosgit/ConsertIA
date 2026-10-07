@@ -150,7 +150,10 @@ export const ChatRemindersTab: React.FC = () => {
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontWeight: 700, fontSize: '0.8125rem', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {rem.contact_phone}
+                  {rem.contact_name || rem.contact_phone}
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                    {rem.contact_name ? rem.contact_phone : ''}
+                  </span>
                   <span className={`badge ${isSent ? 'badge-success' : rem.status === 'cancelled' ? 'badge-gray' : 'badge-warning'}`}
                     style={{ fontSize: '0.5625rem' }}>
                     {isSent ? 'Enviado' : rem.status === 'cancelled' ? 'Cancelado' : 'Pendente'}

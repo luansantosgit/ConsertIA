@@ -285,6 +285,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           await repo.create({
             conversation_id: selected!.id,
             contact_phone: selected!.contact_phone,
+            contact_name: selected!.contactName || selected!.contact_phone,
             message: draft.message,
             scheduled_at: draft.scheduledAt,
           });

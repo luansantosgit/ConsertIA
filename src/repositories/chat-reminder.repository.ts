@@ -6,6 +6,7 @@ export interface ChatReminder {
   tenant_id: string;
   conversation_id: string;
   contact_phone: string;
+  contact_name: string;
   message: string;
   status: 'pending' | 'sent' | 'cancelled';
   scheduled_at: string;
@@ -45,6 +46,7 @@ export class ChatReminderRepository {
   async create(input: {
     conversation_id: string;
     contact_phone: string;
+    contact_name: string;
     message: string;
     scheduled_at: string;
   }): Promise<ChatReminder> {
