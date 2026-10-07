@@ -12,6 +12,7 @@ import { ChatEmptyState } from './ChatEmptyState';
 import { QuickReplyPicker } from './QuickReplyPicker';
 import { OSPickerModal } from './OSPickerModal';
 import { ChatReminderModal } from './ChatReminderModal';
+import { ReminderListModal } from './ReminderListModal';
 
 interface ChatAreaProps {
   selected: ConvRow | undefined;
@@ -82,6 +83,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   // Respostas rápidas: "/" no início do input abre o picker
   const [osPickerOpen, setOsPickerOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
+  const [reminderListOpen, setReminderListOpen] = useState(false);
   const slashQuery = inputText.startsWith('/') ? inputText.slice(1) : null;
 
   // Como no WhatsApp: resposta ÚNICA vai para o input conferir antes de
@@ -155,6 +157,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         onToggleSearch={search.toggleSearch}
           onOpenOSModal={onOpenOSModal}
           onOpenReminderModal={() => setReminderOpen(true)}
+          onOpenReminderList={() => setReminderListOpen(true)}
           onToggleRightPanel={onToggleRightPanel}
       />
 
@@ -290,6 +293,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           const { ChatReminderRepository } = await import('@/repositories/chat-reminder.repository');
           await new ChatReminderRepository().delete(id);
         }}
+      />
+
+      <ReminderListModal
+        open={reminderListOpen}
+        conversation={selected ?? null}
+        onClose={() => setReminderListOpen(false)}
       />
 
       {dragOver && (

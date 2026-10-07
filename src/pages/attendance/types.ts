@@ -4,7 +4,7 @@ export type ChatMediaType = 'image' | 'video' | 'audio' | 'ptt' | 'document' | '
 
 export interface ChatMessage {
   id: string;
-  from: 'customer' | 'bot' | 'attendant';
+  from: 'customer' | 'bot' | 'attendant' | 'reminder';
   text: string;
   time: string;
   /** ISO 8601 timestamp para ordenação cronológica definitiva após confirmação do banco */
@@ -70,7 +70,9 @@ export function toChatMessage(msg: Message): ChatMessage {
     id: msg.id,
     from: msg.direction === 'inbound'
       ? 'customer'
-      : msg.sender_type === 'ai' ? 'bot' : 'attendant',
+      : msg.sender_type === 'ai' ? 'bot'
+      : msg.sender_type === 'reminder' ? 'reminder'
+      : 'attendant',
     text,
     time,
     createdAt: msg.created_at,

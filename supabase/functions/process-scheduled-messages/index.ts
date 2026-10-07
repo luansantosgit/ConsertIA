@@ -60,7 +60,7 @@ serve(async () => {
             direction: "outbound",
             read: true,
             status: "sent",
-            sender_type: "ai",
+            sender_type: "reminder",
           });
           await supabase
             .from("conversations")

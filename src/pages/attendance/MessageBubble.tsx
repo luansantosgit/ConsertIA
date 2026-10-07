@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bot } from 'lucide-react';
+import { User, Bot, Bell } from 'lucide-react';
 import type { OSRow } from '@/components/OSModal';
 import type { ChatMessage, ChatMediaType } from './types';
 import { mediaLabel } from './types';
@@ -115,7 +115,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           borderRadius: 14,
           borderBottomLeftRadius: isCustomer ? 4 : 14,
           borderBottomRightRadius: isCustomer ? 14 : 4,
-          background: isCustomer ? '#fff' : msg.from === 'bot' ? '#ede9fe' : 'var(--primary)',
+          background: isCustomer ? '#fff' : msg.from === 'bot' ? '#ede9fe' : msg.from === 'reminder' ? '#fef9c3' : 'var(--primary)',
           color: msg.from === 'attendant' ? '#fff' : 'var(--text-primary)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
           border: isCustomer ? '1px solid var(--border)' : 'none',
@@ -125,6 +125,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
               <Bot size={12} color="#7c3aed" />
               <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#7c3aed' }}>{agentName || 'IA'}</span>
+            </div>
+          )}
+          {msg.from === 'reminder' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+              <Bell size={12} color="#a16207" />
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#a16207' }}>Lembrete</span>
             </div>
           )}
 

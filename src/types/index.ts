@@ -172,7 +172,7 @@ export interface Message {
   is_internal_note?: boolean;
   connection_id?: string;
   hybrid_provider?: HybridProvider;
-  sender_type?: MessageSenderType;
+  sender_type?: MessageSenderType | 'reminder';
   created_at: string;
 }
 
