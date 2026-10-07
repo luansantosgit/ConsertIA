@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, CheckCircle2, Clock, Pencil, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Bell, CheckCircle2, Pencil, Trash2, Search, Calendar } from 'lucide-react';
 import { SkeletonCard } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -11,11 +11,20 @@ const repo = new ChatReminderRepository();
 
 const fmt = (iso: string) => {
   const d = new Date(iso);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-// Aba "Lembretes Agendados" da página Agenda: lista lembretes do chat
-// com status, editar e remover.
+type PeriodPreset = 'today' | 'week' | 'month' | 'all';
+
+const PERIODS: { key: PeriodPreset; label: string }[] = [
+  { key: 'today', label: 'Hoje' },
+  { key: 'week', label: 'Esta semana' },
+  { key: 'month', label: 'Este mês' },
+  { key: 'all', label: 'Todos' },
+];
+
+// Aba "Lembretes Agendados" da Agenda: nome do lead, busca,
+// filtro por período (padrão hoje), editar e remover.
 export const ChatRemindersTab: React.FC = () => {
   const [reminders, setReminders] = useState<ChatReminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +32,8 @@ export const ChatRemindersTab: React.FC = () => {
   const [editing, setEditing] = useState<ChatReminder | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [period, setPeriod] = useState<PeriodPreset>('today');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,22 +66,68 @@ export const ChatRemindersTab: React.FC = () => {
     await load();
   };
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const dayEnd = todayStart + 86400000;
+    const weekStart = todayStart - now.getDay() * 86400000;
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+
+    return reminders.filter(r => {
+      if (q && !r.contact_phone.toLowerCase().includes(q) && !r.message.toLowerCase().includes(q)) return false;
+      const ts = new Date(r.scheduled_at).getTime();
+      switch (period) {
+        case 'today': return ts >= todayStart && ts < dayEnd;
+        case 'week': return ts >= weekStart && ts < weekStart + 7 * 86400000;
+        case 'month': return ts >= monthStart && ts < monthEnd;
+        case 'all': return true;
+      }
+    });
+  }, [reminders, search, period]);
+
   if (loading) return <SkeletonCard />;
   if (error) return <ErrorMessage message={error} onRetry={load} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {reminders.length === 0 ? (
+      {/* Toolbar: busca + filtro de período */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="search-wrap" style={{ flex: 1, minWidth: 220 }}>
+          <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <input
+            placeholder="Buscar por lead, telefone ou mensagem..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ fontSize: '0.8125rem' }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {PERIODS.map(p => (
+            <button
+              key={p.key}
+              onClick={() => setPeriod(p.key)}
+              className={`btn btn-sm btn-pill ${period === p.key ? 'btn-primary' : 'btn-secondary'}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="card card-p">
           <EmptyState
-            title="Nenhum lembrete agendado"
-            description="Use o botão de sino no chat para criar lembretes automáticos que serão enviados ao cliente na data marcada."
+            title={search ? 'Nenhum lembrete encontrado' : 'Nenhum lembrete neste período'}
+            description={search
+              ? 'Tente buscar por outro termo.'
+              : 'Use o botão de sino no chat para criar lembretes automáticos.'}
           />
         </div>
       ) : (
-        reminders.map(rem => {
+        filtered.map(rem => {
           const isSent = rem.status === 'sent';
-          const expanded = expandedId === rem.id;
           return (
             <div
               key={rem.id}
@@ -80,9 +136,8 @@ export const ChatRemindersTab: React.FC = () => {
                 display: 'flex', alignItems: 'center', gap: 12,
                 opacity: isSent ? 0.65 : 1,
                 borderLeft: `3px solid ${isSent ? '#16a34a' : 'var(--primary)'}`,
-                cursor: 'pointer',
+                padding: '10px 16px',
               }}
-              onClick={() => setExpandedId(expanded ? null : rem.id)}
             >
               <div style={{
                 width: 36, height: 36, borderRadius: 10, flexShrink: 0,
@@ -94,32 +149,28 @@ export const ChatRemindersTab: React.FC = () => {
               </div>
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontWeight: 600, fontSize: '0.8125rem', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Clock size={12} color="var(--text-muted)" />
-                  {fmt(rem.scheduled_at)}
+                <p style={{ fontWeight: 700, fontSize: '0.8125rem', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {rem.contact_phone}
                   <span className={`badge ${isSent ? 'badge-success' : rem.status === 'cancelled' ? 'badge-gray' : 'badge-warning'}`}
                     style={{ fontSize: '0.5625rem' }}>
                     {isSent ? 'Enviado' : rem.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
                   </span>
                 </p>
+                <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Calendar size={10} />
+                  {fmt(rem.scheduled_at)}
+                  {rem.sent_at ? ` · enviado em ${fmt(rem.sent_at)}` : ''}
+                </p>
                 <p style={{
-                  fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0',
-                  overflow: expanded ? 'visible' : 'hidden',
-                  textOverflow: expanded ? 'unset' : 'ellipsis',
-                  whiteSpace: expanded ? 'pre-wrap' : 'nowrap',
+                  fontSize: '0.75rem', color: 'var(--text-muted)', margin: '3px 0 0',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {rem.message}
                 </p>
-                {expanded && (
-                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                    Para: {rem.contact_phone}
-                    {rem.sent_at ? ` · enviado em ${fmt(rem.sent_at)}` : ''}
-                  </p>
-                )}
               </div>
 
-              {expanded && !isSent && (
-                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+              {!isSent && (
+                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   <button
                     className="btn btn-ghost btn-sm"
                     onClick={() => { setEditing(rem); setModalOpen(true); }}
