@@ -34,18 +34,29 @@ export const ChecklistPage: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!osId) return;
-    const fetchOS = async () => {
-      const { data } = await supabase
-        .from('service_orders')
-        .select('subject, checklist_photos')
-        .eq('id', osId)
-        .single();
-      if (data) {
-        setOsSubject(data.subject || '');
-        setSavedPhotos(data.checklist_photos || []);
-      }
+    if (!osId || osId === 'new') {
       setLoading(false);
+      setError('OS inexistente. Solicite um novo link de checklist.');
+      return;
+    }
+    const fetchOS = async () => {
+      try {
+        const { data } = await supabase
+          .from('service_orders')
+          .select('subject, checklist_photos')
+          .eq('id', osId)
+          .maybeSingle();
+        if (data) {
+          setOsSubject(data.subject || '');
+          setSavedPhotos(data.checklist_photos || []);
+        } else {
+          setError('OS inexistente. Solicite um novo link de checklist.');
+        }
+      } catch {
+        setError('Erro ao carregar OS.');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchOS();
   }, [osId]);
@@ -192,10 +203,30 @@ export const ChecklistPage: React.FC = () => {
     stopCamera();
   };
 
+  // Auto-start da câmera após validar a OS (browsers exigem HTTPS)
+  useEffect(() => {
+    if (!loading && !error && !cameraActive) {
+      startCamera();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, error]);
+
   if (loading) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fb' }}>
         <p style={{ color: '#9ca3af' }}>Carregando...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f5f6fb', gap: 12, padding: 24 }}>
+        <div style={{ width: 56, height: 56, borderRadius: 14, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <X size={28} color="#dc2626" />
+        </div>
+        <p style={{ fontSize: '1rem', fontWeight: 700, color: '#1a1d2e' }}>Não foi possível abrir o checklist</p>
+        <p style={{ fontSize: '0.875rem', color: '#9ca3af', textAlign: 'center', maxWidth: 320 }}>{error}</p>
       </div>
     );
   }
