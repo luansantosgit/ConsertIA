@@ -22,7 +22,7 @@ interface OSModalProps {
   initialCustomerId?: string;
   initialOs?: OSRow;
   onClose: () => void;
-  onSave: (os: OSRow, sendToChat?: boolean) => void;
+  onSave: (os: OSRow, sendToChat?: boolean) => OSRow | void | Promise<OSRow | void>;
   onPreviewPdf?: (os: OSRow) => void;
 }
 
@@ -110,12 +110,12 @@ export const OSModal: React.FC<OSModalProps> = ({
   const [step, setStep] = useState<'form' | 'saved'>('form');
   const [savedOsId, setSavedOsId] = useState<string | null>(null);
 
-  const handleSaveOS = (sendToChat: boolean = false) => {
+  const handleSaveOS = async (sendToChat: boolean = false) => {
     if (!form.customerName || !form.subject) return;
     const os = tempOS || buildOSObject();
-    onSave(os, sendToChat);
-    // Step 2: mostra checklist com link real após salvar
-    const realId = os.id.match(/^[0-9a-f]{8}-/i) ? os.id : null;
+    const result = await onSave(os, sendToChat);
+    // UUID real só existe após o banco criar a OS — onSave retorna a OS salva
+    const realId = result?.id ?? (os.id.match(/^[0-9a-f]{8}-/i) ? os.id : null);
     setSavedOsId(realId);
     setStep('saved');
   };

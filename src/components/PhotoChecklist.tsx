@@ -8,19 +8,16 @@ interface PhotoChecklistProps {
   photos: ChecklistPhoto[];
   onChange: (photos: ChecklistPhoto[]) => void;
   osId?: string;
-  onShareChecklist?: () => Promise<string>; // retorna o URL com ID real
 }
 
 export const PhotoChecklist: React.FC<PhotoChecklistProps> = ({
   photos,
   onChange,
   osId,
-  onShareChecklist,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [sharing, setSharing] = useState(false);
   const { user } = useAuthStore();
 
   const handleFiles = async (files: FileList | null) => {
@@ -62,26 +59,12 @@ export const PhotoChecklist: React.FC<PhotoChecklistProps> = ({
     onChange(updated);
   };
 
-  const copyLink = async () => {
-    setSharing(true);
-    try {
-      let url: string;
-      if (osId) {
-        // OS já existe: usa o ID real
-        url = `${window.location.origin}/checklist/${osId}`;
-      } else if (onShareChecklist) {
-        // OS nova: salva rascunho no banco para obter ID real
-        const realUrl = await onShareChecklist();
-        url = realUrl;
-      } else {
-        url = `${window.location.origin}/checklist/new`;
-      }
-      navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } finally {
-      setSharing(false);
-    }
+  const copyLink = () => {
+    if (!osId) return;
+    const url = `${window.location.origin}/checklist/${osId}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   return (
@@ -139,7 +122,7 @@ export const PhotoChecklist: React.FC<PhotoChecklistProps> = ({
       <button
         type="button"
         onClick={copyLink}
-        disabled={sharing}
+        disabled={!osId}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -150,12 +133,13 @@ export const PhotoChecklist: React.FC<PhotoChecklistProps> = ({
           borderRadius: 'var(--radius-sm)',
           fontSize: '0.75rem',
           color: copied ? 'var(--success)' : 'var(--text-muted)',
-          cursor: sharing ? 'wait' : 'pointer',
+          cursor: osId ? 'pointer' : 'not-allowed',
           width: 'fit-content',
+          opacity: osId ? 1 : 0.5,
         }}
       >
         {copied ? <Check size={13} /> : <Link2 size={13} />}
-        {sharing ? 'Gerando link...' : copied ? 'Link copiado!' : 'Copiar link do checklist'}
+        {copied ? 'Link copiado!' : 'Copiar link do checklist'}
       </button>
 
       {photos.length > 0 && (

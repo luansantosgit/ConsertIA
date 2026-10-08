@@ -742,7 +742,7 @@ export function useAttendance() {
     });
   };
 
-  const handleSaveNewOS = async (newOS: OSRow, sendToChat?: boolean) => {
+  const handleSaveNewOS = async (newOS: OSRow, sendToChat?: boolean): Promise<OSRow | void> => {
     if (!selected) return;
     try {
       const { ServiceOrderRepository } = await import('@/repositories/service-order.repository');
@@ -791,6 +791,7 @@ export function useAttendance() {
       if (sendToChat) {
         handleSendOSCardToChat(row);
       }
+      return row;
     } catch (err) {
       console.error('Failed to save service order:', err);
       setError('Erro ao salvar ordem de serviço');
