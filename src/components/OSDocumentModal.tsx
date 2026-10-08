@@ -268,6 +268,27 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
                 {company.company_name || activeTheme.logoText || 'DeeperIA'} — {labels.techSignature}
               </div>
             </div>
+
+            {/* Fotos do checklist de entrada */}
+            {(os.checklist_photos ?? []).length > 0 && (
+              <div style={{ marginTop: 28 }}>
+                <p style={{ fontSize: '0.6875rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.05em' }}>
+                  Fotos do Checklist de Entrada
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                  {(os.checklist_photos ?? []).map((photo, i) => (
+                    <div key={i} style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                      <img src={photo.url} alt={photo.label || `Foto ${i + 1}`} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+                      {photo.label && (
+                        <p style={{ fontSize: '0.6875rem', color: '#64748b', margin: 0, padding: '4px 8px', background: '#f8fafc' }}>
+                          {photo.label}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

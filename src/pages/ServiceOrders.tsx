@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, User, Search, Printer, MessageCircle, Settings, Bell, Trash2, Edit2, Camera, X } from 'lucide-react';
 import { SolidActionSearch } from '@/components/SolidActionIcons';
+import { PhotoChecklist } from '@/components/PhotoChecklist';
 import type { ServiceOrderStatus } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 import { OSModal, type OSRow } from '@/components/OSModal';
@@ -597,17 +598,29 @@ export const ServiceOrders: React.FC = () => {
               <h3 className="modal-title">Fotos do Checklist — {showPhotosOS.subject}</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowPhotosOS(null)} aria-label="Fechar"><X size={16} /></button>
             </div>
-            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {(showPhotosOS.checklist_photos ?? []).map((photo, i) => (
-                <div key={i} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
-                  <img src={photo.url} alt={photo.label || `Foto ${i + 1}`} style={{ width: '100', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
-                  {photo.label && (
-                    <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', padding: '4px 8px', margin: 0, background: 'var(--bg-secondary)' }}>
-                      {photo.label}
-                    </p>
-                  )}
-                </div>
-              ))}
+            <div className="modal-body">
+              <PhotoChecklist
+                photos={showPhotosOS.checklist_photos ?? []}
+                onChange={photos => {
+                  setOS(prev => prev.map(o => o.id === showPhotosOS.id ? { ...o, checklist_photos: photos } : o));
+                  setShowPhotosOS(prev => prev ? { ...prev, checklist_photos: photos } : prev);
+                }}
+                osId={showPhotosOS.id}
+              />
+              <button
+                className="btn btn-primary"
+                style={{ marginTop: 12 }}
+                onClick={async () => {
+                  const { ServiceOrderRepository } = await import('@/repositories/service-order.repository');
+                  const repo = new ServiceOrderRepository();
+                  await repo.update(showPhotosOS.id, {
+                    checklist_photos: showPhotosOS.checklist_photos,
+                  });
+                  setShowPhotosOS(null);
+                }}
+              >
+                Salvar fotos
+              </button>
             </div>
           </div>
         </div>

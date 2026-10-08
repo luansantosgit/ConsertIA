@@ -251,7 +251,14 @@ export const OSModal: React.FC<OSModalProps> = ({
               </div>
             </div>
 
-            {/* PhotoChecklist movido para o Step 2 (após salvar) */}
+            {/* Checklist fotográfico: em edição aparece no form (OS já existe) */}
+            {isEdit && (
+              <PhotoChecklist
+                photos={photos}
+                onChange={setPhotos}
+                osId={initialOs?.id}
+              />
+            )}
           </>
           )}
           </div>
