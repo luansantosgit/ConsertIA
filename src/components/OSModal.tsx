@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, FileText, ArrowRight, Send, Eye } from 'lucide-react';
+import { X, FileText, ArrowRight, Send, Eye, Check } from 'lucide-react';
 import type { ServiceOrder, ChecklistPhoto } from '@/types';
 import { OSDocumentModal } from '@/components/OSDocumentModal';
 import { PhotoChecklist } from '@/components/PhotoChecklist';
@@ -59,35 +59,9 @@ export const OSModal: React.FC<OSModalProps> = ({
 
   const s = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }));
 
-  const [draftOsId, setDraftOsId] = useState<string | null>(null);
-
-  const handleShareChecklist = async (): Promise<string> => {
-    if (draftOsId) {
-      return `${window.location.origin}/checklist/${draftOsId}`;
-    }
-    // Salva rascunho da OS para obter ID real usado no link
-    const { ServiceOrderRepository } = await import('@/repositories/service-order.repository');
-    const repo = new ServiceOrderRepository();
-    const total = budgetItems.reduce((a, i) => a + (Number(i.value) || 0), 0);
-    const created = await repo.createFromForm({
-      customerId: initialCustomerId || undefined,
-      customerName: form.customerName || 'Cliente',
-      subject: form.subject || 'OS em abertura',
-      description: form.description || undefined,
-      budgetAmount: total > 0 ? total : undefined,
-      budgetItems,
-      priority: form.priority,
-      checklistPhotos: photos,
-      serialNumber: form.serialNumber || undefined,
-    });
-    setDraftOsId(created.id);
-    setTempOS(prev => (prev ? { ...prev, id: created.id } : prev));
-    return `${window.location.origin}/checklist/${created.id}`;
-  };
-
   const buildOSObject = (): OSRow => {
     const total = budgetItems.reduce((a, i) => a + (Number(i.value) || 0), 0);
-    const validId = draftOsId ?? tempOS?.id;
+    const validId = tempOS?.id;
     if (initialOs) {
       return {
         ...initialOs,
@@ -133,11 +107,17 @@ export const OSModal: React.FC<OSModalProps> = ({
     setShowPdfPreview(true);
   };
 
+  const [step, setStep] = useState<'form' | 'saved'>('form');
+  const [savedOsId, setSavedOsId] = useState<string | null>(null);
+
   const handleSaveOS = (sendToChat: boolean = false) => {
     if (!form.customerName || !form.subject) return;
     const os = tempOS || buildOSObject();
     onSave(os, sendToChat);
-    onClose();
+    // Step 2: mostra checklist com link real após salvar
+    const realId = os.id.match(/^[0-9a-f]{8}-/i) ? os.id : null;
+    setSavedOsId(realId);
+    setStep('saved');
   };
 
   const handleGoToAllOS = () => {
@@ -159,8 +139,10 @@ export const OSModal: React.FC<OSModalProps> = ({
                 <FileText size={18} />
               </div>
               <div>
-                <h3 className="modal-title">{isEdit ? 'Alterar Ordem de Serviço' : 'Nova Ordem de Serviço'}</h3>
-                {(initialCustomerName || initialOs?.customerName) && (
+                <h3 className="modal-title">
+                  {step === 'saved' ? 'OS salva com sucesso!' : isEdit ? 'Alterar Ordem de Serviço' : 'Nova Ordem de Serviço'}
+                </h3>
+                {(initialCustomerName || initialOs?.customerName) && step === 'form' && (
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     Cliente: <strong>{initialOs?.customerName || initialCustomerName}</strong>
                   </p>
@@ -171,6 +153,39 @@ export const OSModal: React.FC<OSModalProps> = ({
           </div>
 
           <div className="modal-body">
+            {step === 'saved' ? (
+              /* ── STEP 2: OS salva — checklist com link real ── */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '14px 16px', borderRadius: 10,
+                  background: '#ecfdf5', border: '1px solid #bbf7d0',
+                }}>
+                  <Check size={20} color="#16a34a" />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 700, fontSize: '0.875rem', color: '#166534', margin: 0 }}>
+                      {savedOsId ? `OS-${savedOsId.replace(/-/g, '').slice(0, 6).toUpperCase()} criada` : 'OS enviada'}
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                      Agora você pode compartilhar o link do checklist ou anexar fotos.
+                    </p>
+                  </div>
+                </div>
+
+                <PhotoChecklist
+                  photos={photos}
+                  onChange={setPhotos}
+                  osId={savedOsId ?? initialOs?.id ?? undefined}
+                />
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-primary" onClick={onClose}>
+                    Concluir
+                  </button>
+                </div>
+              </div>
+            ) : (
+            <>
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Equipamento *</label>
@@ -236,16 +251,13 @@ export const OSModal: React.FC<OSModalProps> = ({
               </div>
             </div>
 
-            {/* Checklist fotográfico */}
-            <PhotoChecklist
-              photos={photos}
-              onChange={setPhotos}
-              osId={initialOs?.id ?? draftOsId ?? undefined}
-              onShareChecklist={handleShareChecklist}
-            />
+            {/* PhotoChecklist movido para o Step 2 (após salvar) */}
+          </>
+          )}
           </div>
 
           {/* Rodapé organizado */}
+          {step === 'form' && (
           <div className="modal-footer" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               type="button"
@@ -316,6 +328,7 @@ export const OSModal: React.FC<OSModalProps> = ({
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
