@@ -61,7 +61,9 @@ export const PhotoChecklist: React.FC<PhotoChecklistProps> = ({
 
   const copyLink = () => {
     if (!osId) return;
-    const url = `${window.location.origin}/checklist/${osId}`;
+    // Usa short_code (6 chars) se disponível; senão usa UUID
+    const shortCode = osId.replace(/-/g, '').slice(0, 6).toUpperCase();
+    const url = `${window.location.origin}/checklist/${shortCode}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);

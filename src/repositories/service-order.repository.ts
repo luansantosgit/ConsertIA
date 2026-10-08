@@ -118,7 +118,10 @@ export class ServiceOrderRepository extends BaseSupabaseRepository<ServiceOrder>
       }
     }
 
-    const { data: created, error } = await supabase
+      // Gera código amigável: 6 primeiros chars do UUID sem hífens
+      const shortCode = crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase();
+
+      const { data: created, error } = await supabase
       .from(this.tableName)
       .insert({
         tenant_id: this.tenantId,
@@ -131,6 +134,7 @@ export class ServiceOrderRepository extends BaseSupabaseRepository<ServiceOrder>
         priority: form.priority,
         checklist_photos: form.checklistPhotos || [],
         serial_number: form.serialNumber || null,
+        short_code: shortCode,
       })
       .select()
       .single();

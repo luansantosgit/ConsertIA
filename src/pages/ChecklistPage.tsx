@@ -19,7 +19,8 @@ const CAPTURE_WIDTH = 1920;
 const CAPTURE_HEIGHT = 1080;
 
 export const ChecklistPage: React.FC = () => {
-  const { osId } = useParams<{ osId: string }>();
+  const { osId: osIdParam } = useParams<{ osId: string }>();
+  const [osId, setOsId] = useState<string>(osIdParam ?? '');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -41,14 +42,16 @@ export const ChecklistPage: React.FC = () => {
     }
     const fetchOS = async () => {
       try {
+        // Busca por short_code (código amigável) ou UUID (fallback)
         const { data } = await supabase
           .from('service_orders')
-          .select('subject, checklist_photos')
-          .eq('id', osId)
+          .select('id, subject, checklist_photos, short_code')
+          .or(`short_code.eq.${osId},id.eq.${osId}`)
           .maybeSingle();
         if (data) {
           setOsSubject(data.subject || '');
           setSavedPhotos(data.checklist_photos || []);
+          setOsId(data.id); // garante que o save usa o UUID real
         } else {
           setError('OS inexistente. Solicite um novo link de checklist.');
         }
@@ -59,7 +62,7 @@ export const ChecklistPage: React.FC = () => {
       }
     };
     fetchOS();
-  }, [osId]);
+  }, [osIdParam]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -67,20 +70,51 @@ export const ChecklistPage: React.FC = () => {
     setCameraActive(false);
   }, []);
 
+  const [cameraLogs, setCameraLogs] = useState<string[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
+
+  const addLog = (msg: string) => {
+    const ts = new Date().toLocaleTimeString('pt-BR');
+    console.log(`[checklist ${ts}] ${msg}`);
+    setCameraLogs(prev => [...prev, `${ts} — ${msg}`]);
+  };
+
   const startCamera = async () => {
     setError('');
+    addLog('Iniciando câmera...');
     try {
+      addLog(`Requesting getUserMedia (facingMode=${facingMode})`);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode, width: { ideal: CAPTURE_WIDTH }, height: { ideal: CAPTURE_HEIGHT } },
         audio: false,
       });
       streamRef.current = stream;
+      addLog(`Stream obtido: ${stream.getVideoTracks().length} video track(s)`);
+      addLog(`Track label: ${stream.getVideoTracks()[0]?.label || 'unknown'}`);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        addLog('Aguardando video.play()...');
+        await videoRef.current.play();
+        addLog('Video playing ✓');
+      } else {
+        addLog('ERRO: videoRef.current é null');
       }
       setCameraActive(true);
-    } catch {
-      setError('Não foi possível acessar a câmera. Verifique as permissões do navegador.');
+      addLog('Câmera ativa ✓');
+    } catch (err) {
+      const e = err as DOMException;
+      addLog(`ERRO: ${e.name} — ${e.message}`);
+      if (e.name === 'NotAllowedError') {
+        setError('Permissão de câmera negada. Toque no ícone 🔒 na barra do navegador e permita o acesso.');
+      } else if (e.name === 'NotFoundError') {
+        setError('Nenhuma câmera encontrada neste dispositivo.');
+      } else if (e.name === 'NotReadableError') {
+        setError('A câmera está sendo usada por outro app. Feche e tente novamente.');
+      } else {
+        setError(`Erro da câmera: ${e.name}. Verifique se está usando HTTPS.`);
+      }
     }
   };
 
@@ -249,8 +283,19 @@ export const ChecklistPage: React.FC = () => {
           <Wrench size={16} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ color: '#fff', fontSize: '0.8125rem', fontWeight: 600, margin: 0 }}>
+          <p style={{ color: '#fff', fontSize: '0.8125rem', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             Checklist — {osSubject || `OS #${osId}`}
+            <button
+              onClick={() => setShowLogs(v => !v)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                color: 'rgba(255,255,255,0.4)', fontSize: '0.625rem',
+                display: 'flex', alignItems: 'center', gap: 3,
+              }}
+              title="Logs da câmera"
+            >
+              [dbg]
+            </button>
           </p>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.6875rem', margin: 0 }}>
             {captured.length > 0 ? `${captured.length} foto(s) capturada(s)` : 'Aponte e tire fotos'}
@@ -270,6 +315,38 @@ export const ChecklistPage: React.FC = () => {
         )}
       </div>
 
+      {/* Painel de debug da câmera */}
+      {showLogs && (
+        <div style={{
+          position: 'absolute', top: 58, left: 12, right: 12, zIndex: 50,
+          background: 'rgba(0,0,0,0.85)', borderRadius: 10, padding: '10px 14px',
+          maxHeight: 200, overflowY: 'auto', fontSize: '0.625rem',
+          fontFamily: 'monospace', color: '#4ade80',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontWeight: 700, color: '#fff' }}>Logs da câmera</span>
+            <button
+              onClick={() => { setCameraLogs([]); startCamera(); }}
+              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 4, color: '#fff', fontSize: '0.5625rem', padding: '2px 8px', cursor: 'pointer' }}
+            >
+              Limpar & reiniciar
+            </button>
+          </div>
+          {cameraLogs.length === 0 ? (
+            <p style={{ color: '#94a3b8', margin: 0 }}>Nenhum log ainda.</p>
+          ) : (
+            cameraLogs.map((log, i) => (
+              <p key={i} style={{ margin: '2px 0', color: log.includes('ERRO') ? '#f87171' : '#4ade80' }}>
+                {log}
+              </p>
+            ))
+          )}
+          <p style={{ margin: '6px 0 0', color: '#94a3b8', fontSize: '0.5625rem' }}>
+            URL: {window.location.href.startsWith('https') ? 'HTTPS ✓' : 'HTTP ⚠ (câmera exige HTTPS)'}
+          </p>
+        </div>
+      )}
+
       {/* Camera view */}
       {cameraActive && (
         <>
@@ -278,6 +355,7 @@ export const ChecklistPage: React.FC = () => {
             autoPlay
             playsInline
             muted
+            onLoadedData={() => { addLog('Video loaded ✓'); videoRef.current?.play().catch(() => {}); }}
             style={{ width: '100%', height: '100dvh', objectFit: 'cover' }}
           />
 

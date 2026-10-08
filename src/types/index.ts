@@ -54,6 +54,7 @@ export interface ServiceOrder {
   technician_id?: string;
   origin?: string;
   serial_number?: string;
+  short_code?: string;
   budget_items?: Array<{ name: string; value: number }>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   checklist_photos: ChecklistPhoto[];
