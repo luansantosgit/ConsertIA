@@ -237,10 +237,12 @@ export const ChecklistPage: React.FC = () => {
     stopCamera();
   };
 
-  // Auto-start da câmera após validar a OS (browsers exigem HTTPS)
+  // Auto-start da câmera após validar a OS — aguarda 1 frame para
+  // o <video> element montar no DOM (videoRef.current era null)
   useEffect(() => {
     if (!loading && !error && !cameraActive) {
-      startCamera();
+      const timer = setTimeout(() => startCamera(), 100);
+      return () => clearTimeout(timer);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, error]);
