@@ -237,13 +237,25 @@ export const ChecklistPage: React.FC = () => {
     stopCamera();
   };
 
-  // Auto-start da câmera após validar a OS — aguarda 1 frame para
-  // o <video> element montar no DOM (videoRef.current era null)
+  // Auto-start: retry loop que espera o <video> element montar no DOM.
+  // Em mobile lento o videoRef demora > 100ms — tenta até 3 segundos.
   useEffect(() => {
-    if (!loading && !error && !cameraActive) {
-      const timer = setTimeout(() => startCamera(), 100);
-      return () => clearTimeout(timer);
-    }
+    if (loading || error) return;
+    let timer: ReturnType<typeof setTimeout>;
+    let attempts = 0;
+    const tryStart = () => {
+      if (videoRef.current) {
+        addLog('Video element montado, iniciando câmera...');
+        startCamera();
+      } else if (attempts < 30) {
+        attempts++;
+        timer = setTimeout(tryStart, 100);
+      } else {
+        addLog('ERRO: video element não montou em 3s — toque em [dbg] > reiniciar');
+      }
+    };
+    timer = setTimeout(tryStart, 200);
+    return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, error]);
 
@@ -328,7 +340,7 @@ export const ChecklistPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <span style={{ fontWeight: 700, color: '#fff' }}>Logs da câmera</span>
             <button
-              onClick={() => { setCameraLogs([]); startCamera(); }}
+              onClick={() => { setCameraLogs([]); stopCamera(); startCamera(); }}
               style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 4, color: '#fff', fontSize: '0.5625rem', padding: '2px 8px', cursor: 'pointer' }}
             >
               Limpar & reiniciar
@@ -417,13 +429,25 @@ export const ChecklistPage: React.FC = () => {
         </>
       )}
 
-      {/* Tela de revisão (fotos capturadas) */}
+      {/* Tela de revisão + botão de abrir câmera (fallback se auto-start falhar) */}
       {!cameraActive && (
         <div style={{
           minHeight: '100dvh', background: '#f5f6fb',
           padding: '60px 16px 100px', overflow: 'auto',
         }}>
           <div style={{ maxWidth: 480, margin: '0 auto' }}>
+            <button
+              onClick={startCamera}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 14, border: 'none',
+                background: 'var(--primary)', color: '#fff', fontSize: '1rem',
+                fontWeight: 700, cursor: 'pointer', marginBottom: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                boxShadow: '0 4px 12px rgba(79,70,229,0.3)',
+              }}
+            >
+              <Camera size={20} /> Abrir câmera
+            </button>
             {captured.length === 0 && savedPhotos.length === 0 ? (
               <div style={{
                 padding: '60px 20px', background: '#fff', borderRadius: 14,
