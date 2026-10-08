@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, User, Search, Printer, MessageCircle, Settings, Bell, Trash2, Edit2 } from 'lucide-react';
-import { SolidActionPrint, SolidActionSearch } from '@/components/SolidActionIcons';
+import { Plus, User, Search, Printer, MessageCircle, Settings, Bell, Trash2, Edit2, Camera, X } from 'lucide-react';
+import { SolidActionSearch } from '@/components/SolidActionIcons';
 import type { ServiceOrderStatus } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 import { OSModal, type OSRow } from '@/components/OSModal';
@@ -61,6 +61,7 @@ export const ServiceOrders: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewingPdfOS, setViewingPdfOS] = useState<OSRow | null>(null);
+  const [showPhotosOS, setShowPhotosOS] = useState<OSRow | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [autoMessages, setAutoMessages] = useState<KanbanAutoMessages>({});
@@ -362,39 +363,51 @@ export const ServiceOrders: React.FC = () => {
                       {o.budget_amount ? formatCurrency(o.budget_amount) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                     </td>
                     <td style={{ textAlign: 'right', paddingRight: 20, whiteSpace: 'nowrap' }}>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '2px 6px', color: 'var(--primary)' }}
-                        onClick={() => setEditingOs(o)}
-                        title="Alterar OS"
-                      >
-                        <Edit2 size={13} /> Alterar
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '2px 6px', color: 'var(--primary)' }}
-                        onClick={() => handleOpenChat(o)}
-                        title="Conversar no chat com o cliente"
-                      >
-                        <MessageCircle size={13} /> Chat
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        style={{ gap: 6, marginLeft: 6 }}
-                        onClick={() => setViewingPdfOS(o)}
-                        title="Visualizar e Imprimir PDF"
-                      >
-                        <SolidActionPrint size={14} /> PDF
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '2px 6px', marginLeft: 6, color: 'var(--danger)' }}
-                        onClick={() => setConfirmDeleteOS(o)}
-                        title="Excluir OS"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </td>
+                       <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                         {(o.checklist_photos?.length ?? 0) > 0 && (
+                           <button
+                             className="btn btn-ghost btn-sm"
+                             style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                             onClick={() => setShowPhotosOS(o)}
+                             title={`${o.checklist_photos.length} foto(s) do checklist`}
+                           >
+                             <Camera size={14} />
+                           </button>
+                         )}
+                         <button
+                           className="btn btn-ghost btn-sm"
+                           style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                           onClick={() => setEditingOs(o)}
+                           title="Alterar OS"
+                         >
+                           <Edit2 size={14} />
+                         </button>
+                         <button
+                           className="btn btn-ghost btn-sm"
+                           style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                           onClick={() => handleOpenChat(o)}
+                           title="Conversar no chat com o cliente"
+                         >
+                           <MessageCircle size={14} />
+                         </button>
+                         <button
+                           className="btn btn-ghost btn-sm"
+                           style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                           onClick={() => setViewingPdfOS(o)}
+                           title="Visualizar e Imprimir PDF"
+                         >
+                           <Printer size={14} />
+                         </button>
+                         <button
+                           className="btn btn-ghost btn-sm"
+                           style={{ padding: '4px 6px', color: 'var(--danger)' }}
+                           onClick={() => setConfirmDeleteOS(o)}
+                           title="Excluir OS"
+                         >
+                           <Trash2 size={14} />
+                         </button>
+                       </div>
+                     </td>
                   </tr>
                 );
               })}
@@ -574,6 +587,30 @@ export const ServiceOrders: React.FC = () => {
           os={viewingPdfOS}
           onClose={() => setViewingPdfOS(null)}
         />
+      )}
+
+      {/* Modal de fotos do checklist */}
+      {showPhotosOS && (
+        <div className="modal-overlay" onClick={() => setShowPhotosOS(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520, maxHeight: '85vh', overflowY: 'auto' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Fotos do Checklist — {showPhotosOS.subject}</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowPhotosOS(null)} aria-label="Fechar"><X size={16} /></button>
+            </div>
+            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {(showPhotosOS.checklist_photos ?? []).map((photo, i) => (
+                <div key={i} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  <img src={photo.url} alt={photo.label || `Foto ${i + 1}`} style={{ width: '100', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+                  {photo.label && (
+                    <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', padding: '4px 8px', margin: 0, background: 'var(--bg-secondary)' }}>
+                      {photo.label}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       <ConfirmModal

@@ -103,7 +103,7 @@ function addLogo(doc: jsPDF, logoUrl: string | null, x: number, y: number, size:
   return false;
 }
 
-function buildPdf(order: OsFull, company: CompanyInfo, theme: ThemeInfo, pdfLogo: PdfLogoInfo): Blob {
+function buildPdf(order: OsFull, company: CompanyInfo, theme: ThemeInfo, pdfLogo: PdfLogoInfo, checklistPhotos: ChecklistPhotoPdf[] = []): Blob {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210;
   const H = 297;
@@ -358,6 +358,47 @@ function buildPdf(order: OsFull, company: CompanyInfo, theme: ThemeInfo, pdfLogo
     doc.text(`${companyName} — Técnico`, W - M - sigW / 2, y + 16, { align: 'center' });
   }
 
+  // ── FOTOS DO CHECKLIST ──
+  const photosWithBase64 = checklistPhotos.filter(p => p.base64);
+  if (photosWithBase64.length > 0) {
+    doc.addPage();
+    let py = M;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...MUTED);
+    doc.text('FOTOS DO CHECKLIST DE ENTRADA', M, py);
+    py += 6;
+
+    const photoW = (W - M * 2 - 8) / 2;
+    const photoH = 70;
+    let px = M;
+    for (const photo of photosWithBase64) {
+      try {
+        const isPng = photo.base64!.includes('image/png');
+        doc.addImage(photo.base64!, isPng ? 'PNG' : 'JPEG', px, py, photoW, photoH);
+        if (photo.label) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(...MUTED);
+          doc.text(photo.label, px + 2, py + photoH + 4);
+        }
+        // Grid 2 colunas
+        if (px === M) {
+          px = M + photoW + 8;
+        } else {
+          px = M;
+          py += photoH + 18;
+          if (py > H - 100) {
+            doc.addPage();
+            py = M;
+          }
+        }
+      } catch {
+        // pula foto que falhar
+      }
+    }
+  }
+
   // ── RODAPÉ ──
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
@@ -368,6 +409,32 @@ function buildPdf(order: OsFull, company: CompanyInfo, theme: ThemeInfo, pdfLogo
   );
 
   return doc.output('blob');
+}
+
+interface ChecklistPhotoPdf {
+  url: string;
+  label?: string;
+  base64?: string;
+}
+
+/** Baixa as fotos do checklist e converte para base64 (para o PDF) */
+async function fetchPhotosAsBase64(photos: Array<{ url: string; label?: string }>): Promise<ChecklistPhotoPdf[]> {
+  const results: ChecklistPhotoPdf[] = [];
+  for (const photo of photos.slice(0, 6)) {
+    try {
+      const res = await fetch(photo.url);
+      const blob = await res.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+      results.push({ url: photo.url, label: photo.label, base64 });
+    } catch {
+      results.push({ url: photo.url, label: photo.label });
+    }
+  }
+  return results;
 }
 
 async function uploadPdf(orderId: string, blob: Blob): Promise<string | null> {
@@ -392,7 +459,12 @@ export async function sendOsPdfToLead(osId: string, phone: string, caption: stri
     ]);
     if (!order) return false;
 
-    const blob = buildPdf(order, company, theme, pdfLogo);
+    // Baixa as fotos do checklist para incluir no PDF
+    const checklistPhotos = await fetchPhotosAsBase64(
+      (order.checklist_photos ?? []) as Array<{ url: string; label?: string }>
+    );
+
+    const blob = buildPdf(order, company, theme, pdfLogo, checklistPhotos);
     const url = await uploadPdf(order.id, blob);
     if (!url) return false;
 
