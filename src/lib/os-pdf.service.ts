@@ -325,40 +325,7 @@ function buildPdf(order: OsFull, company: CompanyInfo, theme: ThemeInfo, pdfLogo
   doc.text(budget > 0 ? formatCurrency(budget) : 'A definir', colVal, y + 7, { align: 'right' });
   y += 18;
 
-  // ── TERMOS ──
-  doc.setDrawColor(...BORDER);
-  doc.setLineWidth(0.3);
-  doc.setLineDashPattern([1, 1], 0);
-  doc.line(M, y, W - M, y);
-  doc.setLineDashPattern([], 0);
-  y += 5;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(...MUTED);
-  doc.text('Termos de Serviço:', M, y);
-  doc.setFont('helvetica', 'normal');
-  // Usa o texto que o usuário escreveu; se vazio, usa o padrão do sistema
-  const terms = company.os_terms?.trim() || DEFAULT_TERMS;
-  const termLines = doc.splitTextToSize(terms, W - M * 2);
-  doc.text(termLines.slice(0, 5), M, y + 4.5);
-  y += Math.min(termLines.length, 5) * 3.5 + 10;
-
-  // ── ASSINATURAS ──
-  if (y < H - 28) {
-    const sigW = (W - M * 2 - 40) / 2;
-    doc.setDrawColor(148, 163, 184);
-    doc.setLineWidth(0.3);
-    doc.line(M, y + 12, M + sigW, y + 12);
-    doc.line(W - M - sigW, y + 12, W - M, y + 12);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...MUTED);
-    doc.text('Assinatura do cliente', M + sigW / 2, y + 16, { align: 'center' });
-    doc.text(`${companyName} — Técnico`, W - M - sigW / 2, y + 16, { align: 'center' });
-  }
-
-  // ── FOTOS DO CHECKLIST ──
+  // ── FOTOS DO CHECKLIST (antes dos termos/assinaturas) ──
   const photosWithBase64 = checklistPhotos.filter(p => p.base64);
   if (photosWithBase64.length > 0) {
     doc.addPage();
@@ -382,7 +349,6 @@ function buildPdf(order: OsFull, company: CompanyInfo, theme: ThemeInfo, pdfLogo
           doc.setTextColor(...MUTED);
           doc.text(photo.label, px + 2, py + photoH + 4);
         }
-        // Grid 2 colunas
         if (px === M) {
           px = M + photoW + 8;
         } else {
@@ -397,6 +363,41 @@ function buildPdf(order: OsFull, company: CompanyInfo, theme: ThemeInfo, pdfLogo
         // pula foto que falhar
       }
     }
+    // Termos e assinaturas ficam na página seguinte às fotos
+    doc.addPage();
+    y = M;
+  }
+
+  // ── TERMOS (parte final do documento, após as fotos) ──
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(M, y, W - M, y);
+  doc.setLineDashPattern([], 0);
+  y += 5;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTED);
+  doc.text('Termos de Serviço:', M, y);
+  doc.setFont('helvetica', 'normal');
+  const terms = company.os_terms?.trim() || DEFAULT_TERMS;
+  const termLines = doc.splitTextToSize(terms, W - M * 2);
+  doc.text(termLines.slice(0, 5), M, y + 4.5);
+  y += Math.min(termLines.length, 5) * 3.5 + 10;
+
+  // ── ASSINATURAS (final do documento) ──
+  if (y < H - 28) {
+    const sigW = (W - M * 2 - 40) / 2;
+    doc.setDrawColor(148, 163, 184);
+    doc.setLineWidth(0.3);
+    doc.line(M, y + 12, M + sigW, y + 12);
+    doc.line(W - M - sigW, y + 12, W - M, y + 12);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text('Assinatura do cliente', M + sigW / 2, y + 16, { align: 'center' });
+    doc.text(`${companyName} — Técnico`, W - M - sigW / 2, y + 16, { align: 'center' });
   }
 
   // ── RODAPÉ ──
