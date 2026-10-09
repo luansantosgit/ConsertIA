@@ -760,6 +760,7 @@ export function useAttendance() {
           priority: newOS.priority,
           checklist_photos: newOS.checklist_photos,
           serial_number: newOS.serialNumber,
+          equipment_name: newOS.equipmentLabel,
           updated_at: new Date().toISOString(),
         });
       }
@@ -774,13 +775,15 @@ export function useAttendance() {
         priority: newOS.priority,
         checklistPhotos: newOS.checklist_photos,
         serialNumber: newOS.serialNumber,
+        equipmentName: newOS.equipmentLabel,
       });
 
       const row: OSRow = {
         ...created,
         customerName: newOS.customerName,
-        equipmentLabel: newOS.equipmentLabel,
+        equipmentLabel: created.equipment_name ?? newOS.equipmentLabel,
         technicianName: newOS.technicianName,
+        serialNumber: created.serial_number ?? newOS.serialNumber,
       };
 
       setClientOSMap(prev => ({

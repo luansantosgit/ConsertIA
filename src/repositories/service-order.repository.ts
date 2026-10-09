@@ -22,6 +22,7 @@ export interface ServiceOrderForm {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   checklistPhotos?: ChecklistPhoto[];
   serialNumber?: string;
+  equipmentName?: string;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -134,6 +135,7 @@ export class ServiceOrderRepository extends BaseSupabaseRepository<ServiceOrder>
         priority: form.priority,
         checklist_photos: form.checklistPhotos || [],
         serial_number: form.serialNumber || null,
+        equipment_name: form.equipmentName || null,
         short_code: shortCode,
       })
       .select()

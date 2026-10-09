@@ -38,12 +38,12 @@ export const OSModal: React.FC<OSModalProps> = ({
   const isEdit = !!initialOs;
   const [form, setForm] = useState({
     customerName: initialOs?.customerName ?? initialCustomerName,
-    equipmentLabel: initialOs?.equipmentLabel ?? initialEquipment,
+    equipmentLabel: initialOs?.equipmentLabel ?? initialOs?.equipment_name ?? initialEquipment,
     subject: initialOs?.subject ?? '',
     description: initialOs?.description ?? '',
     priority: (initialOs?.priority ?? 'medium') as 'low' | 'medium' | 'high' | 'urgent',
     technicianName: initialOs?.technicianName ?? '',
-    serialNumber: initialOs?.serialNumber ?? '',
+    serialNumber: initialOs?.serialNumber ?? initialOs?.serial_number ?? '',
   });
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(
     (initialOs?.budget_items as BudgetItem[]) ??
