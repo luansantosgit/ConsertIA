@@ -22,6 +22,7 @@ interface CompanySettings {
   address?: string | null;
   language?: string | null;
   os_terms?: string | null;
+  pdf_logo_url?: string | null;
 }
 
 export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
@@ -36,7 +37,7 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
   useEffect(() => {
     supabase
       .from('tenant_settings')
-      .select('company_name, cnpj, whatsapp, phone, address, language, os_terms')
+      .select('company_name, cnpj, whatsapp, phone, address, language, os_terms, pdf_logo_url')
       .limit(1)
       .maybeSingle()
       .then(({ data }) => { if (data) setCompany(data as CompanySettings); });
@@ -109,8 +110,8 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', fontWeight: 800, fontSize: '1.25rem'
               }}>
-                {activeTheme.logoUrl ? (
-                  <img src={activeTheme.logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                {company.pdf_logo_url || activeTheme.logoUrl ? (
+                  <img src={company.pdf_logo_url || activeTheme.logoUrl!} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 ) : (
                   <Wrench size={24} />
                 )}
