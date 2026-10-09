@@ -11,19 +11,6 @@ import { TenantLayout } from '@/components/TenantLayout';
 import { Dashboard } from '@/pages/Dashboard';
 import { Customers } from '@/pages/Customers';
 
-// Tenant (lazy — code-split por rota)
-const ServiceOrders = lazy(() => import('@/pages/ServiceOrders').then(m => ({ default: m.ServiceOrders })));
-const Attendance    = lazy(() => import('@/pages/Attendance').then(m => ({ default: m.Attendance })));
-const Inventory     = lazy(() => import('@/pages/Inventory').then(m => ({ default: m.Inventory })));
-const Financial     = lazy(() => import('@/pages/Financial').then(m => ({ default: m.Financial })));
-const Schedule      = lazy(() => import('@/pages/Schedule').then(m => ({ default: m.Schedule })));
-const Reports       = lazy(() => import('@/pages/Reports').then(m => ({ default: m.Reports })));
-const Settings      = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const AiSettings    = lazy(() => import('@/pages/AiSettings').then(m => ({ default: m.AiSettings })));
-const SubscriptionPage = lazy(() => import('@/pages/subscription/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
-const OnboardingPage = lazy(() => import('@/pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
-const ChecklistPage = lazy(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })));
-
 // Superadmin
 import { SuperAdminLayout }   from '@/superadmin/SuperAdminLayout';
 import { SuperAdminDashboard } from '@/superadmin/SuperAdminDashboard';
@@ -38,6 +25,46 @@ import { SuperAdminWizard } from '@/superadmin/SuperAdminWizard';
 
 import './i18n/config';
 import './styles.css';
+
+/**
+ * Lazy loading com recuperação de chunk stale.
+ * Após deploy na Vercel, o index.html cacheado no browser referencia
+ * chunks antigos (hash diferente) que retornam 404 → "Failed to fetch
+ * dynamically imported module". Recarrega a página para pegar o novo
+ * build, com guarda de 1 reload/min para evitar loop.
+ */
+const CHUNK_ERR = 'Failed to fetch dynamically imported module';
+const CHUNK_RELOAD_KEY = 'chunk-reload-ts';
+
+function lazyLoad<T extends React.ComponentType>(factory: () => Promise<{ default: T }>) {
+  return lazy(() =>
+    factory().catch(err => {
+      const msg = (err as Error)?.message ?? String(err);
+      if (msg.includes(CHUNK_ERR) || msg.includes('Importing a module script failed')) {
+        const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0);
+        const now = Date.now();
+        if (!last || now - last > 60_000) {
+          sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
+          window.location.reload();
+        }
+      }
+      throw err;
+    }),
+  );
+}
+
+// Tenant (lazy — code-split por rota)
+const ServiceOrders = lazyLoad(() => import('@/pages/ServiceOrders').then(m => ({ default: m.ServiceOrders })));
+const Attendance    = lazyLoad(() => import('@/pages/Attendance').then(m => ({ default: m.Attendance })));
+const Inventory     = lazyLoad(() => import('@/pages/Inventory').then(m => ({ default: m.Inventory })));
+const Financial     = lazyLoad(() => import('@/pages/Financial').then(m => ({ default: m.Financial })));
+const Schedule      = lazyLoad(() => import('@/pages/Schedule').then(m => ({ default: m.Schedule })));
+const Reports       = lazyLoad(() => import('@/pages/Reports').then(m => ({ default: m.Reports })));
+const Settings      = lazyLoad(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const AiSettings    = lazyLoad(() => import('@/pages/AiSettings').then(m => ({ default: m.AiSettings })));
+const SubscriptionPage = lazyLoad(() => import('@/pages/subscription/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
+const OnboardingPage = lazyLoad(() => import('@/pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+const ChecklistPage = lazyLoad(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })));
 
 /* ── Fallback de loading (skeleton) ── */
 const PageLoader: React.FC = () => (
