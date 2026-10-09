@@ -43,15 +43,6 @@ const LANGS = [
   { code: 'es',    label: 'Español' },
 ];
 
-const NOTIFICATION_META = [
-  { key: 'notif_new_os', label: 'Nova OS aberta', desc: 'Quando uma nova ordem de serviço é criada' },
-  { key: 'notif_os_ready', label: 'OS pronta para entrega', desc: 'Quando o técnico marca a OS como concluída' },
-  { key: 'notif_budget_no_reply', label: 'Orçamento sem resposta', desc: 'Depois de 24h sem resposta do cliente' },
-  { key: 'notif_low_stock', label: 'Estoque baixo', desc: 'Quando um item atinge o estoque mínimo' },
-  { key: 'notif_whatsapp_message', label: 'Mensagem no WhatsApp', desc: 'Notificação em tempo real de novas mensagens' },
-  { key: 'notif_weekly_report', label: 'Relatório semanal', desc: 'Resumo de faturamento e OS toda segunda-feira' },
-];
-
 export const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState<Section>('aparencia');
@@ -66,7 +57,6 @@ export const SettingsPage: React.FC = () => {
   const [companyLanguage, setCompanyLanguage] = useState('pt-BR');
   const [companyTimezone, setCompanyTimezone] = useState('America/Sao_Paulo');
   const [companyOsTerms, setCompanyOsTerms] = useState('');
-  const [notifications, setNotifications] = useState<Record<string, boolean>>({});
   const [connections, setConnections] = useState<Connection[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -493,39 +483,7 @@ export const SettingsPage: React.FC = () => {
             </div>
           )}
 
-          {/* ── NOTIFICAÇÕES ── */}
-          {activeSection === 'notificacoes' && (
-            <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div>
-                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{t('Notificações')}</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{t('Configure quando e como você quer ser notificado.')}</p>
-              </div>
-              {NOTIFICATION_META.map((n, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                  <div>
-                    <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t(n.label)}</p>
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>{t(n.desc)}</p>
-                  </div>
-                  <label style={{ position: 'relative', display: 'inline-block', width: 40, height: 22, cursor: 'pointer', flexShrink: 0 }}>
-                    <input
-                      type="checkbox"
-                      checked={notifications[n.key] ?? false}
-                      style={{ opacity: 0, width: 0, height: 0 }}
-                      onChange={() => setNotifications(prev => ({ ...prev, [n.key]: !prev[n.key] }))}
-                    />
-                    <span style={{ position: 'absolute', inset: 0, background: notifications[n.key] ? 'var(--primary)' : '#cbd5e1', borderRadius: 11, transition: '0.3s' }}>
-                      <span style={{ position: 'absolute', top: 3, left: notifications[n.key] ? 21 : 3, width: 16, height: 16, background: '#fff', borderRadius: '50%', transition: '0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-                    </span>
-                  </label>
-                </div>
-              ))}
-              <div>
-                <button className="btn btn-primary" onClick={handleSave}>
-                  {saved ? <><Check size={15} />{t('Salvo!')}</> : t('Salvar notificações')}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* ── NOTIFICAÇÕES: em breve (placeholder) — renderizado pelo bloco genérico abaixo ── */}
 
           {/* ── USUÁRIOS ── */}
           {activeSection === 'usuarios' && <UsersSection />}
