@@ -7,7 +7,7 @@ const repo = new OnboardingRepository();
 // QR Code do WhatsApp + polling até conectar
 export const StepWhatsapp: React.FC<{
   token: string;
-  onConnected: () => void;
+  onConnected: (wantsHistorySync: boolean) => void;
   onBack: () => void;
 }> = ({ token, onConnected, onBack }) => {
   const [qr, setQr] = useState<string | null>(null);
@@ -16,8 +16,15 @@ export const StepWhatsapp: React.FC<{
   const [connected, setConnected] = useState(false);
   const [pollErrors, setPollErrors] = useState(0);
   const [checking, setChecking] = useState(false);
+  const [wantSync, setWantSync] = useState(true);
+  const wantSyncRef = useRef(true);
   const pollRef = useRef<number | null>(null);
   const startedRef = useRef(false);
+
+  const toggleSync = (value: boolean) => {
+    setWantSync(value);
+    wantSyncRef.current = value;
+  };
 
   const loadQr = async () => {
     setLoading(true);
@@ -42,7 +49,7 @@ export const StepWhatsapp: React.FC<{
       if (isConnected) {
         setConnected(true);
         if (pollRef.current) window.clearInterval(pollRef.current);
-        setTimeout(onConnected, 1800);
+        setTimeout(() => onConnected(wantSyncRef.current), 1800);
       }
     } catch {
       setPollErrors(e => e + 1);
@@ -64,7 +71,7 @@ export const StepWhatsapp: React.FC<{
         if (isConnected) {
           setConnected(true);
           if (pollRef.current) window.clearInterval(pollRef.current);
-          setTimeout(onConnected, 1800);
+          setTimeout(() => onConnected(wantSyncRef.current), 1800);
         }
       } catch {
         // Falhas consecutivas viram aviso visível + botão manual
@@ -124,7 +131,44 @@ export const StepWhatsapp: React.FC<{
               <RefreshCw size={14} /> Gerar novo QR Code
             </button>
           )}
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+
+          {/* Toggle: sincronizar histórico após conectar */}
+          <label style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 10, margin: '18px auto 0', cursor: 'pointer',
+            maxWidth: 340, userSelect: 'none',
+          }}>
+            <span style={{
+              position: 'relative', display: 'inline-block', width: 40, height: 22, flexShrink: 0,
+            }}>
+              <input
+                type="checkbox"
+                checked={wantSync}
+                onChange={e => toggleSync(e.target.checked)}
+                style={{ opacity: 0, width: 0, height: 0 }}
+              />
+              <span style={{
+                position: 'absolute', inset: 0, borderRadius: 11, transition: '0.3s',
+                background: wantSync ? 'var(--primary)' : 'var(--border)',
+              }}>
+                <span style={{
+                  position: 'absolute', top: 3, left: wantSync ? 21 : 3,
+                  width: 16, height: 16, background: '#fff', borderRadius: '50%',
+                  transition: '0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }} />
+              </span>
+            </span>
+            <span style={{ textAlign: 'left' }}>
+              <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600 }}>
+                Sincronizar histórico de mensagens
+              </span>
+              <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                Traz as últimas conversas deste número para o sistema após conectar.
+              </span>
+            </span>
+          </label>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 14 }}>
             Aguardando leitura do QR Code... mantenha esta aba aberta.
           </p>
 

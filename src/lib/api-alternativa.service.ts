@@ -564,6 +564,135 @@ export async function fetchChatAvatar(
   }
 }
 
+/**
+ * Solicita ao WhatsApp o sync sob demanda do histórico de um chat.
+ * As mensagens chegam depois via webhook (evento `history`) e ficam
+ * disponíveis em /message/find.
+ *
+ * @param connectionId ID da conexão no sistema
+ * @param phone Número do chat (formato JID: 5511999999999@s.whatsapp.net)
+ * @param count Quantidade desejada de mensagens (1-100, default 50)
+ */
+export async function requestHistorySync(
+  connectionId: string,
+  phone: string,
+  count = 50,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data: connection } = await supabase
+      .from('connections')
+      .select('instance_token')
+      .eq('id', connectionId)
+      .single();
+
+    if (!connection?.instance_token) {
+      return { success: false, error: 'Token nao disponivel.' };
+    }
+
+    const settings = await getPlatformConfig();
+    const baseUrl = `https://${settings.uazapiSubdomain || 'api'}.uazapi.com`;
+
+    const response = await fetch(`${baseUrl}/message/history-sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token: connection.instance_token },
+      body: JSON.stringify({
+        number: phone.includes('@') ? phone : `${phone}@s.whatsapp.net`,
+        mode: 'history',
+        count: Math.min(Math.max(count, 1), 100),
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data?.message || 'Falha ao solicitar historico.' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Sincroniza o histórico de todos os chats recentes de uma instância.
+ *
+ * Fluxo:
+ * 1. POST /chat/find — lista chats mais recentes (limitado a maxChats)
+ * 2. Para cada chat, POST /message/history-sync — solicita até 50 mensagens
+ * 3. Mensagens chegam via webhook (evento `history`) e entram no CRM
+ *
+ * @param connectionId ID da conexão no sistema
+ * @param maxChats Máximo de chats para sincronizar (default 30)
+ * @param onProgress Callback de progresso (current, total)
+ */
+export async function syncInstanceHistory(
+  connectionId: string,
+  maxChats = 30,
+  onProgress?: (current: number, total: number) => void,
+): Promise<{ success: boolean; synced: number; error?: string }> {
+  try {
+    const { data: connection } = await supabase
+      .from('connections')
+      .select('instance_token')
+      .eq('id', connectionId)
+      .single();
+
+    if (!connection?.instance_token) {
+      return { success: false, synced: 0, error: 'Token nao disponivel.' };
+    }
+
+    const settings = await getPlatformConfig();
+    const baseUrl = `https://${settings.uazapiSubdomain || 'api'}.uazapi.com`;
+    const token = connection.instance_token;
+
+    // 1. Buscar chats mais recentes (exclui grupos)
+    const chatResponse = await fetch(`${baseUrl}/chat/find`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token },
+      body: JSON.stringify({
+        limit: maxChats,
+        offset: 0,
+        sort: '-wa_lastMsgTimestamp',
+        wa_isGroup: false,
+      }),
+    });
+
+    const chatData = await chatResponse.json();
+    if (!chatResponse.ok) {
+      return { success: false, synced: 0, error: chatData?.message || 'Falha ao listar chats.' };
+    }
+
+    const chats: Array<{ wa_chatid?: string }> = chatData?.chats ?? [];
+    const jids = chats
+      .map(c => c.wa_chatid)
+      .filter((jid): jid is string => typeof jid === 'string' && jid.includes('@s.whatsapp.net'));
+
+    if (jids.length === 0) {
+      return { success: true, synced: 0 };
+    }
+
+    // 2. Solicitar history-sync para cada chat
+    let synced = 0;
+    for (let i = 0; i < jids.length; i++) {
+      onProgress?.(i + 1, jids.length);
+      try {
+        await fetch(`${baseUrl}/message/history-sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', token },
+          body: JSON.stringify({ number: jids[i], mode: 'history', count: 50 }),
+        });
+        synced++;
+      } catch {
+        // Continua para o próximo chat mesmo se um falhar
+      }
+    }
+
+    return { success: true, synced };
+  } catch (error) {
+    return { success: false, synced: 0, error: (error as Error).message };
+  }
+}
+
 export type SendMediaType =
   | 'image' | 'video' | 'videoplay' | 'document'
   | 'audio' | 'myaudio' | 'ptt' | 'ptv' | 'sticker';

@@ -454,6 +454,58 @@ serve(async (req) => {
       return json({ connected });
     }
 
+    // ── Sincronizar histórico de mensagens (após conectar) ──
+    if (action === "sync_history") {
+      if (!session.connection_id) return json({ error: "not_connected_yet" }, 400);
+      const { data: conn } = await admin
+        .from("connections")
+        .select("instance_token")
+        .eq("id", session.connection_id)
+        .maybeSingle();
+      if (!conn?.instance_token) return json({ error: "no_instance" }, 400);
+
+      const plat = await getPlatform(admin);
+      const maxChats = 30;
+
+      // 1. Lista chats mais recentes (exclui grupos)
+      const chatRes = await fetch(`${plat.base}/chat/find`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", token: conn.instance_token },
+        body: JSON.stringify({
+          limit: maxChats,
+          offset: 0,
+          sort: "-wa_lastMsgTimestamp",
+          wa_isGroup: false,
+        }),
+      });
+      const chatData = await chatRes.json();
+      if (!chatRes.ok) {
+        return json({ error: chatData?.message ?? "chat_find_failed" }, 502);
+      }
+      const chats: Array<{ wa_chatid?: string }> = chatData?.chats ?? [];
+      const jids = chats
+        .map((c) => c.wa_chatid)
+        .filter((jid): jid is string => Boolean(jid) && jid.includes("@s.whatsapp.net"));
+
+      if (jids.length === 0) return json({ synced: 0, total: 0 });
+
+      // 2. Solicita history-sync para cada chat (mensagens chegam via webhook)
+      let synced = 0;
+      for (const jid of jids) {
+        try {
+          const syncRes = await fetch(`${plat.base}/message/history-sync`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", token: conn.instance_token },
+            body: JSON.stringify({ number: jid, mode: "history", count: 50 }),
+          });
+          if (syncRes.ok) synced++;
+        } catch {
+          // segue para o próximo chat
+        }
+      }
+      return json({ synced, total: jids.length });
+    }
+
     // ── Cobrança do plano ──
     if (action === "create_payment") {
       if (session.status !== "connected") return json({ error: "connect_whatsapp_first" }, 400);

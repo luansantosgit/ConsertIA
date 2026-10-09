@@ -1375,6 +1375,10 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@keyframes slideInRight { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+.spin { animation: spin 1s linear infinite; }
+
 /* ============================================================
    UTILS
    ============================================================ */

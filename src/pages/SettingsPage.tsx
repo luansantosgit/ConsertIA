@@ -11,6 +11,8 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { ConnectionRepository } from '@/repositories/connection.repository';
 import { ConnectionStatusBadge, QRCodeModal, HybridConfigModal } from '@/components/whatsapp';
 import { generateQRCode, configureWebhook, checkConnectionStatus } from '@/lib/api-alternativa.service';
+import { useHistorySync } from '@/hooks/useHistorySync';
+import { HistorySyncOverlay } from '@/components/HistorySyncOverlay';
 import { hybridService } from '@/lib/hybrid.service';
 import { supabase } from '@/lib/supabase';
 import type { Connection, HybridMode } from '@/types';
@@ -83,6 +85,8 @@ export const SettingsPage: React.FC = () => {
     variant: 'danger' | 'warning' | 'info';
     onConfirm: () => void | Promise<void>;
   }>({ isOpen: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
+  const [syncQuestion, setSyncQuestion] = useState<{ isOpen: boolean; connectionId: string | null }>({ isOpen: false, connectionId: null });
+  const { state: syncState, progress: syncProgress, message: syncMessage, requestSync } = useHistorySync();
 
   const { loadTenantTheme } = useThemeStore();
   const { user } = useAuthStore();
@@ -216,6 +220,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleConnected = useCallback(async () => {
+    const connectedId = newConnectionId;
     setShowQRModal(false);
     setNewConnectionId(null);
     setQrImage(null);
@@ -228,7 +233,10 @@ export const SettingsPage: React.FC = () => {
     } catch (err) {
       console.error('Failed to refresh connections:', err);
     }
-  }, [showToast]);
+    if (connectedId) {
+      setSyncQuestion({ isOpen: true, connectionId: connectedId });
+    }
+  }, [showToast, newConnectionId]);
 
   const handleDisconnect = async (conn: Connection) => {
     setConfirmModal({
@@ -734,6 +742,23 @@ export const SettingsPage: React.FC = () => {
         message={confirmModal.message}
         variant={confirmModal.variant}
       />
+
+      <ConfirmModal
+        isOpen={syncQuestion.isOpen}
+        onClose={() => setSyncQuestion({ isOpen: false, connectionId: null })}
+        onConfirm={() => {
+          const id = syncQuestion.connectionId;
+          setSyncQuestion({ isOpen: false, connectionId: null });
+          if (id) void requestSync(id);
+        }}
+        title="Sincronizar histórico de mensagens?"
+        message="Podemos trazer as mensagens antigas das últimas 30 conversas deste número para o sistema. Deseja sincronizar agora? Você também pode sincronizar depois."
+        variant="info"
+        confirmLabel="Sincronizar agora"
+        cancelLabel="Agora não"
+      />
+
+      <HistorySyncOverlay state={syncState} progress={syncProgress} message={syncMessage} />
 
       {toast && (
         <div

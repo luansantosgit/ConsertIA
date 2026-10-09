@@ -32,6 +32,9 @@ serve(async (req) => {
     }
 
     // ── messages / history ──
+    // history = mensagens antigas via history-sync (importação de histórico):
+    // não dispara IA, não marca não-lidas e importa também mensagens do atendente
+    const isHistoryEvent = eventType === "history";
     if (eventType === "messages" || eventType === "history") {
       // Obter configuracao de conexão para download de mídia e tenant_id
       let instanceToken = "";
@@ -86,7 +89,11 @@ serve(async (req) => {
       const messages = Array.isArray(msgData) ? msgData : msgData ? [msgData] : [];
 
       for (const msg of messages) {
-        if (msg.fromMe === true) continue;
+        // fromMe: em evento normal a mensagem já existe (foi enviada pelo app).
+        // Em history (importação), mensagens do atendente também entram —
+        // sem isso o histórico importado ficaria pela metade.
+        if (msg.fromMe === true && !isHistoryEvent) continue;
+        const isFromMe = msg.fromMe === true;
 
         // Dados do chat podem vir no body, em data ou dentro da propria mensagem
         const chatData: any =
@@ -198,9 +205,13 @@ serve(async (req) => {
         // Se o lead ainda não tem chat aberto, cria uma nova conversa automaticamente
         if (!conversation) {
           let customerId: string | null = null;
+          // fromMe: senderName é o perfil do próprio negócio, não do cliente.
+          // Prioriza o nome do chat (contato) quando disponível.
           let leadName = isGroup
             ? (chatData?.name || senderName || phone)
-            : (senderName || chatData?.name || phone);
+            : (isFromMe
+              ? (chatData?.name || phone)
+              : (senderName || chatData?.name || phone));
 
           if (isGroup) {
             // Grupos: apenas registra a conversa, sem vincular/criar cliente
@@ -222,7 +233,9 @@ serve(async (req) => {
               if (!connectionTenantId && customer.tenant_id) connectionTenantId = customer.tenant_id;
             } else if (connectionTenantId) {
               // Auto-cria cliente para o novo lead
-              const customerName = senderName || chatData?.name || phone;
+              const customerName = isFromMe
+                ? (chatData?.name || phone)
+                : (senderName || chatData?.name || phone);
               const { data: newCustomer, error: custError } = await supabase
                 .from("customers")
                 .insert({
@@ -322,9 +335,10 @@ serve(async (req) => {
           tenant_id: conversation.tenant_id,
           contact_phone: phone,
           content: content,
-          direction: "inbound",
-          sender_type: "customer",
-          read: false,
+          direction: isFromMe ? "outbound" : "inbound",
+          sender_type: isFromMe ? "attendant" : "customer",
+          // Histórico importado já nasce lido — não gera badge de não-lida
+          read: isHistoryEvent ? true : false,
           status: "delivered",
           wa_message_id: waMessageId,
           wa_chat_id: chatId,
@@ -341,13 +355,15 @@ serve(async (req) => {
           continue;
         }
 
-        console.log(`[webhook] Mensagem inserida: waId=${waMessageId} phone=${phone} type=${rawType}`);
+        console.log(`[webhook] Mensagem inserida: waId=${waMessageId} phone=${phone} type=${rawType}${isHistoryEvent ? " (histórico)" : ""}`);
 
-        // Update único e atômico: não lidas + last_message (se mais recente)
+        // Update único e atômico: não lidas + last_message (se mais recente).
+        // Histórico importado não incrementa não-lidas.
         const { error: bumpError } = await supabase.rpc("bump_conversation", {
           p_conv_id: conversation.id,
           p_last_at: timestamp,
           p_last_message: content ? content.substring(0, 100) : null,
+          p_count_unread: !isHistoryEvent,
         });
 
         if (bumpError) console.error(`[webhook] Erro ao atualizar conversa:`, bumpError.message);
@@ -355,7 +371,8 @@ serve(async (req) => {
         // Dispara o agente de IA com debounce por conversa: mensagens em rajada
         // (ex.: "segunda mesmo" + "Kkk" com 1s de diferença) geram UMA única
         // resposta, sempre com todo o conteúdo novo já inserido.
-        if (aiEnabled && !isGroup) {
+        // Mensagens de histórico (antigas) NUNCA disparam IA.
+        if (aiEnabled && !isGroup && !isHistoryEvent) {
           const triggerToken = crypto.randomUUID();
           await supabase
             .from("conversations")

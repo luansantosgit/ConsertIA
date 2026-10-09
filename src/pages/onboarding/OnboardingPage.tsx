@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { OnboardingRepository, type OnboardingPlan, type OnboardingPayment, type OnboardingCredentials, type BillingMethod } from './onboarding.repository';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { HistorySyncOverlay } from '@/components/HistorySyncOverlay';
 import { StepWelcome } from './StepWelcome';
 import { StepCompanyData } from './StepCompanyData';
 import { StepPlanChoice } from './StepPlanChoice';
@@ -33,6 +34,31 @@ export const OnboardingPage: React.FC = () => {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [resuming, setResuming] = useState(true);
+  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncMessage, setSyncMessage] = useState('');
+
+  // Dispara a sincronização de histórico após conectar o WhatsApp
+  const startHistorySync = (sessionToken: string) => {
+    setSyncState('syncing');
+    setSyncProgress(15);
+    setSyncMessage('Buscando conversas recentes deste número...');
+    repo.syncHistory(sessionToken)
+      .then(res => {
+        setSyncProgress(100);
+        setSyncState('done');
+        setSyncMessage(
+          res.total === 0
+            ? 'Nenhuma conversa anterior encontrada para sincronizar.'
+            : `Sincronização solicitada para ${res.synced} de ${res.total} conversa(s)! As mensagens estão chegando.`,
+        );
+      })
+      .catch(() => {
+        setSyncProgress(100);
+        setSyncState('error');
+        setSyncMessage('Não foi possível sincronizar o histórico agora. Você pode tentar depois.');
+      });
+  };
 
   // Retomada: sessão em andamento após refresh
   useEffect(() => {
@@ -141,7 +167,10 @@ export const OnboardingPage: React.FC = () => {
       {step === 'whatsapp' && token && (
         <StepWhatsapp
           token={token}
-          onConnected={() => { setStep('payment'); }}
+          onConnected={(wantsSync) => {
+            setStep('payment');
+            if (wantsSync) startHistorySync(token);
+          }}
           onBack={() => setStep('plan')}
         />
       )}
@@ -177,6 +206,8 @@ export const OnboardingPage: React.FC = () => {
         }
         variant="warning"
       />
+
+      <HistorySyncOverlay state={syncState} progress={syncProgress} message={syncMessage} />
     </OnboardingShell>
   );
 };

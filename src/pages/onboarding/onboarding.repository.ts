@@ -70,6 +70,10 @@ export class OnboardingRepository {
     return call<{ connected: boolean }>({ action: 'poll_connection', token });
   }
 
+  syncHistory(token: string) {
+    return call<{ synced: number; total: number }>({ action: 'sync_history', token });
+  }
+
   createPayment(token: string, billing_type: string) {
     return call<{ payment: OnboardingPayment; pix_encoded_image?: string | null; reused?: boolean }>({
       action: 'create_payment', token, billing_type,
