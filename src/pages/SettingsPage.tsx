@@ -85,7 +85,6 @@ export const SettingsPage: React.FC = () => {
     variant: 'danger' | 'warning' | 'info';
     onConfirm: () => void | Promise<void>;
   }>({ isOpen: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
-  const [syncQuestion, setSyncQuestion] = useState<{ isOpen: boolean; connectionId: string | null }>({ isOpen: false, connectionId: null });
   const { state: syncState, progress: syncProgress, message: syncMessage, requestSync } = useHistorySync();
 
   const { loadTenantTheme } = useThemeStore();
@@ -219,7 +218,7 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleConnected = useCallback(async () => {
+  const handleConnected = useCallback(async (wantsSync: boolean) => {
     const connectedId = newConnectionId;
     setShowQRModal(false);
     setNewConnectionId(null);
@@ -233,10 +232,10 @@ export const SettingsPage: React.FC = () => {
     } catch (err) {
       console.error('Failed to refresh connections:', err);
     }
-    if (connectedId) {
-      setSyncQuestion({ isOpen: true, connectionId: connectedId });
+    if (wantsSync && connectedId) {
+      void requestSync(connectedId);
     }
-  }, [showToast, newConnectionId]);
+  }, [showToast, newConnectionId, requestSync]);
 
   const handleDisconnect = async (conn: Connection) => {
     setConfirmModal({
@@ -590,6 +589,16 @@ export const SettingsPage: React.FC = () => {
                               <button
                                 className="btn btn-ghost btn-sm"
                                 style={{ color: 'var(--primary)' }}
+                                disabled={syncState === 'syncing'}
+                                onClick={() => {
+                                  void requestSync(conn.id);
+                                }}
+                              >
+                                {syncState === 'syncing' ? t('Sincronizando...') : t('Sincronizar histórico')}
+                              </button>
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: 'var(--primary)' }}
                                 onClick={async () => {
                                   try {
                                     const result = await configureWebhook(conn.id);
@@ -741,21 +750,6 @@ export const SettingsPage: React.FC = () => {
         title={confirmModal.title}
         message={confirmModal.message}
         variant={confirmModal.variant}
-      />
-
-      <ConfirmModal
-        isOpen={syncQuestion.isOpen}
-        onClose={() => setSyncQuestion({ isOpen: false, connectionId: null })}
-        onConfirm={() => {
-          const id = syncQuestion.connectionId;
-          setSyncQuestion({ isOpen: false, connectionId: null });
-          if (id) void requestSync(id);
-        }}
-        title="Sincronizar histórico de mensagens?"
-        message="Podemos trazer as mensagens antigas das últimas 30 conversas deste número para o sistema. Deseja sincronizar agora? Você também pode sincronizar depois."
-        variant="info"
-        confirmLabel="Sincronizar agora"
-        cancelLabel="Agora não"
       />
 
       <HistorySyncOverlay state={syncState} progress={syncProgress} message={syncMessage} />

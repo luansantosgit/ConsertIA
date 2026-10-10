@@ -13,7 +13,7 @@ interface QRCodeModalProps {
   loading?: boolean;
   error?: string | null;
   connectionId?: string | null;
-  onConnected?: () => void;
+  onConnected?: (wantsHistorySync: boolean) => void;
 }
 
 export function QRCodeModal({
@@ -30,7 +30,14 @@ export function QRCodeModal({
   onConnected,
 }: QRCodeModalProps) {
   const [timeLeft, setTimeLeft] = useState(expiresIn);
+  const [wantSync, setWantSync] = useState(true);
+  const wantSyncRef = useRef(true);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const toggleSync = (value: boolean) => {
+    setWantSync(value);
+    wantSyncRef.current = value;
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -67,7 +74,7 @@ export function QRCodeModal({
             pollingRef.current = null;
           }
           await configureWebhook(connectionId);
-          onConnected();
+          onConnected(wantSyncRef.current);
         }
       } catch (e) {
         console.error('[QR Polling] error:', e);
@@ -126,6 +133,47 @@ export function QRCodeModal({
               <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>QR Code indisponivel</span>
             )}
           </div>
+
+          {/* Toggle: sincronizar histórico após conectar (igual ao wizard) */}
+          {onConnected && (
+            <label
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                cursor: 'pointer', userSelect: 'none', marginBottom: 16,
+              }}
+            >
+              <span style={{ position: 'relative', display: 'inline-block', width: 40, height: 22, flexShrink: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={wantSync}
+                  onChange={(e) => toggleSync(e.target.checked)}
+                  style={{ opacity: 0, width: 0, height: 0 }}
+                />
+                <span
+                  style={{
+                    position: 'absolute', inset: 0, borderRadius: 11, transition: '0.3s',
+                    background: wantSync ? 'var(--primary)' : 'var(--border)',
+                  }}
+                >
+                  <span
+                    style={{
+                      position: 'absolute', top: 3, left: wantSync ? 21 : 3,
+                      width: 16, height: 16, background: '#fff', borderRadius: '50%',
+                      transition: '0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    }}
+                  />
+                </span>
+              </span>
+              <span style={{ textAlign: 'left' }}>
+                <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600 }}>
+                  Sincronizar histórico de mensagens
+                </span>
+                <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Traz as últimas conversas deste número após conectar.
+                </span>
+              </span>
+            </label>
+          )}
 
           <div style={{ width: '100%', marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
