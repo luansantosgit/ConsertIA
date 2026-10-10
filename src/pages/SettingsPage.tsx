@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Palette, Bell, Shield, Users, Wrench, Clock,
-  Check, ChevronRight, Smartphone, MessageSquare, MonitorSmartphone, Bot, Zap
+  Check, ChevronRight, Smartphone, MessageSquare, MonitorSmartphone, Bot, Zap,
+  PenLine, Trash2
 } from 'lucide-react';
 import { useThemeStore } from '@/stores/theme.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -9,7 +10,7 @@ import { SkeletonCard } from '@/components/Skeleton';
 import ErrorMessage from '@/components/ErrorMessage';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { ConnectionRepository } from '@/repositories/connection.repository';
-import { ConnectionStatusBadge, QRCodeModal, HybridConfigModal } from '@/components/whatsapp';
+import { ConnectionStatusBadge, QRCodeModal, HybridConfigModal, ConnectionEditModal } from '@/components/whatsapp';
 import { generateQRCode, configureWebhook, checkConnectionStatus } from '@/lib/api-alternativa.service';
 import { useHistorySync } from '@/hooks/useHistorySync';
 import { HistorySyncOverlay } from '@/components/HistorySyncOverlay';
@@ -87,6 +88,33 @@ export const SettingsPage: React.FC = () => {
     onConfirm: () => void | Promise<void>;
   }>({ isOpen: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
   const { state: syncState, progress: syncProgress, message: syncMessage, requestSync } = useHistorySync();
+  const [editingConnection, setEditingConnection] = useState<Connection | null>(null);
+  const [savingName, setSavingName] = useState(false);
+
+  const handleRenameConnection = useCallback(async (conn: Connection, name: string) => {
+    setSavingName(true);
+    try {
+      const repo = new ConnectionRepository();
+      await repo.update(conn.id, { name } as Partial<Connection>);
+      const data = await repo.getAll();
+      setConnections(data);
+      setEditingConnection(prev => prev ? { ...prev, name } : null);
+      showToast('Nome da conexão atualizado!');
+    } catch {
+      showToast('Erro ao salvar o nome da conexão', 'error');
+    } finally {
+      setSavingName(false);
+    }
+  }, [showToast]);
+
+  const handleReconfigureWebhook = useCallback(async (connId: string) => {
+    try {
+      const result = await configureWebhook(connId);
+      showToast(result.success ? 'Webhook reconfigurado!' : `Erro: ${result.error}`, result.success ? 'success' : 'error');
+    } catch {
+      showToast('Erro ao reconfigurar webhook', 'error');
+    }
+  }, [showToast]);
 
   const { loadTenantTheme } = useThemeStore();
   const { user } = useAuthStore();
@@ -590,39 +618,13 @@ export const SettingsPage: React.FC = () => {
                               {qrLoading && newConnectionId === conn.id ? t('Gerando...') : t('Gerar QR Code')}
                             </button>
                           ) : conn.status === 'connected' ? (
-                            <>
-                              <button
-                                className="btn btn-ghost btn-sm"
-                                style={{ color: 'var(--primary)' }}
-                                disabled={syncState === 'syncing'}
-                                onClick={() => {
-                                  void requestSync(conn.id);
-                                }}
-                              >
-                                {syncState === 'syncing' ? t('Sincronizando...') : t('Sincronizar histórico')}
-                              </button>
-                              <button
-                                className="btn btn-ghost btn-sm"
-                                style={{ color: 'var(--primary)' }}
-                                onClick={async () => {
-                                  try {
-                                    const result = await configureWebhook(conn.id);
-                                    showToast(result.success ? 'Webhook reconfigurado!' : `Erro: ${result.error}`, result.success ? 'success' : 'error');
-                                  } catch {
-                                    showToast('Erro ao reconfigurar webhook', 'error');
-                                  }
-                                }}
-                              >
-                                {t('Reconfigurar Webhook')}
-                              </button>
-                              <button
-                                className="btn btn-ghost btn-sm"
-                                style={{ color: 'var(--danger)' }}
-                                onClick={() => handleDisconnect(conn)}
-                              >
-                                {t('Desconectar')}
-                              </button>
-                            </>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--danger)' }}
+                              onClick={() => handleDisconnect(conn)}
+                            >
+                              {t('Desconectar')}
+                            </button>
                           ) : (
                             <button
                               className="btn btn-ghost btn-sm"
@@ -634,10 +636,20 @@ export const SettingsPage: React.FC = () => {
                           )}
                           <button
                             className="btn btn-ghost btn-sm"
-                            style={{ color: 'var(--text-muted)' }}
+                            title={t('Editar conexão')}
+                            aria-label={t('Editar conexão')}
+                            onClick={() => setEditingConnection(conn)}
+                          >
+                            <PenLine size={15} />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: 'var(--danger)' }}
+                            title={t('Excluir conexão')}
+                            aria-label={t('Excluir conexão')}
                             onClick={() => handleDeleteConnection(conn)}
                           >
-                            {t('Excluir')}
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
@@ -738,6 +750,17 @@ export const SettingsPage: React.FC = () => {
         onRefresh={handleRefreshQR}
         connectionId={newConnectionId}
         onConnected={handleConnected}
+      />
+
+      <ConnectionEditModal
+        isOpen={editingConnection !== null}
+        onClose={() => setEditingConnection(null)}
+        connection={editingConnection}
+        savingName={savingName}
+        syncing={syncState === 'syncing'}
+        onRename={(name) => { if (editingConnection) void handleRenameConnection(editingConnection, name); }}
+        onSync={() => { if (editingConnection) void requestSync(editingConnection.id); }}
+        onReconfigureWebhook={() => { if (editingConnection) void handleReconfigureWebhook(editingConnection.id); }}
       />
 
       <HybridConfigModal
