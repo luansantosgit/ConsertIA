@@ -138,8 +138,8 @@ export function QRCodeModal({
           {onConnected && (
             <label
               style={{
-                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                cursor: 'pointer', userSelect: 'none', marginBottom: 16,
+                display: 'flex', alignItems: 'center', flexWrap: 'wrap',
+                gap: 10, width: '100%', cursor: 'pointer', userSelect: 'none',
               }}
             >
               <span style={{ position: 'relative', display: 'inline-block', width: 40, height: 22, flexShrink: 0 }}>
@@ -164,18 +164,18 @@ export function QRCodeModal({
                   />
                 </span>
               </span>
-              <span style={{ textAlign: 'left' }}>
-                <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600 }}>
-                  Sincronizar histórico de mensagens
+              <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.3 }}>
+                  Sincronizar histórico
                 </span>
-                <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                  Traz as últimas conversas deste número após conectar.
+                <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.3 }}>
+                  Traz as últimas conversas após conectar.
                 </span>
               </span>
             </label>
           )}
 
-          <div style={{ width: '100%', marginBottom: 16 }}>
+          <div style={{ width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 Expira em

@@ -23,6 +23,7 @@ import { AppearanceSection } from '@/pages/settings/AppearanceSection';
 import { UsersSection } from '@/pages/settings/UsersSection';
 import { QuickRepliesSection } from '@/pages/settings/QuickRepliesSection';
 import { PdfLogoUpload } from '@/pages/settings/PdfLogoUpload';
+import { WhatsAppIcon } from '@/components/WhatsAppIcon';
 
 type Section = 'aparencia' | 'empresa' | 'horario' | 'notificacoes' | 'aparelhos' | 'usuarios' | 'respostas' | 'seguranca' | 'integracao' | 'conexoes';
 
@@ -539,19 +540,20 @@ export const SettingsPage: React.FC = () => {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {connections.map(conn => (
-                      <div key={conn.id} className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <MessageSquare size={18} style={{ color: 'var(--primary)' }} />
+                      <div key={conn.id} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(37, 211, 102, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <WhatsAppIcon size={18} color="#25D366" />
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <p style={{ fontWeight: 600, fontSize: '0.875rem', overflowWrap: 'anywhere' }}>{conn.name || conn.phone_number}</p>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {conn.provider === 'api_oficial' ? 'API Oficial' : 'API Alternativa'}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{conn.name || conn.phone_number}</p>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              {conn.provider === 'api_oficial' ? 'API Oficial' : 'API Alternativa'}
-                            </p>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                           <label
                             title={t('Agente de IA atende neste canal')}
                             style={{
@@ -576,6 +578,9 @@ export const SettingsPage: React.FC = () => {
                             </span>
                           </label>
                           <ConnectionStatusBadge status={conn.status} provider={conn.provider} />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                           {conn.status === 'waiting' ? (
                             <button
                               className="btn btn-primary btn-sm"
