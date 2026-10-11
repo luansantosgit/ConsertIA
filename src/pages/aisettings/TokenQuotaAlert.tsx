@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Coins, X, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAiQuotaAlert } from '@/stores/ai-quota.store';
@@ -193,7 +193,7 @@ export const TokenQuotaAlert: React.FC<{
                         style={{ justifyContent: 'space-between', padding: '14px 16px' }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <Coins size={16} color="var(--primary)" />
+                          <Coins size={16} color="var(--primary-text)" />
                           <span style={{ textAlign: 'left' }}>
                             <strong>{pkg.name}</strong>
                             <br />
@@ -202,7 +202,7 @@ export const TokenQuotaAlert: React.FC<{
                             </span>
                           </span>
                         </span>
-                        <strong style={{ color: 'var(--primary)' }}>{formatCurrency(pkg.price)}</strong>
+                        <strong style={{ color: 'var(--primary-text)' }}>{formatCurrency(pkg.price)}</strong>
                       </button>
                     ))
                   )}
@@ -215,7 +215,7 @@ export const TokenQuotaAlert: React.FC<{
                     {purchase.info.package_name} · {purchase.info.tokens.toLocaleString('pt-BR')} tokens · {formatCurrency(purchase.info.amount)}
                   </p>
                   {purchase.pixImage && (
-                    <div style={{ padding: 10, background: '#fff', border: '1px solid var(--border)', borderRadius: 12 }}>
+                    <div style={{ padding: 10, background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12 }}>
                       <img src={`data:image/png;base64,${purchase.pixImage}`} alt="QR Code Pix" style={{ width: 200, height: 200, display: 'block' }} />
                     </div>
                   )}

@@ -91,7 +91,7 @@ export const StepCompanyData: React.FC<{
         <div className="form-group">
           <label className="form-label">
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Bot size={13} color="var(--primary)" />
+              <Bot size={13} color="var(--primary-text)" />
               Endereço <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(a IA informa aos clientes)</span>
             </span>
           </label>

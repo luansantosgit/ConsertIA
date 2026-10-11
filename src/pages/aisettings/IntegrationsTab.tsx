@@ -38,7 +38,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
       <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
           <h3 style={{ fontWeight: 700, fontSize: '1rem', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Zap size={18} color="var(--primary)" /> {t('Integrações de IA')}
+            <Zap size={18} color="var(--primary-text)" /> {t('Integrações de IA')}
           </h3>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
             {t('O agente usa o OpenRouter como provedor de modelos de linguagem.')}

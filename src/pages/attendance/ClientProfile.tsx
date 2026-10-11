@@ -25,7 +25,7 @@ export const ClientProfile: React.FC<ClientProfileProps> = ({
         height: 56,
         borderRadius: '50%',
         background: showAvatar ? 'transparent' : 'var(--primary-light)',
-        color: 'var(--primary)',
+        color: 'var(--primary-text)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

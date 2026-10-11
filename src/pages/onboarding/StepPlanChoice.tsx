@@ -68,19 +68,19 @@ export const StepPlanChoice: React.FC<{
                 <span className="badge badge-primary">Mais escolhido</span>
               )}
             </div>
-            <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
+            <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary-text)', margin: 0 }}>
               {fmtBRL(plan.price)}
               <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-muted)' }}>/mês</span>
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {plan.features.slice(0, 5).map((f: string) => (
                 <li key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  <Check size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <Check size={14} color="var(--primary-text)" style={{ flexShrink: 0, marginTop: 2 }} />
                   {f}
                 </li>
               ))}
             </ul>
-            <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--primary-text)', fontWeight: 600 }}>
               {choosing === plan.id ? 'Registrando escolha...' : 'Escolher este plano →'}
             </span>
           </button>

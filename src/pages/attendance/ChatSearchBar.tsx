@@ -29,7 +29,7 @@ export const ChatSearchBar: React.FC<{
       display: 'flex', alignItems: 'center', gap: 8,
       padding: '8px 20px',
       borderBottom: '1px solid var(--border)',
-      background: '#fff',
+      background: 'var(--card-bg)',
       animation: 'slideDown 0.15s ease',
     }}>
       <Search size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />

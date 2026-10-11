@@ -147,7 +147,7 @@ export const ImportProductsModal: React.FC<{
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {SPREADSHEET_COLUMNS.map(c => (
                 <p key={c.key} style={{ margin: 0, fontSize: '0.75rem' }}>
-                  <code style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontWeight: 700 }}>{c.label}</code>
+                  <code style={{ background: 'var(--primary-light)', color: 'var(--primary-text)', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontWeight: 700 }}>{c.label}</code>
                   {c.required && <strong style={{ color: 'var(--danger)' }}> *</strong>}
                   <span style={{ color: 'var(--text-muted)' }}> — {c.hint}</span>
                 </p>
@@ -180,12 +180,12 @@ export const ImportProductsModal: React.FC<{
             >
               {parsing ? (
                 <>
-                  <UploadCloud size={28} color="var(--primary)" style={{ animation: 'spin 1s linear infinite' }} />
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>Lendo planilha...</span>
+                  <UploadCloud size={28} color="var(--primary-text)" style={{ animation: 'spin 1s linear infinite' }} />
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-text)' }}>Lendo planilha...</span>
                 </>
               ) : (
                 <>
-                  <FileSpreadsheet size={28} color="var(--primary)" />
+                  <FileSpreadsheet size={28} color="var(--primary-text)" />
                   <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>Arraste a planilha .xlsx aqui</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ou clique para escolher o arquivo</span>
                 </>
@@ -224,7 +224,7 @@ export const ImportProductsModal: React.FC<{
               )}
               {importing ? (
                 <div>
-                  <div style={{ height: 6, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ height: 6, background: 'var(--progress-track)', borderRadius: 99, overflow: 'hidden' }}>
                     <div style={{ height: '100%', background: 'var(--primary)', borderRadius: 99, width: `${(progress.done / Math.max(progress.total, 1)) * 100}%`, transition: 'width 0.2s' }} />
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>

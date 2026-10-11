@@ -67,7 +67,7 @@ export const SuperAdminSettings: React.FC = () => {
       <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
           <h3 style={{ fontWeight: 700, fontSize: '1rem', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Phone size={18} color="var(--primary)" /> Configurações da plataforma
+            <Phone size={18} color="var(--primary-text)" /> Configurações da plataforma
           </h3>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
             Contato de suporte/vendas exibido nos CTAs do site institucional.

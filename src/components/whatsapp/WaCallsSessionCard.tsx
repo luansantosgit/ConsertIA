@@ -33,7 +33,7 @@ export function WaCallsSessionCard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--primary)',
+              color: 'var(--primary-text)',
             }}
           >
             <Phone size={18} />

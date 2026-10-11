@@ -72,13 +72,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       justifyContent: 'space-between',
       padding: '12px 20px',
       borderBottom: '1px solid var(--border)',
-      background: '#fff'
+      background: 'var(--card-bg)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{
           width: 38, height: 38, borderRadius: '50%',
           background: showAvatar ? 'transparent' : 'var(--primary-light)',
-          color: 'var(--primary)',
+          color: 'var(--primary-text)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700, fontSize: '0.9375rem', overflow: 'hidden', flexShrink: 0,
         }}>
@@ -92,7 +92,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div>
           <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{selected?.contactName}</p>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {selected?.contact_phone} · <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{selected?.deviceInfo}</span>
+            {selected?.contact_phone} · <span style={{ color: 'var(--primary-text)', fontWeight: 600 }}>{selected?.deviceInfo}</span>
           </p>
         </div>
       </div>
@@ -113,7 +113,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                 background: 'var(--danger)', color: '#fff',
                 fontSize: '0.5625rem', fontWeight: 700,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                lineHeight: 1, border: '1.5px solid #fff',
+                lineHeight: 1, border: '1.5px solid var(--card-bg)',
               }}>
                 {pendingCount > 9 ? '9+' : pendingCount}
               </span>
@@ -122,7 +122,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           {bellOpen && (
             <div style={{
               position: 'absolute', top: '100%', right: 0, marginTop: 4,
-              background: '#fff', border: '1px solid var(--border)', borderRadius: 10,
+              background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 10,
               boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100,
               minWidth: 180, overflow: 'hidden', animation: 'slideUp 0.15s ease',
             }}>
@@ -136,7 +136,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   color: 'var(--text-primary)',
                 }}
               >
-                <CheckCircle2 size={14} color="var(--primary)" />
+                <CheckCircle2 size={14} color="var(--primary-text)" />
                 Ver agendamentos {pendingCount > 0 ? `(${pendingCount})` : ''}
               </button>
               <button
@@ -149,7 +149,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   color: 'var(--text-primary)',
                 }}
               >
-                <Plus size={14} color="var(--primary)" />
+                <Plus size={14} color="var(--primary-text)" />
                 Fazer novo agendamento
               </button>
             </div>

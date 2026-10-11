@@ -112,7 +112,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   const transferredActive = chatFilter === 'transferred_chats' || chatFilter === 'transferred_groups';
 
   return (
-    <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', background: '#fff', borderRight: '1px solid var(--border)', minHeight: 0 }}>
+    <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRight: '1px solid var(--border)', minHeight: 0 }}>
       <div style={{ padding: '12px 16px 0' }}>
         <span style={{
           fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase',
@@ -150,7 +150,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             {dropdownFor === 'filter' && (
               <div style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: 4,
-                background: '#fff', border: '1px solid var(--border)', borderRadius: 10,
+                background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 10,
                 boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100,
                 minWidth: 190, overflow: 'hidden',
                 animation: 'slideUp 0.15s ease',
@@ -193,7 +193,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                   >
                     <o.icon size={14} />
                     {o.label}
-                    {sortBy === o.key && <Check size={12} color="var(--primary)" style={{ marginLeft: 'auto' }} />}
+                    {sortBy === o.key && <Check size={12} color="var(--primary-text)" style={{ marginLeft: 'auto' }} />}
                   </button>
                 ))}
               </div>

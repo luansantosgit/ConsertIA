@@ -38,6 +38,18 @@ const DEFAULT_THEME: Omit<TenantTheme, 'tenantId'> = {
   sidebarDark: false,
 };
 
+// Mistura a cor com branco (amount 0-1) — usado para clarear
+// a cor primária quando exibida como TEXTO no modo escuro
+function lightenHex(hex: string, amount: number): string {
+  const m = hex.replace('#', '');
+  const full = m.length === 3 ? m.split('').map(c => c + c).join('') : m;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * amount);
+  return `#${[mix(r), mix(g), mix(b)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
 // Aplica as variáveis CSS dinamicamente no :root.
 // `systemName` é o nome do SISTEMA (tema global) — título da aba e favicon
 // gerado NUNCA usam o nome da empresa/tenant.
@@ -50,9 +62,13 @@ function applyCSS(theme: Omit<TenantTheme, 'tenantId'>, systemName: string) {
   // Titulo da aba = nome do sistema (sempre), mesmo com tema do tenant ativo
   document.title = `${systemName || 'DeeperIA'} - CRM + IA para Assistência Técnica`;
 
-  // Gera variações automáticas da cor primária
-  root.style.setProperty('--primary-light', theme.primaryColor + '20');
-  root.style.setProperty('--primary-ring', theme.primaryColor + '40');
+  // Dark mode: texto/ícones na cor primária precisam de contraste —
+  // clareia a marca para uso como COR (var(--primary-text)).
+  // Chips (--primary-light) ganham alpha maior para ficarem visíveis.
+  const isDark = root.dataset.theme === 'dark';
+  root.style.setProperty('--primary-text', isDark ? lightenHex(theme.primaryColor, 0.55) : theme.primaryColor);
+  root.style.setProperty('--primary-light', theme.primaryColor + (isDark ? '30' : '20'));
+  root.style.setProperty('--primary-ring', theme.primaryColor + (isDark ? '55' : '40'));
 
   // Favicon dinâmico
   let link = document.getElementById('dynamic-favicon') as HTMLLinkElement | null;

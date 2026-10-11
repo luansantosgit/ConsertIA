@@ -72,7 +72,7 @@ export const QuotesSection: React.FC<QuotesSectionProps> = ({ quote, saving, sav
           <input
             type="checkbox" checked={quote.labor_enabled}
             onChange={e => onSave({ labor_enabled: e.target.checked })}
-            style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+            style={{ width: 16, height: 16, accentColor: 'var(--primary-text)' }}
           />
           {t('Adicionar cálculo de mão de obra ao orçamento')}
         </label>

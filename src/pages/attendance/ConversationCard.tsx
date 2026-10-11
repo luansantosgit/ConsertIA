@@ -45,7 +45,7 @@ export const ConversationCard = React.memo(function ConversationCard({
         height: 40,
         borderRadius: '50%',
         background: conv.contactAvatar ? 'transparent' : 'var(--primary-light)',
-        color: 'var(--primary)',
+        color: 'var(--primary-text)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -69,7 +69,7 @@ export const ConversationCard = React.memo(function ConversationCard({
             height: 10,
             borderRadius: '50%',
             background: '#10b981',
-            border: '2px solid #fff'
+            border: '2px solid var(--card-bg)'
           }} />
         )}
       </div>
@@ -77,9 +77,9 @@ export const ConversationCard = React.memo(function ConversationCard({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2, alignItems: 'center', gap: 4 }}>
           <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-            {conv.is_group && <Users size={11} color="var(--primary)" style={{ flexShrink: 0 }} />}
+            {conv.is_group && <Users size={11} color="var(--primary-text)" style={{ flexShrink: 0 }} />}
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.contactName}</span>
-            {conv.pinned && <Pin size={11} color="var(--primary)" fill="var(--primary)" style={{ flexShrink: 0 }} />}
+            {conv.pinned && <Pin size={11} color="var(--primary-text)" fill="var(--primary-text)" style={{ flexShrink: 0 }} />}
           </span>
           <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', flexShrink: 0 }}>{timeAgo(conv.last_message_at!)}</span>
         </div>

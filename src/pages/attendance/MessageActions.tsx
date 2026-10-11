@@ -82,7 +82,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         title="Opções da mensagem"
         aria-label="Opções da mensagem"
         style={{
-          background: menuOpen ? '#f1f5f9' : 'transparent',
+          background: menuOpen ? 'var(--hover-bg)' : 'transparent',
           border: 'none',
           cursor: 'pointer',
           padding: 3,
@@ -102,7 +102,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             position: 'absolute',
             ...(openUp ? { bottom: '100%', marginBottom: 4 } : { top: '100%', marginTop: 4 }),
             ...anchor,
-            background: '#fff',
+            background: 'var(--card-bg)',
             border: '1px solid var(--border)',
             borderRadius: 10,
             boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
@@ -114,7 +114,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
           <button
             onClick={() => setEmojiPicker(v => !v)}
             style={itemStyle}
-            onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
             <Smile size={14} /> Reagir
@@ -123,7 +123,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             <button
               onClick={() => { onMention(msg); closeMenu(); }}
               style={itemStyle}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'none')}
             >
               <Reply size={14} /> Mencionar
@@ -133,7 +133,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             <button
               onClick={() => { onStartEdit(); closeMenu(); }}
               style={itemStyle}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'none')}
             >
               <Pencil size={14} /> Editar
@@ -152,7 +152,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
           <button
             onClick={() => { onForward(msg); closeMenu(); }}
             style={itemStyle}
-            onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
             <Forward size={14} /> Encaminhar
@@ -165,7 +165,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                   key={emoji}
                   onClick={() => { onReact(msg.id, emoji); closeMenu(); }}
                   style={{ fontSize: '1.1rem', background: 'none', border: 'none', cursor: 'pointer', padding: 2, borderRadius: 4, transition: 'background 0.1s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                 >
                   {emoji}

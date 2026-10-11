@@ -124,7 +124,7 @@ export function QRCodeModal({
             }}
           >
             {loading ? (
-              <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
+              <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-text)' }} />
             ) : qrCode ? (
               <img src={qrCode} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 8 }} />
             ) : error ? (

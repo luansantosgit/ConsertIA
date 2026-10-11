@@ -10,7 +10,7 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({
   onFormChange,
 }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: '#f8fafc', padding: 12, borderRadius: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--hover-bg)', padding: 12, borderRadius: 10 }}>
       <div>
         <label className="form-label" style={{ fontSize: '0.75rem' }}>Nome do Cliente</label>
         <input

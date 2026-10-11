@@ -23,11 +23,11 @@ export const MessageOSCard: React.FC<MessageOSCardProps> = ({
     <div
       style={{
         marginTop: 10,
-        background: isAttendant ? 'rgba(255, 255, 255, 0.12)' : '#f8fafc',
-        border: isAttendant ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid #e2e8f0',
+        background: isAttendant ? 'rgba(255, 255, 255, 0.12)' : 'var(--hover-bg)',
+        border: isAttendant ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid var(--border)',
         borderRadius: 10,
         padding: '12px',
-        color: isAttendant ? '#fff' : '#0f172a',
+        color: isAttendant ? '#fff' : 'var(--text-primary)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -35,7 +35,7 @@ export const MessageOSCard: React.FC<MessageOSCardProps> = ({
           <FileText size={16} />
           <strong style={{ fontSize: '0.875rem' }}>{formatOSCode(osCard.osId)}</strong>
         </div>
-        <span className="badge badge-primary" style={{ background: '#fff', color: 'var(--primary)' }}>
+        <span className="badge badge-primary" style={{ background: 'var(--card-bg)', color: 'var(--primary-text)' }}>
           {osCard.status.toUpperCase()}
         </span>
       </div>
@@ -54,8 +54,8 @@ export const MessageOSCard: React.FC<MessageOSCardProps> = ({
             if (found) onViewPdfOS(found);
           }}
           style={{
-            background: '#fff',
-            color: 'var(--primary)',
+            background: 'var(--card-bg)',
+            color: 'var(--primary-text)',
             border: 'none',
             borderRadius: 6,
             padding: '6px 12px',

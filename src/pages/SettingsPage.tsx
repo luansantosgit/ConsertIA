@@ -594,7 +594,7 @@ export const SettingsPage: React.FC = () => {
                               type="checkbox"
                               checked={conn.ai_enabled === true}
                               onChange={() => handleToggleConnectionAi(conn)}
-                              style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                              style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
                             />
                             <Bot size={14} color={conn.ai_enabled ? 'var(--primary)' : 'var(--text-muted)'} />
                             <span style={{

@@ -45,7 +45,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = ({
   if (connections.length === 1) {
     return (
       <div style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface-secondary)' }}>
-        <Smartphone size={16} style={{ color: 'var(--primary)' }} />
+        <Smartphone size={16} style={{ color: 'var(--primary-text)' }} />
         <div style={{ flex: 1 }}>
           <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem' }}>{connections[0].name || 'WhatsApp'}</p>
           <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>{connections[0].phone_number || connections[0].provider}</p>
@@ -72,7 +72,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = ({
             name="chat_channel"
             checked={selectedConnId === conn.id}
             onChange={() => onSelect(conn.id)}
-            style={{ accentColor: 'var(--primary)' }}
+            style={{ accentColor: 'var(--primary-text)' }}
           />
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: selectedConnId === conn.id ? 'var(--primary)' : 'var(--text-primary)' }}>

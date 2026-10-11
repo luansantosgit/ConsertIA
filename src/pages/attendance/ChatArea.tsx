@@ -125,7 +125,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   return (
     <div
-      style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: '#fff', position: 'relative' }}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--card-bg)', position: 'relative' }}
       onDragEnter={e => {
         e.preventDefault();
         dragDepthRef.current += 1;
@@ -177,19 +177,19 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         <div style={{
           margin: '12px 20px 0',
           padding: '10px 14px',
-          background: 'linear-gradient(135deg, #ede9fe, #fdf4ff)',
-          border: '1px solid #ddd6fe',
+          background: 'var(--primary-light)',
+          border: '1px solid var(--primary-ring)',
           borderRadius: 10,
           display: 'flex',
           alignItems: 'center',
           gap: 10
         }}>
-          <Zap size={16} color="#7c3aed" />
-          <p style={{ fontSize: '0.8125rem', color: '#5b21b6', flex: 1 }}>
+          <Zap size={16} color="var(--primary-text)" />
+          <p style={{ fontSize: '0.8125rem', color: 'var(--primary-text)', flex: 1 }}>
             <strong>IA Copilot:</strong> {selected.aiSuggestion}
           </p>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
             onClick={onDismissSuggestion}
             title="Dispensar aviso"
           >
@@ -230,7 +230,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         <div style={{
           margin: '0 20px',
           padding: '8px 12px',
-          background: '#f1f5f9',
+          background: 'var(--hover-bg)',
           borderTop: '1px solid var(--border)',
           borderLeft: '3px solid var(--primary)',
           borderRadius: 6,
@@ -238,9 +238,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           alignItems: 'center',
           gap: 8,
         }}>
-          <Reply size={14} color="var(--primary)" />
+          <Reply size={14} color="var(--primary-text)" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: '0.6875rem', fontWeight: 700, margin: 0, color: 'var(--primary)' }}>
+            <p style={{ fontSize: '0.6875rem', fontWeight: 700, margin: 0, color: 'var(--primary-text)' }}>
               {quotedMessage.from === 'customer' ? 'Cliente' : quotedMessage.from === 'bot' ? 'IA DeeperIA' : 'Você'}
             </p>
             <p style={{ fontSize: '0.6875rem', margin: 0, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -319,8 +319,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             pointerEvents: 'none',
           }}
         >
-          <Paperclip size={32} color="var(--primary)" />
-          <p style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+          <Paperclip size={32} color="var(--primary-text)" />
+          <p style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--primary-text)', margin: 0 }}>
             Solte para anexar
           </p>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>

@@ -99,7 +99,7 @@ export const DeviceCoverageSection: React.FC = () => {
               <input
                 type="checkbox" checked={enabled}
                 onChange={() => toggleDevice(key)}
-                style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+                style={{ width: 16, height: 16, accentColor: 'var(--primary-text)' }}
               />
               <Icon size={16} color={enabled ? 'var(--primary)' : 'var(--text-muted)'} />
               <strong style={{ fontSize: '0.875rem' }}>{t(label)}</strong>

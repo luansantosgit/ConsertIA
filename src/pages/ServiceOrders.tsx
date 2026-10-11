@@ -23,7 +23,7 @@ const STATUS_META: Record<ServiceOrderStatus, { label: string; badge: string; co
   pending:            { label: 'Pendente',            badge: 'badge-gray',    color: '#94a3b8' },
   diagnosis:          { label: 'Diagnóstico',          badge: 'badge-info',    color: '#3b82f6' },
   awaiting_approval:  { label: 'Ag. Aprovação',        badge: 'badge-warning', color: '#f59e0b' },
-  approved:           { label: 'Aprovado',             badge: 'badge-primary', color: '#4f46e5' },
+  approved:           { label: 'Aprovado',             badge: 'badge-primary', color: 'var(--primary-text)' },
   awaiting_part:      { label: 'Ag. Peça',             badge: 'badge-danger',  color: '#ef4444' },
   in_progress:        { label: 'Em Andamento',         badge: 'badge-info',    color: '#3b82f6' },
   completed:          { label: 'Concluído',            badge: 'badge-success', color: '#10b981' },
@@ -257,7 +257,7 @@ export const ServiceOrders: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* View toggle */}
-          <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 3 }}>
+          <div style={{ display: 'flex', background: 'var(--hover-bg)', borderRadius: 8, padding: 3 }}>
             {(['list', 'kanban'] as const).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500,
@@ -298,14 +298,14 @@ export const ServiceOrders: React.FC = () => {
         return (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
             {[
-              { label: t('Total abertas'), value: os.filter(o => !['completed','cancelled'].includes(o.status)).length, color: '#4f46e5', bg: '#eef2ff' },
+              { label: t('Total abertas'), value: os.filter(o => !['completed','cancelled'].includes(o.status)).length, color: 'var(--primary-text)', bg: 'var(--primary-light)' },
               { label: t('Em andamento'), value: os.filter(o => o.status === 'in_progress').length, color: '#3b82f6', bg: '#eff6ff' },
               { label: t('Ag. aprovação'), value: os.filter(o => o.status === 'awaiting_approval').length, color: '#f59e0b', bg: '#fffbeb' },
               { label: t('Prontas'), value: os.filter(o => o.status === 'ready').length, color: '#10b981', bg: '#ecfdf5' },
               { label: t('Valor fechado'), value: formatCurrency(wonValue), color: '#10b981', bg: '#ecfdf5' },
               { label: t('Valor perdido'), value: formatCurrency(lostValue), color: '#ef4444', bg: '#fef2f2' },
             ].map(s => (
-              <div key={s.label} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', boxShadow: 'var(--card-shadow)' }}>
+              <div key={s.label} style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', boxShadow: 'var(--card-shadow)' }}>
                 <p style={{ fontSize: s.value.toString().startsWith('R$') ? '1.375rem' : '1.75rem', fontWeight: 800, color: s.color }}>{s.value}</p>
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</p>
               </div>
@@ -337,10 +337,10 @@ export const ServiceOrders: React.FC = () => {
                 const pm = PRIORITY_META[o.priority];
                 return (
                   <tr key={o.id}>
-                    <td style={{ paddingLeft: 20, fontWeight: 700, color: 'var(--primary)', fontSize: '0.8125rem' }}>{formatOSCode(o.id)}</td>
+                    <td style={{ paddingLeft: 20, fontWeight: 700, color: 'var(--primary-text)', fontSize: '0.8125rem' }}>{formatOSCode(o.id)}</td>
                     <td style={{ fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 26, height: 26, borderRadius: '50%', overflow: 'hidden', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.6875rem', flexShrink: 0 }}>
+                        <div style={{ width: 26, height: 26, borderRadius: '50%', overflow: 'hidden', background: 'var(--primary-light)', color: 'var(--primary-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.6875rem', flexShrink: 0 }}>
                           {o.contactAvatar
                             ? <img src={o.contactAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             : (o.customerName || '?').charAt(0).toUpperCase()}
@@ -368,7 +368,7 @@ export const ServiceOrders: React.FC = () => {
                          {(o.checklist_photos?.length ?? 0) > 0 && (
                            <button
                              className="btn btn-ghost btn-sm"
-                             style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                             style={{ padding: '4px 6px', color: 'var(--primary-text)' }}
                              onClick={() => setShowPhotosOS(o)}
                              title={`${o.checklist_photos.length} foto(s) do checklist`}
                            >
@@ -377,7 +377,7 @@ export const ServiceOrders: React.FC = () => {
                          )}
                          <button
                            className="btn btn-ghost btn-sm"
-                           style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                           style={{ padding: '4px 6px', color: 'var(--primary-text)' }}
                            onClick={() => setEditingOs(o)}
                            title="Alterar OS"
                          >
@@ -385,7 +385,7 @@ export const ServiceOrders: React.FC = () => {
                          </button>
                          <button
                            className="btn btn-ghost btn-sm"
-                           style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                           style={{ padding: '4px 6px', color: 'var(--primary-text)' }}
                            onClick={() => handleOpenChat(o)}
                            title="Conversar no chat com o cliente"
                          >
@@ -393,7 +393,7 @@ export const ServiceOrders: React.FC = () => {
                          </button>
                          <button
                            className="btn btn-ghost btn-sm"
-                           style={{ padding: '4px 6px', color: 'var(--primary)' }}
+                           style={{ padding: '4px 6px', color: 'var(--primary-text)' }}
                            onClick={() => setViewingPdfOS(o)}
                            title="Visualizar e Imprimir PDF"
                          >
@@ -481,7 +481,7 @@ export const ServiceOrders: React.FC = () => {
                     >
                       <Settings size={13} />
                     </button>
-                    <span style={{ background: '#f1f5f9', borderRadius: 99, padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>{colOS.length}</span>
+                    <span style={{ background: 'var(--hover-bg)', borderRadius: 99, padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>{colOS.length}</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -491,7 +491,7 @@ export const ServiceOrders: React.FC = () => {
                       draggable
                       onDragStart={e => { e.dataTransfer.setData('text/os-id', o.id); e.dataTransfer.effectAllowed = 'move'; }}
                       style={{
-                        background: '#fff',
+                        background: 'var(--card-bg)',
                         border: '1px solid var(--border)',
                         borderRadius: 10,
                         padding: '14px',
@@ -504,14 +504,14 @@ export const ServiceOrders: React.FC = () => {
                       onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--card-shadow)'; }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>{formatOSCode(o.id)}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-text)' }}>{formatOSCode(o.id)}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', fontWeight: 600, color: PRIORITY_META[o.priority].color }}>
                           <div style={{ width: 5, height: 5, borderRadius: '50%', background: PRIORITY_META[o.priority].color }} />
                           {t(PRIORITY_META[o.priority].label)}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem', flexShrink: 0 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: 'var(--primary-light)', color: 'var(--primary-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem', flexShrink: 0 }}>
                           {o.contactAvatar
                             ? <img src={o.contactAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             : (o.customerName || '?').charAt(0).toUpperCase()}
@@ -526,7 +526,7 @@ export const ServiceOrders: React.FC = () => {
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button
                             className="btn btn-ghost btn-sm"
-                            style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary)' }}
+                            style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary-text)' }}
                             onClick={() => setEditingOs(o)}
                             title="Alterar OS"
                           >
@@ -534,7 +534,7 @@ export const ServiceOrders: React.FC = () => {
                           </button>
                           <button
                             className="btn btn-ghost btn-sm"
-                            style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary)' }}
+                            style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary-text)' }}
                             onClick={() => handleOpenChat(o)}
                             title="Conversar no chat com o cliente"
                           >
@@ -542,7 +542,7 @@ export const ServiceOrders: React.FC = () => {
                           </button>
                           <button
                             className="btn btn-ghost btn-sm"
-                            style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary)' }}
+                            style={{ padding: '2px 6px', fontSize: '0.75rem', color: 'var(--primary-text)' }}
                             onClick={() => setViewingPdfOS(o)}
                           >
                             <Printer size={12} /> PDF

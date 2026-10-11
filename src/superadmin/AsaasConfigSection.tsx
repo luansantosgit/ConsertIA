@@ -192,7 +192,7 @@ export const AsaasConfigSection: React.FC = () => {
                 type="checkbox"
                 checked={config.enabled_methods.includes(m.key)}
                 onChange={() => toggleMethod(m.key, 'enabled_methods')}
-                style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
               />
               <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{m.label}</span>
             </label>
@@ -222,7 +222,7 @@ export const AsaasConfigSection: React.FC = () => {
                   type="checkbox"
                   checked={active}
                   onChange={() => toggleMethod(m.key, 'onboarding_enabled_methods')}
-                  style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                  style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
                 />
                 <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{m.label}</span>
               </label>

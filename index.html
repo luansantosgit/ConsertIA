@@ -9,6 +9,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'>D</text></svg>" />
+    <script>
+      // Anti-flash: aplica o modo de cor salvo (ou preferência do sistema)
+      // antes do primeiro paint — evita tela branca piscando no dark mode.
+      (function () {
+        try {
+          var stored = localStorage.getItem('deeperia-mode');
+          var mode = 'light';
+          if (stored) {
+            var parsed = JSON.parse(stored);
+            mode = (parsed && parsed.state && parsed.state.mode) || 'light';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            mode = 'dark';
+          }
+          document.documentElement.dataset.theme = mode;
+        } catch (e) { /* modo padrão light */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

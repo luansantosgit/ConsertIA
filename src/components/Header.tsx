@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen, AlertTriangle, Bot } from 'lucide-react';
+import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen, AlertTriangle, Bot, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
+import { useModeStore } from '@/stores/mode.store';
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSubscriptionAlert } from '@/stores/subscription.store';
@@ -37,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
   const { language, changeLanguage, t } = useTranslation();
   const { hasOverdue } = useSubscriptionAlert();
   const { tokensPaused } = useAiQuotaAlert();
+  const { mode, toggleMode } = useModeStore();
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
@@ -132,6 +134,17 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
           </button>
         )}
 
+        {/* Dark mode toggle */}
+        <button
+          className="header-icon-btn"
+          id="dark-mode-toggle-btn"
+          onClick={toggleMode}
+          aria-label={mode === 'dark' ? t('Ativar modo claro') : t('Ativar modo escuro')}
+          title={mode === 'dark' ? t('Ativar modo claro') : t('Ativar modo escuro')}
+        >
+          {mode === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+        </button>
+
         {/* Language switcher */}
         <div ref={langRef} style={{ position: 'relative' }}>
           <button
@@ -159,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
           {langOpen && (
             <div style={{
               position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-              background: '#fff', border: '1px solid var(--border)',
+              background: 'var(--card-bg)', border: '1px solid var(--border)',
               borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
               minWidth: 140, overflow: 'hidden', zIndex: 200,
               animation: 'slideUp 0.15s ease',
@@ -178,7 +191,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
                     color: language === lang.code ? 'var(--primary)' : 'var(--text-primary)',
                     textAlign: 'left', transition: 'background 0.1s',
                   }}
-                  onMouseEnter={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                  onMouseEnter={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = 'var(--hover-bg)'; }}
                   onMouseLeave={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                 >
                   <span style={{ fontSize: '1.125rem' }}>{lang.flag}</span>

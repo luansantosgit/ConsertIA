@@ -133,7 +133,7 @@ export const OSModal: React.FC<OSModalProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: 8,
-                background: 'var(--primary-light)', color: 'var(--primary)',
+                background: 'var(--primary-light)', color: 'var(--primary-text)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
                 <FileText size={18} />
@@ -269,7 +269,7 @@ export const OSModal: React.FC<OSModalProps> = ({
             <button
               type="button"
               className="btn btn-ghost"
-              style={{ color: 'var(--primary)', gap: 6, paddingLeft: 0 }}
+              style={{ color: 'var(--primary-text)', gap: 6, paddingLeft: 0 }}
               onClick={handleGoToAllOS}
             >
               Ver todas as OS <ArrowRight size={14} />

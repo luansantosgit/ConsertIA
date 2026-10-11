@@ -78,7 +78,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     <div style={{
       padding: '12px 20px',
       borderTop: '1px solid var(--border)',
-      background: '#fff',
+      background: 'var(--card-bg)',
       display: 'flex',
       flexDirection: 'column',
       gap: 8,
@@ -94,7 +94,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 padding: '4px 10px',
                 borderRadius: 99,
                 border: '1px solid var(--border)',
-                background: '#f8fafc',
+                background: 'var(--hover-bg)',
                 cursor: 'pointer',
                 color: 'var(--text-secondary)',
                 transition: 'all 0.15s',

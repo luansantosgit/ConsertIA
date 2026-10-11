@@ -131,14 +131,14 @@ export const SuperAdminWizard: React.FC = () => {
         >
           {uploading ? (
             <>
-              <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
-              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>
+              <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-text)' }} />
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-text)' }}>
                 Enviando vídeo...
               </p>
             </>
           ) : (
             <>
-              <UploadCloud size={32} color="var(--primary)" />
+              <UploadCloud size={32} color="var(--primary-text)" />
               <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Arraste o vídeo aqui
               </p>

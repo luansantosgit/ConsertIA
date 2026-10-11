@@ -77,7 +77,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       display: 'flex',
       flexDirection: 'column',
       gap: 12,
-      background: '#f8fafc'
+      background: 'var(--content-bg)'
     }}>
       {loadingMessages && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

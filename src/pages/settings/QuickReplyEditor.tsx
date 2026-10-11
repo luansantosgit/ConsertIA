@@ -160,8 +160,8 @@ export const QuickReplyEditor: React.FC<{
                       >
                         {uploadingIdx === idx ? (
                           <>
-                            <Upload size={20} color="var(--primary)" style={{ animation: 'spin 1s linear infinite' }} />
-                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)' }}>
+                            <Upload size={20} color="var(--primary-text)" style={{ animation: 'spin 1s linear infinite' }} />
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-text)' }}>
                               Enviando mídia...
                             </span>
                           </>
@@ -175,7 +175,7 @@ export const QuickReplyEditor: React.FC<{
                           </>
                         ) : (
                           <>
-                            <Upload size={20} color="var(--primary)" />
+                            <Upload size={20} color="var(--primary-text)" />
                             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                               Arraste a mídia aqui
                             </span>
@@ -248,7 +248,7 @@ const MediaPreview: React.FC<{ url: string }> = ({ url }) => {
   }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)' }}>
-      <FileText size={18} color="var(--primary)" />
+      <FileText size={18} color="var(--primary-text)" />
       <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{fileName}</span>
     </div>
   );

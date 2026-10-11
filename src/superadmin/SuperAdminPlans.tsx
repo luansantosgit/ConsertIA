@@ -315,7 +315,7 @@ export const SuperAdminPlans: React.FC = () => {
                 type="checkbox"
                 checked={plan.showOnSite}
                 onChange={(e) => toggleShowOnSite(plan, e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+                style={{ width: 16, height: 16, accentColor: 'var(--primary-text)' }}
               />
               <Globe size={14} />
               {plan.showOnSite ? 'Exibindo no site com preço' : 'Mostrar plano no site'}

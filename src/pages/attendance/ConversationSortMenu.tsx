@@ -89,11 +89,11 @@ export const ConversationSortMenu: React.FC<ConversationSortMenuProps> = ({ sort
                 color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)',
                 textAlign: 'left', whiteSpace: 'nowrap',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'none')}
             >
               <span style={{ width: 14, display: 'flex', flexShrink: 0 }}>
-                {sortBy === o.key && <Check size={13} color="var(--primary)" />}
+                {sortBy === o.key && <Check size={13} color="var(--primary-text)" />}
               </span>
               {o.label}
             </button>

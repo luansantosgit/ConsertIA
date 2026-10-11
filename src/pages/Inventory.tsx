@@ -182,12 +182,12 @@ export const Inventory: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
         {[
-          { label: t('Novo Item'), value: items.length, color: '#4f46e5', bg: '#eef2ff' },
+          { label: t('Novo Item'), value: items.length, color: 'var(--primary-text)', bg: 'var(--primary-light)' },
           { label: t('Estoque baixo'), value: lowStock.length, color: '#f59e0b', bg: '#fffbeb' },
           { label: t('Sem estoque'), value: outOfStock.length, color: '#ef4444', bg: '#fef2f2' },
           { label: 'R$', value: 'R$' + items.reduce((a, i) => a + i.stock_quantity * (i.cost || 0), 0).toLocaleString('pt-BR'), color: '#10b981', bg: '#ecfdf5' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', boxShadow: 'var(--card-shadow)' }}>
+          <div key={s.label} style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', boxShadow: 'var(--card-shadow)' }}>
             <div style={{ width: 36, height: 36, borderRadius: 8, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
               <Package size={18} color={s.color} />
             </div>
@@ -256,7 +256,7 @@ export const Inventory: React.FC = () => {
                         fontSize: '1.125rem', fontWeight: 800,
                         color: item.stock_quantity === 0 ? 'var(--danger)' : item.stock_quantity <= (item.min_stock_quantity ?? 0) ? 'var(--warning)' : 'var(--text-primary)',
                       }}>{item.stock_quantity}</span>
-                      <div style={{ flex: 1, height: 4, background: '#f1f5f9', borderRadius: 99, minWidth: 40, maxWidth: 60, overflow: 'hidden' }}>
+                      <div style={{ flex: 1, height: 4, background: 'var(--hover-bg)', borderRadius: 99, minWidth: 40, maxWidth: 60, overflow: 'hidden' }}>
                         <div style={{ height: '100%', borderRadius: 99, background: st.glow, width: Math.min(100, (item.stock_quantity / Math.max(item.min_stock_quantity! * 3, 10)) * 100) + '%', transition: 'width 0.3s' }} />
                       </div>
                     </div>
@@ -270,7 +270,7 @@ export const Inventory: React.FC = () => {
                       <button className="btn btn-sm btn-icon" style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: 8 }} onClick={() => setMovModal({ item, type: 'out' })} title="Saída de estoque">
                         <ArrowUp size={14} />
                       </button>
-                      <button className="btn btn-sm btn-icon btn-ghost" style={{ color: 'var(--primary)', borderRadius: 8 }} onClick={() => { setEditingItem(item); setShowAddModal(true); }} title="Editar produto">
+                      <button className="btn btn-sm btn-icon btn-ghost" style={{ color: 'var(--primary-text)', borderRadius: 8 }} onClick={() => { setEditingItem(item); setShowAddModal(true); }} title="Editar produto">
                         <Pencil size={14} />
                       </button>
                       <button className="btn btn-sm btn-icon btn-ghost" style={{ color: 'var(--text-muted)', borderRadius: 8 }} onClick={() => setConfirmDelete({ isOpen: true, item, bulk: false })} title="Excluir produto">
@@ -311,7 +311,7 @@ export const Inventory: React.FC = () => {
               <button className="btn btn-ghost btn-icon" onClick={() => setMovModal(null)}><X size={16} /></button>
             </div>
             <div className="modal-body">
-              <div style={{ padding: '12px', background: '#f8fafc', borderRadius: 8, marginBottom: 4 }}>
+              <div style={{ padding: '12px', background: 'var(--hover-bg)', borderRadius: 8, marginBottom: 4 }}>
                 <p style={{ fontWeight: 700, fontSize: '0.875rem' }}>{movModal.item.name}</p>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Estoque atual: <strong>{movModal.item.stock_quantity}</strong></p>
               </div>

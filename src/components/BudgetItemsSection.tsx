@@ -96,8 +96,8 @@ export const BudgetItemsSection: React.FC<{
             background: 'var(--primary-light)',
             fontWeight: 700,
           }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--primary)' }}>TOTAL</span>
-            <span style={{ fontSize: '1rem', color: 'var(--primary)' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--primary-text)' }}>TOTAL</span>
+            <span style={{ fontSize: '1rem', color: 'var(--primary-text)' }}>
               {formatCurrency(total)}
             </span>
           </div>

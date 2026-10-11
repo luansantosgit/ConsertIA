@@ -150,12 +150,12 @@ export const Reports: React.FC = () => {
   const MAX_REV = Math.max(...revenueByMonth, 1);
 
   const kpis = [
-    { label: 'Faturamento Mês', value: formatCurrency(totalIncome), change: '+18%', positive: true, icon: DollarSign, color: '#4f46e5', bg: '#eef2ff', chartData: revenueByMonth.slice(-7) },
+    { label: 'Faturamento Mês', value: formatCurrency(totalIncome), change: '+18%', positive: true, icon: DollarSign, color: 'var(--primary-text)', bg: 'var(--primary-light)', chartData: revenueByMonth.slice(-7) },
     { label: 'OS Concluídas', value: String(completedOrders.length), change: '+11%', positive: true, icon: FileText, color: '#10b981', bg: '#ecfdf5', chartData: [completedOrders.length * 0.7, completedOrders.length * 0.8, completedOrders.length * 0.85, completedOrders.length * 0.9, completedOrders.length * 0.95, completedOrders.length * 0.98, completedOrders.length] },
-    { label: 'Ticket Médio', value: formatCurrency(ticketMedio), change: '+5%', positive: true, icon: Target, color: '#7c3aed', bg: '#ede9fe', chartData: [ticketMedio * 0.8, ticketMedio * 0.85, ticketMedio * 0.9, ticketMedio * 0.95, ticketMedio, ticketMedio, ticketMedio] },
+    { label: 'Ticket Médio', value: formatCurrency(ticketMedio), change: '+5%', positive: true, icon: Target, color: 'var(--primary-text)', bg: 'var(--primary-light)', chartData: [ticketMedio * 0.8, ticketMedio * 0.85, ticketMedio * 0.9, ticketMedio * 0.95, ticketMedio, ticketMedio, ticketMedio] },
     { label: 'Tempo Médio Reparo', value: avgRepairTime, change: '-0.3d', positive: true, icon: Clock, color: '#f59e0b', bg: '#fffbeb', chartData: [3, 2.8, 2.5, 2.9, 2.6, 2.4, 2.4] },
     { label: 'Taxa Conversão', value: `${conversionRate}%`, change: '+4%', positive: true, icon: TrendingUp, color: '#ec4899', bg: '#fdf2f8', chartData: [55, 60, 58, 62, 65, 70, conversionRate] },
-    { label: 'Orçamentos Recuperados', value: formatCurrency(transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((s, t) => s + (t.amount || 0), 0) * 0.25), change: 'IA recuperou 8', positive: true, icon: Zap, color: '#8b5cf6', bg: '#ede9fe', chartData: [0, 500, 1200, 2000, 2600, 3200, 3200] },
+    { label: 'Orçamentos Recuperados', value: formatCurrency(transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((s, t) => s + (t.amount || 0), 0) * 0.25), change: 'IA recuperou 8', positive: true, icon: Zap, color: '#8b5cf6', bg: 'var(--primary-light)', chartData: [0, 500, 1200, 2000, 2600, 3200, 3200] },
   ];
 
   const topTechnicians = analyzeTechnicians(serviceOrders);
@@ -186,7 +186,7 @@ export const Reports: React.FC = () => {
           <p className="page-subtitle">{t('Inteligência do seu negócio em tempo real')}</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 3 }}>
+          <div style={{ display: 'flex', background: 'var(--hover-bg)', borderRadius: 8, padding: 3 }}>
             {(['7d', '30d', '3m', '12m'] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)} style={{
                 padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500,
@@ -202,13 +202,13 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg, #ede9fe, #faf5ff)', border: '1px solid #ddd6fe', borderRadius: 12, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+      <div style={{ padding: '16px 20px', background: 'var(--primary-light)', border: '1px solid var(--primary-ring)', borderRadius: 12, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Zap size={20} color="#fff" />
         </div>
         <div>
-          <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#3730a3', marginBottom: 4 }}>Insight da IA — Agosto 2026</p>
-          <p style={{ fontSize: '0.875rem', color: '#4c1d95', lineHeight: 1.6 }}>
+          <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--primary-text)', marginBottom: 4 }}>Insight da IA — Agosto 2026</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--primary-text)', lineHeight: 1.6 }}>
             Você tem <strong>{formatCurrency(transactions.filter(t => t.type === 'income' && t.status === 'pending').reduce((s, t) => s + (t.amount || 0), 0))} em orçamentos parados</strong> este mês — a IA de recuperação já recuperou 8 deles.
             Seu técnico {topTechnicians[0]?.name || '—'} tem o menor tempo médio de reparo ({topTechnicians[0]?.avgTime || '—'}). Considere alocar mais OS de alta prioridade para ele.
             O defeito mais recorrente é <strong>{topDefects[0]?.defect || '—'} ({topDefects[0]?.pct || 0}%)</strong> — estoque em nível crítico (5 unidades).
@@ -218,7 +218,7 @@ export const Reports: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
         {kpis.map(k => (
-          <div key={k.label} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', boxShadow: 'var(--card-shadow)', transition: 'transform 0.15s, box-shadow 0.15s' }}
+          <div key={k.label} style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', boxShadow: 'var(--card-shadow)', transition: 'transform 0.15s, box-shadow 0.15s' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--card-shadow-hover)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--card-shadow)'; }}
           >

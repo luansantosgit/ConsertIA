@@ -59,7 +59,7 @@ export const LeadRow: React.FC<LeadRowProps> = ({ lead, onStatusChange, onNotesS
             {lead.plan_name && <span className="badge badge-primary" style={{ fontSize: '0.6875rem' }}>Plano: {lead.plan_name}</span>}
             {lead.quotes_per_day != null && <span>~{lead.quotes_per_day} orç./dia</span>}
             {lead.ticket != null && <span>ticket R$ {lead.ticket.toLocaleString('pt-BR')}</span>}
-            <a href={`https://wa.me/${lead.whatsapp}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+            <a href={`https://wa.me/${lead.whatsapp}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary-text)', fontWeight: 600 }}>
               {lead.whatsapp}
             </a>
           </div>

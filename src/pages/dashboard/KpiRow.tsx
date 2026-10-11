@@ -74,8 +74,8 @@ export const KpiRow: React.FC<{ stats: DashboardStats }> = ({ stats }) => {
         : null,
       lowerIsBetter: true,
       footer: t('Meta: até 4h'),
-      iconBg: '#ede9fe',
-      iconColor: '#7c3aed',
+      iconBg: 'var(--primary-light)',
+      iconColor: 'var(--primary-text)',
     },
     {
       icon: Target,

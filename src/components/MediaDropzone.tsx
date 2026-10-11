@@ -75,7 +75,7 @@ export const MediaDropzone: React.FC<{
           )}
           {!isImage && !isVideo && !isAudio && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', padding: 12 }}>
-              <FileText size={18} color="var(--primary)" />
+              <FileText size={18} color="var(--primary-text)" />
               <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{fileName}</span>
             </div>
           )}
@@ -119,7 +119,7 @@ export const MediaDropzone: React.FC<{
             transition: 'background 0.15s, border-color 0.15s',
           }}
         >
-          <UploadCloud size={compact ? 18 : 22} color="var(--primary)" style={uploading ? { animation: 'spin 1s linear infinite' } : undefined} />
+          <UploadCloud size={compact ? 18 : 22} color="var(--primary-text)" style={uploading ? { animation: 'spin 1s linear infinite' } : undefined} />
           <span style={{ fontSize: compact ? '0.6875rem' : '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             {uploading ? 'Enviando...' : 'Arraste a mídia aqui'}
           </span>

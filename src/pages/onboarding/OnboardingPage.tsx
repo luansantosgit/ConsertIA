@@ -213,7 +213,7 @@ export const OnboardingPage: React.FC = () => {
 };
 
 const OnboardingShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div style={{
+  <div className="theme-light" style={{
     minHeight: '100vh',
     background: 'linear-gradient(160deg, #eef2ff 0%, #f8fafc 45%, #eef2ff 100%)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',

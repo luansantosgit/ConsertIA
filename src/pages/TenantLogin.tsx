@@ -68,7 +68,7 @@ export const TenantLogin: React.FC = () => {
   };
 
   return (
-    <div className="login-page">
+    <div className="login-page theme-light">
       {/* Left - Form */}
       <div className="login-left">
         <div className="login-card">

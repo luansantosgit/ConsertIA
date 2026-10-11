@@ -172,7 +172,7 @@ export const UserFormModal: React.FC<{
                       type="checkbox"
                       checked={perms.has(m.key)}
                       onChange={() => togglePerm(m.key)}
-                      style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                      style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
                     />
                     <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>{t(m.label)}</span>
                   </label>

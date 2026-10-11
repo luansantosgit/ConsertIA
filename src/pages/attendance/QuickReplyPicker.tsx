@@ -62,7 +62,7 @@ export const QuickReplyPicker: React.FC<{
 
   return (
     <div style={{
-      margin: '0 20px', padding: 6, background: '#fff',
+      margin: '0 20px', padding: 6, background: 'var(--card-bg)',
       border: '1px solid var(--border)', borderRadius: 12,
       boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
       maxHeight: 240, overflowY: 'auto',
@@ -103,7 +103,7 @@ export const QuickReplyPicker: React.FC<{
           >
             <div style={{
               width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: 'var(--primary-light)', color: 'var(--primary)',
+              background: 'var(--primary-light)', color: 'var(--primary-text)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {hasMedia ? <ImageIcon size={15} /> : <Zap size={15} />}

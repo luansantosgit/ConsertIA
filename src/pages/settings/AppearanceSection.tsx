@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Check, Upload, Trash2, Lock } from 'lucide-react';
+import { Check, Upload, Trash2, Lock, Sun, Moon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
+import { useModeStore } from '@/stores/mode.store';
 import { useTranslation } from '@/hooks/useTranslation';
 import { SkeletonCard } from '@/components/Skeleton';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -26,6 +27,7 @@ export const AppearanceSection: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { globalTheme, setTenantTheme, applyTheme } = useThemeStore();
+  const { mode, setMode } = useModeStore();
   const tenantId = user?.tenantId ?? '';
 
   const [allowed, setAllowed] = useState<boolean | null>(null);
@@ -128,22 +130,66 @@ export const AppearanceSection: React.FC = () => {
   if (error) return <ErrorMessage message={error} onRetry={() => setError(null)} />;
   if (loading || allowed === null) return <SkeletonCard />;
 
+  // Modo de exibição (claro/escuro) — preferência do usuário, sempre disponível
+  const modeCard = (
+    <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 20 }}>
+      <div>
+        <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{t('Modo de exibição')}</h3>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          {t('Escolha entre o tema claro e o escuro. Sua escolha fica salva neste dispositivo.')}
+        </p>
+      </div>
+      <div style={{ display: 'flex', gap: 12 }}>
+        {([
+          { value: 'light' as const, icon: <Sun size={18} />, label: t('Claro') },
+          { value: 'dark' as const, icon: <Moon size={18} />, label: t('Escuro') },
+        ]).map(opt => {
+          const active = mode === opt.value;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setMode(opt.value)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                border: `1.5px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
+                background: active ? 'var(--primary-light)' : 'transparent',
+                color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: 600, fontSize: '0.875rem',
+                transition: 'border 0.15s, background 0.15s, color 0.15s',
+              }}
+            >
+              {opt.icon}
+              {opt.label}
+              {active && <Check size={14} />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   if (!allowed) {
     return (
-      <div className="card card-p">
-        <div className="empty-state">
-          <div className="empty-state-icon"><Lock size={24} /></div>
-          <p className="empty-state-title">{t('Personalização de marca')}</p>
-          <p className="empty-state-desc">
-            {t('Esta funcionalidade está disponível apenas em planos superiores. Fale com o suporte para habilitar a logo e as cores próprias da sua empresa.')}
-          </p>
+      <>
+        {modeCard}
+        <div className="card card-p">
+          <div className="empty-state">
+            <div className="empty-state-icon"><Lock size={24} /></div>
+            <p className="empty-state-title">{t('Personalização de marca')}</p>
+            <p className="empty-state-desc">
+              {t('Esta funcionalidade está disponível apenas em planos superiores. Fale com o suporte para habilitar a logo e as cores próprias da sua empresa.')}
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+    <>
+      {modeCard}
+      <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
         <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{t('Aparência')}</h3>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -194,7 +240,7 @@ export const AppearanceSection: React.FC = () => {
             {preview.logoUrl ? (
               <img src={preview.logoUrl} alt={preview.logoText} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--primary)' }}>{(preview.logoText || 'C').charAt(0).toUpperCase()}</span>
+              <span style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--primary-text)' }}>{(preview.logoText || 'C').charAt(0).toUpperCase()}</span>
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -271,5 +317,6 @@ export const AppearanceSection: React.FC = () => {
         </button>
       </div>
     </div>
+    </>
   );
 };

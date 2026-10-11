@@ -92,7 +92,7 @@ export const ChatReminderModal: React.FC<{
         <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
           <div className="modal-header">
             <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Bell size={16} color="var(--primary)" />
+              <Bell size={16} color="var(--primary-text)" />
               {editing ? 'Editar lembrete' : 'Novo lembrete'}
             </h3>
             <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Fechar"><X size={16} /></button>

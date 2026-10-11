@@ -187,7 +187,7 @@ export const Financial: React.FC = () => {
         {[
           { label: t('Receita Total'), value: formatCurrency(totalIncome), change: '+14% mes', positive: true, icon: TrendingUp, color: '#10b981', bg: '#ecfdf5' },
           { label: t('Despesas Total'), value: formatCurrency(totalExpense), change: '+5% mes', positive: false, icon: TrendingDown, color: '#ef4444', bg: '#fef2f2' },
-          { label: t('Saldo do Periodo'), value: formatCurrency(balance), change: balance >= 0 ? t('Positivo') : t('Negativo'), positive: balance >= 0, icon: DollarSign, color: '#4f46e5', bg: '#eef2ff' },
+          { label: t('Saldo do Periodo'), value: formatCurrency(balance), change: balance >= 0 ? t('Positivo') : t('Negativo'), positive: balance >= 0, icon: DollarSign, color: 'var(--primary-text)', bg: 'var(--primary-light)' },
           { label: t('A Receber'), value: formatCurrency(pending), change: t('Pendente'), positive: false, icon: ArrowUpRight, color: '#f59e0b', bg: '#fffbeb' },
         ].map(s => (
           <div key={s.label} className="stat-card">

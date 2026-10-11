@@ -56,7 +56,7 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10,
-              cursor: 'pointer', background: enabled ? '#ecfdf5' : '#f8fafc',
+              cursor: 'pointer', background: enabled ? 'var(--success-bg)' : 'var(--hover-bg)',
               transition: 'background 0.15s',
             }}
           >
@@ -130,14 +130,14 @@ export const OSAutoMessageModal: React.FC<OSAutoMessageModalProps> = ({
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
                     border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer',
-                    background: sendPdf ? '#ecfdf5' : '#f8fafc', transition: 'background 0.15s',
+                    background: sendPdf ? 'var(--success-bg)' : 'var(--hover-bg)', transition: 'background 0.15s',
                   }}
                 >
                   <input
                     type="checkbox"
                     checked={sendPdf}
                     onChange={e => setSendPdf(e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+                    style={{ width: 16, height: 16, accentColor: 'var(--primary-text)' }}
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
                     <FileText size={16} color={sendPdf ? '#10b981' : 'var(--text-muted)'} />

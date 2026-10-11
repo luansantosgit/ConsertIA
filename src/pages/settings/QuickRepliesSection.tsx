@@ -78,7 +78,7 @@ export const QuickRepliesSection: React.FC = () => {
             <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{
                 width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                background: 'var(--primary-light)', color: 'var(--primary)',
+                background: 'var(--primary-light)', color: 'var(--primary-text)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <FileText size={16} />

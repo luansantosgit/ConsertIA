@@ -179,7 +179,7 @@ export const SuperAdminAi: React.FC = () => {
       <div className="card card-p" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
           <h3 style={{ fontWeight: 700, fontSize: '1rem', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Bot size={18} color="var(--primary)" /> {t('Provedor de IA (OpenRouter)')}
+            <Bot size={18} color="var(--primary-text)" /> {t('Provedor de IA (OpenRouter)')}
           </h3>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
             {t('Token central da plataforma e distribuição de uso entre as empresas.')}
@@ -249,7 +249,7 @@ export const SuperAdminAi: React.FC = () => {
                   <input
                     type="checkbox" checked={globalAllowed.includes(m.id)}
                     onChange={() => toggleGlobalModel(m.id)}
-                    style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                    style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
                   />
                   {m.label}
                 </label>
@@ -311,7 +311,7 @@ export const SuperAdminAi: React.FC = () => {
                   <input
                     type="checkbox" checked={usesToken}
                     onChange={e => toggleTenantToken(tenant.id, e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+                    style={{ width: 16, height: 16, accentColor: 'var(--primary-text)' }}
                   />
                   {t('Token da plataforma')}
                 </label>
@@ -347,7 +347,7 @@ export const SuperAdminAi: React.FC = () => {
                             <input
                               type="checkbox" checked={draftAllowed.includes(m.id)}
                               onChange={() => toggleModel(m.id)}
-                              style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                              style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
                             />
                             {m.label}
                           </label>

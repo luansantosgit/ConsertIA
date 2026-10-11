@@ -133,7 +133,7 @@ export const PdfLogoUpload: React.FC = () => {
               transition: 'background 0.15s, border-color 0.15s',
             }}
           >
-            <UploadCloud size={16} color="var(--primary)" />
+            <UploadCloud size={16} color="var(--primary-text)" />
             <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {saving ? 'Salvando...' : 'Arraste a logo'}
             </span>

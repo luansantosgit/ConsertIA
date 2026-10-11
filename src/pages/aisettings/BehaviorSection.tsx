@@ -23,7 +23,7 @@ function Toggle({ label, description, checked, onChange }: {
         type="checkbox"
         checked={checked}
         onChange={e => onChange(e.target.checked)}
-        style={{ marginTop: 3, width: 16, height: 16, accentColor: 'var(--primary)' }}
+        style={{ marginTop: 3, width: 16, height: 16, accentColor: 'var(--primary-text)' }}
       />
       <span>
         <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600 }}>{label}</span>

@@ -32,7 +32,7 @@ export const HistorySyncOverlay: React.FC<HistorySyncOverlayProps> = ({ state, p
         gap: 14,
         padding: '14px 18px',
         borderRadius: 14,
-        background: 'var(--bg-primary, #fff)',
+        background: 'var(--card-bg)',
         border: '1px solid var(--border)',
         boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
         maxWidth: 380,
@@ -57,7 +57,7 @@ export const HistorySyncOverlay: React.FC<HistorySyncOverlayProps> = ({ state, p
           />
         </svg>
         {state === 'syncing' ? (
-          <span style={{ position: 'absolute', fontSize: '0.5625rem', fontWeight: 700, color: 'var(--primary)' }}>
+          <span style={{ position: 'absolute', fontSize: '0.5625rem', fontWeight: 700, color: 'var(--primary-text)' }}>
             {progress}%
           </span>
         ) : (

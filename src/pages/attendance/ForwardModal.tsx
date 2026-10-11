@@ -91,7 +91,7 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
         </div>
 
         <div style={{ padding: '0 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--hover-bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px' }}>
             <Search size={14} color="var(--text-muted)" />
             <input
               value={search}
@@ -132,11 +132,11 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
                   key={conv.id}
                   onClick={() => handleForward({ type: 'conversation', id: conv.id })}
                   style={itemStyle}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                 >
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <MessageSquare size={14} color="var(--primary)" />
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <MessageSquare size={14} color="var(--primary-text)" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -165,10 +165,10 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
                   key={customer.id}
                   onClick={() => handleForward({ type: 'customer', id: customer.id })}
                   style={itemStyle}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                 >
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700, fontSize: '0.75rem', color: 'var(--primary)' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700, fontSize: '0.75rem', color: 'var(--primary-text)' }}>
                     {customer.name?.charAt(0).toUpperCase() || '?'}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>

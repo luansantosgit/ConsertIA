@@ -108,7 +108,7 @@ export const TokenPackagesSection: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h3 style={{ fontWeight: 700, fontSize: '1rem', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Coins size={18} color="var(--primary)" /> Pacotes de Tokens
+            <Coins size={18} color="var(--primary-text)" /> Pacotes de Tokens
           </h3>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
             Ofertas que as empresas compram pelo Asaas quando a cota de IA esgota.
@@ -162,7 +162,7 @@ export const TokenPackagesSection: React.FC = () => {
             <div key={pkg.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{
                 width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                background: 'var(--primary-light)', color: 'var(--primary)',
+                background: 'var(--primary-light)', color: 'var(--primary-text)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Coins size={16} />

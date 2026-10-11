@@ -103,7 +103,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             position: 'absolute', bottom: -8,
             left: isCustomer ? 0 : 'auto',
             right: isCustomer ? 'auto' : 0,
-            background: '#fff', border: '1px solid var(--border)',
+            background: 'var(--card-bg)', border: '1px solid var(--border)',
             borderRadius: 99, padding: '1px 6px', fontSize: '0.75rem',
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)', zIndex: 1,
           }}>
@@ -115,7 +115,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           borderRadius: 14,
           borderBottomLeftRadius: isCustomer ? 4 : 14,
           borderBottomRightRadius: isCustomer ? 14 : 4,
-          background: isCustomer ? '#fff' : msg.from === 'bot' ? '#ede9fe' : msg.from === 'reminder' ? '#fef9c3' : 'var(--primary)',
+          background: isCustomer ? 'var(--card-bg)' : msg.from === 'bot' ? 'var(--primary-light)' : msg.from === 'reminder' ? '#fef9c3' : 'var(--primary)',
           color: msg.from === 'attendant' ? '#fff' : 'var(--text-primary)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
           border: isCustomer ? '1px solid var(--border)' : 'none',
@@ -124,7 +124,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {msg.from === 'bot' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
               <Bot size={12} color="#7c3aed" />
-              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#7c3aed' }}>{agentName || 'IA'}</span>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary-text)' }}>{agentName || 'IA'}</span>
             </div>
           )}
           {msg.from === 'reminder' && (
@@ -137,7 +137,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {quoted && !msg.deleted && (
             <div style={{
               borderLeft: `3px solid ${msg.from === 'attendant' ? 'rgba(255,255,255,0.6)' : 'var(--primary)'}`,
-              background: msg.from === 'attendant' ? 'rgba(255,255,255,0.1)' : '#f1f5f9',
+              background: msg.from === 'attendant' ? 'rgba(255,255,255,0.1)' : 'var(--hover-bg)',
               borderRadius: 6, padding: '4px 8px', marginBottom: 6,
             }}>
               <p style={{ fontSize: '0.6875rem', fontWeight: 700, margin: 0, opacity: 0.85 }}>

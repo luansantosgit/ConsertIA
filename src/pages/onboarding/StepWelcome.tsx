@@ -62,7 +62,7 @@ export const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-              background: 'var(--primary-light)', color: 'var(--primary)',
+              background: 'var(--primary-light)', color: 'var(--primary-text)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <Icon size={18} />

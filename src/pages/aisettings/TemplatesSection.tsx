@@ -134,7 +134,7 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ templates, l
               width: 40, height: 40, borderRadius: 10, flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden',
-              background: 'var(--primary-light)', color: 'var(--primary)',
+              background: 'var(--primary-light)', color: 'var(--primary-text)',
             }}>
               {template.type === 'media' && template.media_url ? (
                 <img src={template.media_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

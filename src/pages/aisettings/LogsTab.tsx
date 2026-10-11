@@ -33,9 +33,9 @@ export const LogsTab: React.FC<LogsTabProps> = ({
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
             {[
-              { label: 'Total de logs', value: String(totalLogsCount), color: 'var(--primary)' },
+              { label: 'Total de logs', value: String(totalLogsCount), color: 'var(--primary-text)' },
               { label: 'Custo total', value: formatCurrency(totalCost), color: '#16a34a' },
-              { label: 'Requisições (página)', value: String(aiLogs.length), color: '#7c3aed' },
+              { label: 'Requisições (página)', value: String(aiLogs.length), color: 'var(--primary-text)' },
               { label: 'Erros (página)', value: String(aiLogs.filter(l => !l.success).length), color: '#ea580c' },
             ].map((m, i) => (
               <div key={i} className="card" style={{ padding: '16px 18px' }}>

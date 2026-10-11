@@ -55,7 +55,7 @@ export const MediaSendModal: React.FC<MediaSendModalProps> = ({
                   border: '1px solid var(--border)',
                   borderRadius: 10,
                   overflow: 'hidden',
-                  background: '#f8fafc',
+                  background: 'var(--hover-bg)',
                   aspectRatio: '1 / 1',
                   display: 'flex',
                   alignItems: 'center',

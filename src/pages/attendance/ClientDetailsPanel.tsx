@@ -46,7 +46,7 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
       flexDirection: 'column',
       gap: 16,
       overflowY: 'auto',
-      background: '#fff',
+      background: 'var(--card-bg)',
       flexShrink: 0,
       animation: 'fadeIn 0.15s ease'
     }}>
@@ -152,7 +152,7 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
         onSendOSCardToChat={onSendOSCardToChat}
       />
 
-      <div style={{ background: '#f8fafc', borderRadius: 10, padding: '12px' }}>
+      <div style={{ background: 'var(--hover-bg)', borderRadius: 10, padding: '12px' }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
           Ações Rápidas de IA
         </p>
@@ -172,10 +172,10 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
                 fontSize: '0.75rem',
                 padding: '6px 10px',
                 borderRadius: 8,
-                border: '1px solid #ddd6fe',
-                background: '#fff',
+                border: '1px solid var(--primary-ring)',
+                background: 'var(--card-bg)',
                 cursor: 'pointer',
-                color: '#5b21b6',
+                color: 'var(--primary-text)',
                 textAlign: 'left'
               }}
             >

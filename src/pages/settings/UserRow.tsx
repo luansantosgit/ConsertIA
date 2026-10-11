@@ -37,7 +37,7 @@ export const UserRow: React.FC<{
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
       <div style={{
         width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-        background: 'var(--primary-light)', color: 'var(--primary)',
+        background: 'var(--primary-light)', color: 'var(--primary-text)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontWeight: 700, fontSize: '0.875rem',
       }}>

@@ -34,7 +34,7 @@ export function ConfirmModal({
   const variantStyles = {
     danger: { bg: '#fef2f2', color: 'var(--danger)', icon: Trash2 },
     warning: { bg: '#fffbeb', color: 'var(--warning)', icon: AlertTriangle },
-    info: { bg: 'var(--primary-light)', color: 'var(--primary)', icon: AlertTriangle },
+    info: { bg: 'var(--primary-light)', color: 'var(--primary-text)', icon: AlertTriangle },
   };
 
   const style = variantStyles[variant];
@@ -80,7 +80,7 @@ export function ConfirmModal({
                 type="checkbox"
                 checked={checkboxChecked}
                 onChange={e => onCheckboxChange?.(e.target.checked)}
-                style={{ width: 14, height: 14, accentColor: 'var(--primary)' }}
+                style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
               />
               {checkboxLabel}
             </label>

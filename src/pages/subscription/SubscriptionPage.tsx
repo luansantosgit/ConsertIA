@@ -168,7 +168,7 @@ export const SubscriptionPage: React.FC = () => {
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Mensalidade</p>
-          <p style={{ fontWeight: 700, fontSize: '1.5rem', margin: 0, color: 'var(--primary)' }}>
+          <p style={{ fontWeight: 700, fontSize: '1.5rem', margin: 0, color: 'var(--primary-text)' }}>
             {plan ? fmtBRL(plan.price) : '—'}
           </p>
         </div>

@@ -66,7 +66,7 @@ export const OSDocumentModal: React.FC<OSDocumentModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 8,
-              background: 'var(--primary-light)', color: 'var(--primary)',
+              background: 'var(--primary-light)', color: 'var(--primary-text)',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
               <FileText size={20} />

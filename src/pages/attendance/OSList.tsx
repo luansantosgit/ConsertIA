@@ -28,7 +28,7 @@ export const OSList: React.FC<OSListProps> = ({
         </p>
         <button
           className="btn btn-ghost btn-sm"
-          style={{ color: 'var(--primary)', padding: 0, fontSize: '0.75rem', gap: 3 }}
+          style={{ color: 'var(--primary-text)', padding: 0, fontSize: '0.75rem', gap: 3 }}
           onClick={onOpenOSModal}
         >
           <Plus size={12} />Nova OS
@@ -36,7 +36,7 @@ export const OSList: React.FC<OSListProps> = ({
       </div>
 
       {currentClientOSList.length === 0 ? (
-        <div style={{ padding: '12px', background: '#f8fafc', borderRadius: 8, textAlign: 'center' }}>
+        <div style={{ padding: '12px', background: 'var(--hover-bg)', borderRadius: 8, textAlign: 'center' }}>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6 }}>Nenhuma OS cadastrada</p>
           <button
             className="btn btn-secondary btn-sm"
@@ -54,7 +54,7 @@ export const OSList: React.FC<OSListProps> = ({
               <div
                 key={os.id}
                 style={{
-                  background: '#f8fafc',
+                  background: 'var(--hover-bg)',
                   border: '1px solid var(--border)',
                   borderRadius: 8,
                   padding: '10px 12px',
@@ -64,7 +64,7 @@ export const OSList: React.FC<OSListProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.8125rem' }}>{formatOSCode(os.id)}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--primary-text)', fontSize: '0.8125rem' }}>{formatOSCode(os.id)}</span>
                   <span className={`badge ${st.badge}`} style={{ fontSize: '0.6875rem' }}>{st.label}</span>
                 </div>
                 <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
@@ -93,7 +93,7 @@ export const OSList: React.FC<OSListProps> = ({
                       fontSize: '0.6875rem',
                       justifyContent: 'center',
                       gap: 4,
-                      background: '#ecfdf5',
+                      background: 'var(--success-bg)',
                       color: '#065f46',
                       border: '1px solid #a7f3d0'
                     }}
@@ -108,7 +108,7 @@ export const OSList: React.FC<OSListProps> = ({
           })}
           <button
             className="btn btn-ghost btn-sm"
-            style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', color: 'var(--primary)', gap: 4 }}
+            style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', color: 'var(--primary-text)', gap: 4 }}
             onClick={() => navigate('/ordens')}
           >
             Ver todas as OS no sistema <ExternalLink size={12} />

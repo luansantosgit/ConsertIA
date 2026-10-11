@@ -34,7 +34,7 @@ export const PaymentHistory: React.FC<{ invoices: SubscriptionInvoice[] }> = ({ 
             >
               <div style={{
                 width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                background: 'var(--primary-light)', color: 'var(--primary)',
+                background: 'var(--primary-light)', color: 'var(--primary-text)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Receipt size={16} />

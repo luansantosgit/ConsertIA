@@ -91,7 +91,7 @@ export const ConversationMenu = React.memo(function ConversationMenu({
           position: 'fixed',
           ...(menuPos.up ? { bottom: menuPos.bottom } : { top: menuPos.top }),
           right: menuPos.right,
-          background: '#fff',
+          background: 'var(--card-bg)',
           border: '1px solid var(--border)',
           borderRadius: 10,
           boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
@@ -105,7 +105,7 @@ export const ConversationMenu = React.memo(function ConversationMenu({
               setMenuOpen(false);
             }}
             style={itemStyle}
-            onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
             {conv.unread_count > 0
@@ -115,7 +115,7 @@ export const ConversationMenu = React.memo(function ConversationMenu({
           <button
             onClick={() => { onTogglePin(conv.id); setMenuOpen(false); }}
             style={itemStyle}
-            onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-bg)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
             {conv.pinned
