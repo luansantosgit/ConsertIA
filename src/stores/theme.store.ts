@@ -38,15 +38,17 @@ const DEFAULT_THEME: Omit<TenantTheme, 'tenantId'> = {
   sidebarDark: false,
 };
 
-// Aplica as variáveis CSS dinamicamente no :root
-function applyCSS(theme: Omit<TenantTheme, 'tenantId'>) {
+// Aplica as variáveis CSS dinamicamente no :root.
+// `systemName` é o nome do SISTEMA (tema global) — título da aba e favicon
+// gerado NUNCA usam o nome da empresa/tenant.
+function applyCSS(theme: Omit<TenantTheme, 'tenantId'>, systemName: string) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   root.style.setProperty('--primary', theme.primaryColor);
   root.style.setProperty('--primary-dark', theme.primaryDark);
 
-  // Titulo da aba respeita o nome configurado pelo superadmin
-  document.title = `${theme.logoText || 'DeeperIA'} - CRM + IA para Assistência Técnica`;
+  // Titulo da aba = nome do sistema (sempre), mesmo com tema do tenant ativo
+  document.title = `${systemName || 'DeeperIA'} - CRM + IA para Assistência Técnica`;
 
   // Gera variações automáticas da cor primária
   root.style.setProperty('--primary-light', theme.primaryColor + '20');
@@ -68,8 +70,8 @@ function applyCSS(theme: Omit<TenantTheme, 'tenantId'>) {
     link.type = theme.faviconUrl.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/x-icon';
     link.href = theme.faviconUrl;
   } else {
-    // Gera favicon SVG com a cor primária e sigla
-    const initial = (theme.logoText || 'D').charAt(0).toUpperCase();
+    // Gera favicon SVG com a cor primária e a inicial do nome do SISTEMA
+    const initial = (systemName || 'D').charAt(0).toUpperCase();
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
       <rect width='32' height='32' rx='8' fill='${encodeURIComponent(theme.primaryColor)}'/>
       <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' 
@@ -126,12 +128,12 @@ export const useThemeStore = create<ThemeState>()(
           sidebarDark: tenantTheme?.sidebarDark ?? globalTheme.sidebarDark,
         };
         set({ activeTheme: theme });
-        applyCSS(theme);
+        applyCSS(theme, get().globalTheme.logoText);
       },
 
       reapplyCSS: () => {
         // Apenas re-aplica as variáveis CSS do activeTheme já persistido — sem mudar state
-        applyCSS(get().activeTheme);
+        applyCSS(get().activeTheme, get().globalTheme.logoText);
       },
 
       loadGlobalTheme: async () => {
