@@ -158,6 +158,9 @@ export const AiSettings: React.FC = () => {
               totalLogsCount={h.totalLogsCount}
               totalCost={h.totalCost}
               loadingLogs={h.loadingLogs}
+              logsPage={h.logsPage}
+              logsPageSize={h.logsPageSize}
+              onLogsPageChange={h.goToLogsPage}
               expandedLog={h.expandedLog}
               setExpandedLog={h.setExpandedLog}
               formatDate={h.formatDate}

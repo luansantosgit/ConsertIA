@@ -3,12 +3,16 @@ import { ThumbsUp, ThumbsDown, Clock, ChevronUp, ChevronDown } from 'lucide-reac
 import type { AiLog } from './types';
 import { formatCurrency } from '@/lib/format';
 import { useTranslation } from '@/hooks/useTranslation';
+import { Pagination } from '@/components/Pagination';
 
 interface LogsTabProps {
   aiLogs: AiLog[];
   totalLogsCount: number;
   totalCost: number;
   loadingLogs: boolean;
+  logsPage: number;
+  logsPageSize: number;
+  onLogsPageChange: (page: number) => void;
   expandedLog: string | null;
   setExpandedLog: (id: string | null) => void;
   formatDate: (iso: string) => string;
@@ -16,6 +20,7 @@ interface LogsTabProps {
 
 export const LogsTab: React.FC<LogsTabProps> = ({
   aiLogs, totalLogsCount, totalCost, loadingLogs,
+  logsPage, logsPageSize, onLogsPageChange,
   expandedLog, setExpandedLog, formatDate,
 }) => {
   const { t } = useTranslation();
@@ -30,8 +35,8 @@ export const LogsTab: React.FC<LogsTabProps> = ({
             {[
               { label: 'Total de logs', value: String(totalLogsCount), color: 'var(--primary)' },
               { label: 'Custo total', value: formatCurrency(totalCost), color: '#16a34a' },
-              { label: 'Requisições', value: String(aiLogs.length), color: '#7c3aed' },
-              { label: 'Erros', value: String(aiLogs.filter(l => !l.success).length), color: '#ea580c' },
+              { label: 'Requisições (página)', value: String(aiLogs.length), color: '#7c3aed' },
+              { label: 'Erros (página)', value: String(aiLogs.filter(l => !l.success).length), color: '#ea580c' },
             ].map((m, i) => (
               <div key={i} className="card" style={{ padding: '16px 18px' }}>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6 }}>{t(m.label)}</p>
@@ -48,7 +53,8 @@ export const LogsTab: React.FC<LogsTabProps> = ({
             {aiLogs.length === 0 ? (
               <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)' }}>{t('Nenhum log encontrado.')}</div>
             ) : (
-              aiLogs.map(log => (
+              <>
+              {aiLogs.map(log => (
                 <div key={log.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <div onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', cursor: 'pointer' }}>
                     <div style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: log.success ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: log.success ? '#16a34a' : '#dc2626' }}>
@@ -84,7 +90,15 @@ export const LogsTab: React.FC<LogsTabProps> = ({
                   </div>
                 )}
               </div>
-            ))
+            ))}
+            <Pagination
+              page={logsPage}
+              totalItems={totalLogsCount}
+              pageSize={logsPageSize}
+              onPageChange={onLogsPageChange}
+              label="logs"
+              />
+              </>
           )}
         </div>
       </>

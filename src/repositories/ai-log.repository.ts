@@ -140,4 +140,17 @@ export class AiLogRepository extends BaseSupabaseRepository<AiLog> {
     if (error) throw error;
     return count ?? 0;
   }
+
+  async getPage(page: number, pageSize = 20): Promise<AiLog[]> {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    return this.fetchMany(
+      supabase
+        .from(this.tableName)
+        .select('*')
+        .eq('tenant_id', this.tenantId)
+        .order('created_at', { ascending: false })
+        .range(from, to),
+    );
+  }
 }

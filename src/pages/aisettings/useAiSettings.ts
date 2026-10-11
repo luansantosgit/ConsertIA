@@ -38,6 +38,8 @@ export function useAiSettings() {
   const [totalLogsCount, setTotalLogsCount] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [loadingLogs, setLoadingLogs] = useState(true);
+  const [logsPage, setLogsPage] = useState(1);
+  const LOGS_PAGE_SIZE = 20;
 
   useEffect(() => {
     async function fetchData() {
@@ -52,7 +54,7 @@ export function useAiSettings() {
           entitlementRepo.getUsage(),
           entitlementRepo.getPlanLimit().catch(() => 0),
           aiConfigRepo.getActive().catch(() => null),
-          aiLogRepo.getAll(),
+          aiLogRepo.getPage(1, LOGS_PAGE_SIZE),
           aiLogRepo.count(),
           aiLogRepo.getTotalCost(),
         ]);
@@ -81,6 +83,25 @@ export function useAiSettings() {
       }
     }
     fetchData();
+  }, []);
+
+  // Paginação dos logs: carrega a página solicitada
+  const goToLogsPage = useCallback(async (page: number) => {
+    setLogsPage(page);
+    setLoadingLogs(true);
+    setExpandedLog(null);
+    try {
+      const [logs, count] = await Promise.all([
+        aiLogRepo.getPage(page, LOGS_PAGE_SIZE),
+        aiLogRepo.count(),
+      ]);
+      setAiLogs(logs);
+      setTotalLogsCount(count);
+    } catch (err) {
+      console.error('Failed to fetch AI logs page:', err);
+    } finally {
+      setLoadingLogs(false);
+    }
   }, []);
 
   const flashSaved = useCallback(() => {
@@ -203,6 +224,7 @@ export function useAiSettings() {
     saveAgent, savePersonality, saveQuote, saveDiagnosis,
     createTemplate, updateTemplate, deleteTemplate,
     aiLogs, totalLogsCount, totalCost, loadingLogs,
+    logsPage, logsPageSize: LOGS_PAGE_SIZE, goToLogsPage,
     expandedLog, setExpandedLog, formatDate,
   };
 }
