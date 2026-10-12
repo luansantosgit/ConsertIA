@@ -12,8 +12,6 @@
   --primary-dark: #4338ca;
   --primary-light: rgba(79,70,229,0.12);
   --primary-ring: rgba(79,70,229,0.25);
-  /* Cor da marca para TEXTO/ícones — clareada no dark via JS */
-  --primary-text: var(--primary);
 
   /* Sidebar (light/icon-only — igual ao Figma) */
   --sidebar-bg: #ffffff;
@@ -77,8 +75,6 @@
   /* Mode-specific (dark sobrescreve em html[data-theme='dark']) */
   --skeleton-bg: #e2e5f1;
   --hover-bg: #f9fafb;
-  --bg-secondary: #f8fafc;
-  --surface-secondary: #f8fafc;
   --table-row-border: #f5f6fb;
   --progress-track: #f1f5f9;
   --btn-secondary-bg: #f1f5f9;
@@ -129,8 +125,6 @@ html[data-theme='dark'] {
 
   --skeleton-bg: #232732;
   --hover-bg: #1a1c24;
-  --bg-secondary: #1a1c24;
-  --surface-secondary: #1a1c24;
   --table-row-border: rgba(255,255,255,0.05);
   --progress-track: #232732;
   --btn-secondary-bg: #1e2028;
@@ -142,7 +136,6 @@ html[data-theme='dark'] {
 
 /* Escopo forçado claro (ex.: wizard público /comece-agora sempre light) */
 .theme-light {
-  --primary-text: var(--primary);
   --sidebar-bg: #ffffff;
   --sidebar-border: #eef0f6;
   --sidebar-icon: #9ca3af;
@@ -171,8 +164,6 @@ html[data-theme='dark'] {
   --info-text: #1e40af;
   --skeleton-bg: #e2e5f1;
   --hover-bg: #f9fafb;
-  --bg-secondary: #f8fafc;
-  --surface-secondary: #f8fafc;
   --table-row-border: #f5f6fb;
   --progress-track: #f1f5f9;
   --btn-secondary-bg: #f1f5f9;
@@ -232,6 +223,11 @@ img { max-width: 100%; display: block; }
   border-radius: var(--radius-sm);
 }
 @keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
@@ -408,7 +404,7 @@ img { max-width: 100%; display: block; }
 
 .sidebar-item:hover {
   background: var(--primary-light);
-  color: var(--primary-text);
+  color: var(--primary);
 }
 
 .sidebar-item.active {
@@ -644,7 +640,7 @@ img { max-width: 100%; display: block; }
   justify-content: center;
   font-weight: 700;
   font-size: 0.8125rem;
-  color: var(--primary-text);
+  color: var(--primary);
 }
 
 .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -795,7 +791,7 @@ img { max-width: 100%; display: block; }
 
 .appt-btn {
   background: rgba(255,255,255,0.95);
-  color: var(--primary-text);
+  color: var(--primary);
   border: none;
   border-radius: var(--radius-full);
   padding: 8px 18px;
@@ -917,7 +913,7 @@ img { max-width: 100%; display: block; }
   padding: 4px 10px;
   border-radius: var(--radius-full);
   background: var(--primary-light);
-  color: var(--primary-text);
+  color: var(--primary);
 }
 
 /* ── Right panel: Customers ── */
@@ -941,7 +937,7 @@ img { max-width: 100%; display: block; }
   justify-content: center;
   font-size: 0.8125rem;
   font-weight: 700;
-  color: var(--primary-text);
+  color: var(--primary);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -971,7 +967,7 @@ img { max-width: 100%; display: block; }
   background: none;
 }
 
-.customer-edit-btn:hover { color: var(--primary-text); background: var(--primary-light); }
+.customer-edit-btn:hover { color: var(--primary); background: var(--primary-light); }
 
 /* ── Task item ── */
 .task-item {
@@ -1038,7 +1034,7 @@ img { max-width: 100%; display: block; }
 .card-link {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--primary-text);
+  color: var(--primary);
   cursor: pointer;
   background: none;
   border: none;
@@ -1182,7 +1178,7 @@ img { max-width: 100%; display: block; }
 }
 
 .input:focus, .select:focus, .textarea:focus {
-  border-color: var(--primary-text);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-ring);
   background: var(--input-focus-bg);
 }
@@ -1206,7 +1202,7 @@ img { max-width: 100%; display: block; }
 }
 
 .search-wrap:focus-within {
-  border-color: var(--primary-text);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-ring);
 }
 
@@ -1270,7 +1266,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 .badge-danger  { background: var(--danger-bg);  color: var(--danger-text); }
 .badge-info    { background: var(--info-bg);    color: var(--info-text); }
 .badge-gray    { background: #f1f5f9; color: var(--text-secondary); }
-.badge-primary { background: var(--primary-light); color: var(--primary-text); }
+.badge-primary { background: var(--primary-light); color: var(--primary); }
 
 /* ============================================================
    MODAL
@@ -1334,7 +1330,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   align-items: center;
   justify-content: center;
   padding: 48px;
-  background: var(--card-bg);
+  background: #fff;
 }
 
 .login-right {
@@ -1448,7 +1444,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 }
 
 .plan-card:hover, .plan-card.featured {
-  border-color: var(--primary-text);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-ring);
 }
 
@@ -1467,7 +1463,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 }
 
 .plan-name { font-size: 1.125rem; font-weight: 700; }
-.plan-price { font-size: 2rem; font-weight: 800; color: var(--primary-text); line-height: 1; }
+.plan-price { font-size: 2rem; font-weight: 800; color: var(--primary); line-height: 1; }
 .plan-features { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .plan-features li { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-secondary); }
 
@@ -1720,7 +1716,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   height: 38px;
   border-radius: 50%;
   background: var(--primary-light, #eef2ff);
-  color: var(--primary-text);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;

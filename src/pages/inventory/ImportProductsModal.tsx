@@ -173,7 +173,7 @@ export const ImportProductsModal: React.FC<{
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                 padding: '32px 16px', borderRadius: 12, cursor: parsing ? 'wait' : 'pointer',
-                border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--border)'}`,
+                border: `2px dashed ${dragOver ? 'var(--primary-text)' : 'var(--border)'}`,
                 background: dragOver ? 'var(--primary-light)' : 'transparent',
                 transition: 'background 0.15s, border-color 0.15s',
               }}

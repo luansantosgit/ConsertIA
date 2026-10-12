@@ -245,7 +245,7 @@ export const Reports: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 140, paddingTop: 8 }}>
           {MONTHS.map((m, i) => (
             <div key={m} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: i === MONTHS.length - 1 ? 'var(--primary)' : 'var(--text-muted)' }}>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: i === MONTHS.length - 1 ? 'var(--primary-text)' : 'var(--text-muted)' }}>
                 {formatCurrency(revenueByMonth[i])}
               </span>
               <div style={{

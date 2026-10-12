@@ -62,7 +62,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = ({
           key={conn.id}
           style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-            borderRadius: 8, border: `2px solid ${selectedConnId === conn.id ? 'var(--primary)' : 'var(--border)'}`,
+            borderRadius: 8, border: `2px solid ${selectedConnId === conn.id ? 'var(--primary-text)' : 'var(--border)'}`,
             background: selectedConnId === conn.id ? 'var(--primary-light)' : 'var(--surface)',
             cursor: 'pointer', transition: 'all 0.15s',
           }}
@@ -75,7 +75,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = ({
             style={{ accentColor: 'var(--primary-text)' }}
           />
           <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: selectedConnId === conn.id ? 'var(--primary)' : 'var(--text-primary)' }}>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: selectedConnId === conn.id ? 'var(--primary-text)' : 'var(--text-primary)' }}>
               {conn.name || 'WhatsApp'}
             </p>
             <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>

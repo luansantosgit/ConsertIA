@@ -268,13 +268,13 @@ export const SuperAdminTheme: React.FC = () => {
               </p>
               <label style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 8, padding: '12px', border: `2px dashed ${currentTheme.logoType === 'icon' && currentTheme.logoUrl ? 'var(--primary)' : 'var(--border)'}`,
+                gap: 8, padding: '12px', border: `2px dashed ${currentTheme.logoType === 'icon' && currentTheme.logoUrl ? 'var(--primary-text)' : 'var(--border)'}`,
                 borderRadius: 'var(--radius-md)', cursor: 'pointer',
                 transition: 'border-color 0.15s', fontSize: '0.875rem', color: 'var(--text-muted)',
                 background: currentTheme.logoType === 'icon' && currentTheme.logoUrl ? 'var(--primary-light)' : 'transparent',
               }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = currentTheme.logoType === 'icon' && currentTheme.logoUrl ? 'var(--primary)' : 'var(--border)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = currentTheme.logoType === 'icon' && currentTheme.logoUrl ? 'var(--primary-text)' : 'var(--border)')}
               >
                 <Upload size={16} />
                 {currentTheme.logoType === 'icon' && currentTheme.logoUrl ? '✓ Ícone carregado — clique para trocar' : 'Upload de ícone (PNG/SVG)'}
@@ -292,13 +292,13 @@ export const SuperAdminTheme: React.FC = () => {
               </p>
               <label style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 8, padding: '12px', border: `2px dashed ${currentTheme.logoType === 'full' && currentTheme.logoUrl ? 'var(--primary)' : 'var(--border)'}`,
+                gap: 8, padding: '12px', border: `2px dashed ${currentTheme.logoType === 'full' && currentTheme.logoUrl ? 'var(--primary-text)' : 'var(--border)'}`,
                 borderRadius: 'var(--radius-md)', cursor: 'pointer',
                 transition: 'border-color 0.15s', fontSize: '0.875rem', color: 'var(--text-muted)',
                 background: currentTheme.logoType === 'full' && currentTheme.logoUrl ? 'var(--primary-light)' : 'transparent',
               }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = currentTheme.logoType === 'full' && currentTheme.logoUrl ? 'var(--primary)' : 'var(--border)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = currentTheme.logoType === 'full' && currentTheme.logoUrl ? 'var(--primary-text)' : 'var(--border)')}
               >
                 <Upload size={16} />
                 {currentTheme.logoType === 'full' && currentTheme.logoUrl ? '✓ Logo completo carregado — clique para trocar' : 'Upload de logo completo (PNG/SVG)'}

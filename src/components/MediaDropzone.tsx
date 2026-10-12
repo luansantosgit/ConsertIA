@@ -114,7 +114,7 @@ export const MediaDropzone: React.FC<{
             padding: compact ? '12px 10px' : '18px 14px',
             borderRadius: 10,
             cursor: uploading ? 'wait' : 'pointer',
-            border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--border)'}`,
+            border: `2px dashed ${dragOver ? 'var(--primary-text)' : 'var(--border)'}`,
             background: dragOver ? 'var(--primary-light)' : 'transparent',
             transition: 'background 0.15s, border-color 0.15s',
           }}

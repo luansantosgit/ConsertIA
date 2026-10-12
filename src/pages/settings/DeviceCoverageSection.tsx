@@ -101,7 +101,7 @@ export const DeviceCoverageSection: React.FC = () => {
                 onChange={() => toggleDevice(key)}
                 style={{ width: 16, height: 16, accentColor: 'var(--primary-text)' }}
               />
-              <Icon size={16} color={enabled ? 'var(--primary)' : 'var(--text-muted)'} />
+              <Icon size={16} color={enabled ? 'var(--primary-text)' : 'var(--text-muted)'} />
               <strong style={{ fontSize: '0.875rem' }}>{t(label)}</strong>
             </label>
 

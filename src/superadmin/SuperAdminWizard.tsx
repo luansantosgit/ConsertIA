@@ -124,7 +124,7 @@ export const SuperAdminWizard: React.FC = () => {
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
             padding: '36px 20px', borderRadius: 14, cursor: uploading ? 'wait' : 'pointer',
-            border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--border)'}`,
+            border: `2px dashed ${dragOver ? 'var(--primary-text)' : 'var(--border)'}`,
             background: dragOver ? 'var(--primary-light)' : 'transparent',
             transition: 'background 0.15s, border-color 0.15s',
           }}

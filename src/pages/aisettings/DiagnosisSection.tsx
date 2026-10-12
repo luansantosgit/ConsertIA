@@ -34,7 +34,7 @@ export const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ diagnosis, s
             background: diagnosis.repair_mode === 'screen_only' ? 'var(--primary-light)' : 'transparent',
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.875rem', color: diagnosis.repair_mode === 'screen_only' ? 'var(--primary)' : 'inherit' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.875rem', color: diagnosis.repair_mode === 'screen_only' ? 'var(--primary-text)' : 'inherit' }}>
             <Smartphone size={18} /> {t('Somente troca de tela')}
           </span>
           <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
@@ -52,7 +52,7 @@ export const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ diagnosis, s
             background: diagnosis.repair_mode === 'screen_and_glass' ? 'var(--primary-light)' : 'transparent',
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.875rem', color: diagnosis.repair_mode === 'screen_and_glass' ? 'var(--primary)' : 'inherit' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.875rem', color: diagnosis.repair_mode === 'screen_and_glass' ? 'var(--primary-text)' : 'inherit' }}>
             <Layers size={18} /> {t('Troca de tela e de vidro')}
           </span>
           <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>

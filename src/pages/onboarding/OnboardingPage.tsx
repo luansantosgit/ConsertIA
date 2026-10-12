@@ -143,7 +143,7 @@ export const OnboardingPage: React.FC = () => {
                   background: active ? 'var(--primary)' : 'var(--border)',
                   transition: 'background 0.3s',
                 }} />
-                <span style={{ fontSize: '0.625rem', fontWeight: 600, color: active ? 'var(--primary)' : 'var(--text-muted)', textAlign: 'center' }}>
+                <span style={{ fontSize: '0.625rem', fontWeight: 600, color: active ? 'var(--primary-text)' : 'var(--text-muted)', textAlign: 'center' }}>
                   {label}
                 </span>
               </div>

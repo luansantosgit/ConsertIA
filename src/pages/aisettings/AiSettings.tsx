@@ -80,7 +80,7 @@ export const AiSettings: React.FC = () => {
                 width: '100%', padding: '12px 16px', border: 'none',
                 borderBottom: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left',
                 background: h.activeSection === key ? 'var(--primary-light)' : 'transparent',
-                color: h.activeSection === key ? 'var(--primary)' : 'var(--text-secondary)',
+                color: h.activeSection === key ? 'var(--primary-text)' : 'var(--text-secondary)',
                 fontWeight: h.activeSection === key ? 700 : 400,
                 fontSize: '0.875rem', fontFamily: 'inherit', transition: 'background 0.1s, color 0.1s',
                 borderLeft: h.activeSection === key ? '3px solid var(--primary)' : '3px solid transparent',

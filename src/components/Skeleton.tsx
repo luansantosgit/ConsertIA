@@ -1,7 +1,7 @@
 import React from 'react';
 
 const shimmerStyle: React.CSSProperties = {
-  background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)',
+  background: 'linear-gradient(90deg, var(--skeleton-bg) 25%, var(--hover-bg) 50%, var(--skeleton-bg) 75%)',
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s ease-in-out infinite',
 };

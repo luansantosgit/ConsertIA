@@ -183,7 +183,7 @@ export const AsaasConfigSection: React.FC = () => {
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
                 padding: '8px 14px', borderRadius: 99,
-                border: `1px solid ${config.enabled_methods.includes(m.key) ? 'var(--primary)' : 'var(--border)'}`,
+                border: `1px solid ${config.enabled_methods.includes(m.key) ? 'var(--primary-text)' : 'var(--border)'}`,
                 background: config.enabled_methods.includes(m.key) ? 'var(--primary-light)' : 'transparent',
                 transition: 'background 0.12s, border-color 0.12s',
               }}
@@ -213,7 +213,7 @@ export const AsaasConfigSection: React.FC = () => {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
                   padding: '8px 14px', borderRadius: 99,
-                  border: `1px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
+                  border: `1px solid ${active ? 'var(--primary-text)' : 'var(--border)'}`,
                   background: active ? 'var(--primary-light)' : 'transparent',
                   transition: 'background 0.12s, border-color 0.12s',
                 }}

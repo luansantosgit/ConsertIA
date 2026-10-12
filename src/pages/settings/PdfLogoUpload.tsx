@@ -128,7 +128,7 @@ export const PdfLogoUpload: React.FC = () => {
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               padding: '10px 8px', borderRadius: 10,
               cursor: saving ? 'wait' : 'pointer',
-              border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--border)'}`,
+              border: `2px dashed ${dragOver ? 'var(--primary-text)' : 'var(--border)'}`,
               background: dragOver ? 'var(--primary-light)' : 'transparent',
               transition: 'background 0.15s, border-color 0.15s',
             }}

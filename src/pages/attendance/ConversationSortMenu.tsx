@@ -46,7 +46,7 @@ export const ConversationSortMenu: React.FC<ConversationSortMenuProps> = ({ sort
           cursor: 'pointer',
           padding: 5,
           borderRadius: '50%',
-          color: open || isActive ? 'var(--primary)' : 'var(--text-muted)',
+          color: open || isActive ? 'var(--primary-text)' : 'var(--text-muted)',
           display: 'flex',
           alignItems: 'center',
           flexShrink: 0,

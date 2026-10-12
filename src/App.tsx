@@ -70,9 +70,8 @@ const ChecklistPage = lazyLoad(() => import('@/pages/ChecklistPage').then(m => (
 const PageLoader: React.FC = () => (
   <div className="page" style={{ gap: 16 }}>
     {[1, 2, 3].map(i => (
-      <div key={i} style={{ height: i === 1 ? 52 : 180, borderRadius: 12, background: 'linear-gradient(90deg, #f1f5f9 25%, #e5e9f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+      <div key={i} className="skeleton" style={{ height: i === 1 ? 52 : 180, borderRadius: 12 }} />
     ))}
-    <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
   </div>
 );
 

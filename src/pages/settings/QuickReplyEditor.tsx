@@ -153,7 +153,7 @@ export const QuickReplyEditor: React.FC<{
                         style={{
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                           padding: '18px 12px', borderRadius: 10, cursor: uploadingIdx === idx ? 'wait' : 'pointer',
-                          border: `2px dashed ${dragIdx === idx ? 'var(--primary)' : 'var(--border)'}`,
+                          border: `2px dashed ${dragIdx === idx ? 'var(--primary-text)' : 'var(--border)'}`,
                           background: dragIdx === idx ? 'var(--primary-light)' : 'transparent',
                           transition: 'background 0.15s, border-color 0.15s',
                         }}

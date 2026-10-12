@@ -152,9 +152,9 @@ export const AppearanceSection: React.FC = () => {
               style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-                border: `1.5px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
+                border: `1.5px solid ${active ? 'var(--primary-text)' : 'var(--border)'}`,
                 background: active ? 'var(--primary-light)' : 'transparent',
-                color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                color: active ? 'var(--primary-text)' : 'var(--text-secondary)',
                 fontWeight: 600, fontSize: '0.875rem',
                 transition: 'border 0.15s, background 0.15s, color 0.15s',
               }}

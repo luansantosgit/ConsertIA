@@ -67,7 +67,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     cursor: 'pointer',
     padding: 6,
     borderRadius: '50%',
-    color: showEmoji ? 'var(--primary)' : 'var(--text-muted)',
+    color: showEmoji ? 'var(--primary-text)' : 'var(--text-muted)',
     display: 'flex',
     alignItems: 'center',
     flexShrink: 0,

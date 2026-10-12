@@ -425,7 +425,7 @@ export const SettingsPage: React.FC = () => {
                 width: '100%', padding: '12px 16px', border: 'none',
                 borderBottom: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left',
                 background: activeSection === key ? 'var(--primary-light)' : 'transparent',
-                color: activeSection === key ? 'var(--primary)' : 'var(--text-secondary)',
+                color: activeSection === key ? 'var(--primary-text)' : 'var(--text-secondary)',
                 fontWeight: activeSection === key ? 600 : 400,
                 fontSize: '0.875rem', fontFamily: 'inherit',
                 transition: 'background 0.1s, color 0.1s',
@@ -586,7 +586,7 @@ export const SettingsPage: React.FC = () => {
                             style={{
                               display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
                               padding: '6px 10px', borderRadius: 99,
-                              border: `1px solid ${conn.ai_enabled ? 'var(--primary)' : 'var(--border)'}`,
+                              border: `1px solid ${conn.ai_enabled ? 'var(--primary-text)' : 'var(--border)'}`,
                               background: conn.ai_enabled ? 'var(--primary-light)' : 'transparent',
                             }}
                           >
@@ -596,10 +596,10 @@ export const SettingsPage: React.FC = () => {
                               onChange={() => handleToggleConnectionAi(conn)}
                               style={{ width: 14, height: 14, accentColor: 'var(--primary-text)' }}
                             />
-                            <Bot size={14} color={conn.ai_enabled ? 'var(--primary)' : 'var(--text-muted)'} />
+                            <Bot size={14} color={conn.ai_enabled ? 'var(--primary-text)' : 'var(--text-muted)'} />
                             <span style={{
                               fontSize: '0.75rem', fontWeight: 600,
-                              color: conn.ai_enabled ? 'var(--primary)' : 'var(--text-muted)',
+                              color: conn.ai_enabled ? 'var(--primary-text)' : 'var(--text-muted)',
                             }}>
                               {t('IA')}
                             </span>

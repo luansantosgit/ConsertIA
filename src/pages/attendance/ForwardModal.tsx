@@ -111,7 +111,7 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 padding: '8px 0', borderRadius: 8, fontSize: '0.8125rem', fontWeight: 600,
                 background: tab === key ? '#ede9fe' : 'transparent',
-                color: tab === key ? 'var(--primary)' : 'var(--text-muted)',
+                color: tab === key ? 'var(--primary-text)' : 'var(--text-muted)',
                 border: 'none', cursor: 'pointer', transition: 'all 0.15s',
               }}
             >
@@ -146,7 +146,7 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
                       {conv.contact_phone}
                     </p>
                   </div>
-                  <Send size={14} color={sending?.id === conv.id ? 'var(--primary)' : 'var(--text-muted)'} />
+                  <Send size={14} color={sending?.id === conv.id ? 'var(--primary-text)' : 'var(--text-muted)'} />
                 </button>
               ))
             )

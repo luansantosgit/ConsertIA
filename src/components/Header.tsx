@@ -188,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
                     border: 'none', background: language === lang.code ? 'var(--primary-light)' : 'transparent',
                     cursor: 'pointer', fontFamily: 'inherit',
                     fontSize: '0.875rem', fontWeight: language === lang.code ? 600 : 400,
-                    color: language === lang.code ? 'var(--primary)' : 'var(--text-primary)',
+                    color: language === lang.code ? 'var(--primary-text)' : 'var(--text-primary)',
                     textAlign: 'left', transition: 'background 0.1s',
                   }}
                   onMouseEnter={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = 'var(--hover-bg)'; }}

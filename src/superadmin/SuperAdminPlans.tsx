@@ -241,7 +241,7 @@ export const SuperAdminPlans: React.FC = () => {
           <div
             key={plan.id}
             className="plan-card"
-            style={{ borderColor: plan.featured ? 'var(--primary)' : undefined, position: 'relative' }}
+            style={{ borderColor: plan.featured ? 'var(--primary-text)' : undefined, position: 'relative' }}
           >
             {plan.featured && <span className="plan-badge">Mais popular</span>}
 
@@ -308,7 +308,7 @@ export const SuperAdminPlans: React.FC = () => {
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.8125rem',
                 marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--border)',
-                color: plan.showOnSite ? 'var(--primary)' : 'var(--text-muted)', fontWeight: plan.showOnSite ? 600 : 400,
+                color: plan.showOnSite ? 'var(--primary-text)' : 'var(--text-muted)', fontWeight: plan.showOnSite ? 600 : 400,
               }}
             >
               <input

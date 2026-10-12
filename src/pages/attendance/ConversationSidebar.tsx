@@ -136,7 +136,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: 4,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: transferredActive || dropdownFor === 'filter' ? 'var(--primary)' : 'var(--text-muted)',
+                color: transferredActive || dropdownFor === 'filter' ? 'var(--primary-text)' : 'var(--text-muted)',
                 transition: 'color 0.15s',
               }}
               title="Filtros e ordenação"
@@ -168,7 +168,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                       cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit',
                       textAlign: 'left',
                       background: chatFilter === o.key ? 'var(--primary-light)' : 'transparent',
-                      color: chatFilter === o.key ? 'var(--primary)' : 'var(--text-primary)',
+                      color: chatFilter === o.key ? 'var(--primary-text)' : 'var(--text-primary)',
                       fontWeight: chatFilter === o.key ? 600 : 400,
                     }}
                   >
@@ -187,7 +187,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                       cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit',
                       textAlign: 'left',
                       background: sortBy === o.key ? 'var(--primary-light)' : 'transparent',
-                      color: sortBy === o.key ? 'var(--primary)' : 'var(--text-primary)',
+                      color: sortBy === o.key ? 'var(--primary-text)' : 'var(--text-primary)',
                       fontWeight: sortBy === o.key ? 600 : 400,
                     }}
                   >

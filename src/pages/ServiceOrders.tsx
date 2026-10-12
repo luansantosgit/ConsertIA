@@ -473,11 +473,11 @@ export const ServiceOrders: React.FC = () => {
                       aria-label="Configurar mensagem automática"
                       style={{
                         background: 'none', border: 'none', cursor: 'pointer', padding: 3,
-                        borderRadius: 6, color: (autoMessages[col.key]?.enabled ?? true) ? 'var(--primary)' : 'var(--text-muted)',
+                        borderRadius: 6, color: (autoMessages[col.key]?.enabled ?? true) ? 'var(--primary-text)' : 'var(--text-muted)',
                         display: 'flex', alignItems: 'center', transition: 'color 0.15s',
                       }}
                       onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = (autoMessages[col.key]?.enabled ?? true) ? 'var(--primary)' : 'var(--text-muted)')}
+                      onMouseLeave={e => (e.currentTarget.style.color = (autoMessages[col.key]?.enabled ?? true) ? 'var(--primary-text)' : 'var(--text-muted)')}
                     >
                       <Settings size={13} />
                     </button>

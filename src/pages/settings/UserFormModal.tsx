@@ -163,7 +163,7 @@ export const UserFormModal: React.FC<{
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
                       padding: '8px 10px', borderRadius: 8,
-                      border: `1px solid ${perms.has(m.key) ? 'var(--primary)' : 'var(--border)'}`,
+                      border: `1px solid ${perms.has(m.key) ? 'var(--primary-text)' : 'var(--border)'}`,
                       background: perms.has(m.key) ? 'var(--primary-light)' : 'transparent',
                       transition: 'background 0.12s, border-color 0.12s',
                     }}

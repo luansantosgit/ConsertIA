@@ -54,7 +54,7 @@ export const StepPlanChoice: React.FC<{
             style={{
               textAlign: 'left', cursor: 'pointer', padding: 18,
               display: 'flex', flexDirection: 'column', gap: 10,
-              borderColor: plan.featured ? 'var(--primary)' : 'var(--border)',
+              borderColor: plan.featured ? 'var(--primary-text)' : 'var(--border)',
               borderWidth: plan.featured ? 1.5 : 1,
               background: plan.featured ? 'var(--primary-light)' : '#fff',
               transition: 'transform 0.12s',

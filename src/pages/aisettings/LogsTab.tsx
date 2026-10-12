@@ -63,7 +63,7 @@ export const LogsTab: React.FC<LogsTabProps> = ({
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{log.provider}/{log.model}</span>
-                        <span style={{ padding: '2px 8px', borderRadius: 99, fontSize: '0.7rem', fontWeight: 600, background: log.success ? 'var(--primary-light)' : '#fee2e2', color: log.success ? 'var(--primary)' : '#dc2626' }}>
+                        <span style={{ padding: '2px 8px', borderRadius: 99, fontSize: '0.7rem', fontWeight: 600, background: log.success ? 'var(--primary-light)' : '#fee2e2', color: log.success ? 'var(--primary-text)' : '#dc2626' }}>
                           {log.success ? t('Sucesso') : t('Erro')}
                         </span>
                         {log.cost > 0 && (
