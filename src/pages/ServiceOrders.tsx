@@ -261,7 +261,7 @@ export const ServiceOrders: React.FC = () => {
             {(['list', 'kanban'] as const).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500,
-                background: view === v ? '#fff' : 'transparent',
+                background: view === v ? 'var(--card-bg)' : 'transparent',
                 color: view === v ? 'var(--text-primary)' : 'var(--text-muted)',
                 boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                 transition: 'all 0.15s',
@@ -519,7 +519,7 @@ export const ServiceOrders: React.FC = () => {
                         <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.customerName || '—'}</p>
                       </div>
                       <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: 10 }}>{(o.equipmentLabel || '—')} · {o.subject}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                           <User size={11} />{o.technicianName || '—'}
                         </span>

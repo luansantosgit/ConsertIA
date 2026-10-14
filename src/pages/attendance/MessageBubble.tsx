@@ -115,7 +115,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           borderRadius: 14,
           borderBottomLeftRadius: isCustomer ? 4 : 14,
           borderBottomRightRadius: isCustomer ? 14 : 4,
-          background: isCustomer ? 'var(--card-bg)' : msg.from === 'bot' ? 'var(--primary-light)' : msg.from === 'reminder' ? '#fef9c3' : 'var(--primary)',
+          background: isCustomer ? 'var(--card-bg)' : msg.from === 'bot' ? 'var(--primary-light)' : msg.from === 'reminder' ? 'var(--warning-bg)' : 'var(--primary)',
           color: msg.from === 'attendant' ? '#fff' : 'var(--text-primary)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
           border: isCustomer ? '1px solid var(--border)' : 'none',
@@ -123,14 +123,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         }}>
           {msg.from === 'bot' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-              <Bot size={12} color="#7c3aed" />
+              <Bot size={12} color="var(--primary-text)" />
               <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary-text)' }}>{agentName || 'IA'}</span>
             </div>
           )}
           {msg.from === 'reminder' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-              <Bell size={12} color="#a16207" />
-              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#a16207' }}>Lembrete</span>
+              <Bell size={12} color="var(--warning-text)" />
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--warning-text)' }}>Lembrete</span>
             </div>
           )}
 

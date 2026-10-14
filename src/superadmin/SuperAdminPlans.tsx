@@ -261,7 +261,7 @@ export const SuperAdminPlans: React.FC = () => {
               </p>
             </div>
 
-            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '12px 14px' }}>
+            <div style={{ background: 'var(--hover-bg)', borderRadius: 8, padding: '12px 14px' }}>
               <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>
                 LIMITES
               </p>

@@ -146,7 +146,7 @@ export const TokenQuotaAlert: React.FC<{
       {paused && (
         <div style={{
           display: 'flex', gap: 12, alignItems: 'center',
-          padding: '14px 16px', background: '#fef2f2',
+          padding: '14px 16px', background: 'var(--danger-bg)',
           border: '1.5px solid var(--danger)', borderRadius: 12,
         }}>
           <AlertTriangle size={20} color="var(--danger)" style={{ flexShrink: 0 }} />

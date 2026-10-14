@@ -241,7 +241,7 @@ export const SuperAdminAi: React.FC = () => {
         </div>
 
         {mode === 'all' && (
-          <div style={{ padding: '12px 14px', borderRadius: 10, background: '#f8fafc', border: '1px dashed var(--border)' }}>
+          <div style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--hover-bg)', border: '1px dashed var(--border)' }}>
             <strong style={{ fontSize: '0.8125rem' }}>{t('Modelos permitidos (global — todas as empresas)')}</strong>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 6, margin: '10px 0' }}>
               {OPENROUTER_MODELS.map(m => (
@@ -325,7 +325,7 @@ export const SuperAdminAi: React.FC = () => {
               {mode === 'selected' && usesToken && (
                 <div style={{
                   marginTop: 10, padding: '12px 14px', borderRadius: 10,
-                  background: '#f8fafc', border: '1px dashed var(--border)', flexBasis: '100%',
+                  background: 'var(--hover-bg)', border: '1px dashed var(--border)', flexBasis: '100%',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <strong style={{ fontSize: '0.8125rem' }}>{t('Modelos permitidos (token global)')}</strong>

@@ -432,7 +432,7 @@ export const SuperAdminCompanies: React.FC = () => {
                 </div>
               </div>
               {/* Preview */}
-              <div style={{ padding: '14px', background: '#f8fafc', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+              <div style={{ padding: '14px', background: 'var(--hover-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                 <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>PREVIEW</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: form.primaryColor || '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>

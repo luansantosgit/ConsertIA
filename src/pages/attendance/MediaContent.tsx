@@ -31,7 +31,7 @@ export const MediaContent: React.FC<MediaContentProps> = ({ msg, onFetchMedia })
           alignItems: 'center',
           gap: 10,
           background: msg.from === 'attendant' ? 'rgba(255,255,255,0.15)' : 'var(--hover-bg)',
-          border: msg.from === 'attendant' ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0',
+          border: msg.from === 'attendant' ? '1px solid rgba(255,255,255,0.2)' : '1px solid var(--border)',
           borderRadius: 10,
           padding: '10px 14px',
           maxWidth: 260,

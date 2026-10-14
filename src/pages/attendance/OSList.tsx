@@ -76,7 +76,7 @@ export const OSList: React.FC<OSListProps> = ({
                     <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(os.budget_amount)}</strong>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 4, paddingTop: 6, borderTop: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', gap: 6, marginTop: 4, paddingTop: 6, borderTop: '1px solid var(--border)' }}>
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ flex: 1, padding: '4px 6px', fontSize: '0.6875rem', justifyContent: 'center', gap: 4 }}

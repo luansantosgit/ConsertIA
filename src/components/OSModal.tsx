@@ -159,11 +159,11 @@ export const OSModal: React.FC<OSModalProps> = ({
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '14px 16px', borderRadius: 10,
-                  background: '#ecfdf5', border: '1px solid #bbf7d0',
+                  background: 'var(--success-bg)', border: '1px solid var(--success)',
                 }}>
-                  <Check size={20} color="#16a34a" />
+                  <Check size={20} color="var(--success)" />
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 700, fontSize: '0.875rem', color: '#166534', margin: 0 }}>
+                    <p style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--success-text)', margin: 0 }}>
                       {savedOsId ? `OS-${savedOsId.replace(/-/g, '').slice(0, 6).toUpperCase()} criada` : 'OS enviada'}
                     </p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>

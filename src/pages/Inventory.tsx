@@ -205,7 +205,7 @@ export const Inventory: React.FC = () => {
         {selectedIds.size > 0 && (
           <button
             className="btn btn-sm"
-            style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', gap: 6 }}
+            style={{ background: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger)', gap: 6 }}
             onClick={() => setConfirmDelete({ isOpen: true, item: null, bulk: true })}
           >
             <Trash2 size={13} />
@@ -264,10 +264,10 @@ export const Inventory: React.FC = () => {
                   <td><span className={'badge ' + st.badge}>{st.label}</span></td>
                   <td style={{ textAlign: 'right', paddingRight: 20 }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                      <button className="btn btn-sm btn-icon" style={{ background: '#ecfdf5', color: '#10b981', border: '1px solid #6ee7b7', borderRadius: 8 }} onClick={() => setMovModal({ item, type: 'in' })} title="Entrada de estoque">
+                      <button className="btn btn-sm btn-icon" style={{ background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success)', borderRadius: 8 }} onClick={() => setMovModal({ item, type: 'in' })} title="Entrada de estoque">
                         <ArrowDown size={14} />
                       </button>
-                      <button className="btn btn-sm btn-icon" style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: 8 }} onClick={() => setMovModal({ item, type: 'out' })} title="Saída de estoque">
+                      <button className="btn btn-sm btn-icon" style={{ background: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger)', borderRadius: 8 }} onClick={() => setMovModal({ item, type: 'out' })} title="Saída de estoque">
                         <ArrowUp size={14} />
                       </button>
                       <button className="btn btn-sm btn-icon btn-ghost" style={{ color: 'var(--primary-text)', borderRadius: 8 }} onClick={() => { setEditingItem(item); setShowAddModal(true); }} title="Editar produto">

@@ -283,7 +283,7 @@ export const Schedule: React.FC = () => {
         </div>
 
         {HOURS.map(hour => (
-          <div key={hour} style={{ display: 'grid', gridTemplateColumns: '60px repeat(6, 1fr)', borderBottom: '1px solid #f5f6fb', minHeight: 60 }}>
+            <div key={hour} style={{ display: 'grid', gridTemplateColumns: '60px repeat(6, 1fr)', borderBottom: '1px solid var(--table-row-border)', minHeight: 60 }}>
             <div style={{ padding: '8px 12px 0', fontSize: '0.6875rem', color: 'var(--text-muted)', textAlign: 'right', flexShrink: 0 }}>
               {String(hour).padStart(2, '0')}:00
             </div>

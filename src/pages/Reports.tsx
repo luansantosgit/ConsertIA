@@ -190,7 +190,7 @@ export const Reports: React.FC = () => {
             {(['7d', '30d', '3m', '12m'] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)} style={{
                 padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500,
-                background: period === p ? '#fff' : 'transparent',
+                background: period === p ? 'var(--card-bg)' : 'transparent',
                 color: period === p ? 'var(--text-primary)' : 'var(--text-muted)',
                 boxShadow: period === p ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
               }}>{p}</button>

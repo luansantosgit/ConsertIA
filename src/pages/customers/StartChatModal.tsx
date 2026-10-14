@@ -139,7 +139,7 @@ export const StartChatModal: React.FC<StartChatModalProps> = ({ customer, isOpen
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {error && (
-            <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ padding: '8px 12px', background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, color: 'var(--danger-text)', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: 8 }}>
               <AlertCircle size={15} />
               {error}
             </div>

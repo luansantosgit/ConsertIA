@@ -30,7 +30,7 @@ export const ConversationCard = React.memo(function ConversationCard({
         alignItems: 'flex-start',
         gap: 10,
         padding: '13px 16px',
-        borderBottom: '1px solid #f5f6fb',
+        borderBottom: '1px solid var(--table-row-border)',
         cursor: 'pointer',
         transition: 'background 0.12s',
         background: isSelected ? 'var(--primary-light)' : 'transparent',
@@ -134,8 +134,8 @@ export const ConversationCard = React.memo(function ConversationCard({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               borderRadius: 7, cursor: 'pointer',
               border: '1px solid',
-              borderColor: conv.ai_state === 'attending' ? '#c4b5fd' : '#6ee7b7',
-              background: conv.ai_state === 'attending' ? '#ede9fe' : '#d1fae5',
+              borderColor: conv.ai_state === 'attending' ? 'var(--primary-ring)' : 'var(--success)',
+              background: conv.ai_state === 'attending' ? 'var(--primary-light)' : 'var(--success-bg)',
               transition: 'transform 0.12s, filter 0.12s',
             }}
             onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(0.95)'; }}

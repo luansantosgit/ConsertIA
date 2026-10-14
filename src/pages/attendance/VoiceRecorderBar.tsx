@@ -81,12 +81,12 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
 
   if (recording) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 'var(--radius-full)', padding: '8px 14px' }}>
-        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 0 4px rgba(239,68,68,0.15)' }} />
-        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#b91c1c', flex: 1 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-full)', padding: '8px 14px' }}>
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--danger)', boxShadow: '0 0 0 4px rgba(239,68,68,0.15)' }} />
+        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--danger-text)', flex: 1 }}>
           Gravando áudio · {fmt(seconds)}
         </span>
-        <button onClick={() => stopRecording(false)} title="Descartar gravação" style={{ ...iconBtn, color: '#b91c1c' }}>
+        <button onClick={() => stopRecording(false)} title="Descartar gravação" style={{ ...iconBtn, color: 'var(--danger-text)' }}>
           <Trash2 size={16} />
         </button>
         <button onClick={() => stopRecording(true)} title="Enviar áudio" style={{ ...iconBtn, background: 'var(--primary)', color: '#fff' }}>

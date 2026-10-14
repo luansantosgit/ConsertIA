@@ -188,11 +188,11 @@ export const SuperAdminIntegracoes: React.FC = () => {
             </p>
           </div>
 
-          <div style={{ padding: 14, background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0' }}>
-            <p style={{ fontSize: '0.8125rem', color: '#166534' }}>
+          <div style={{ padding: 14, background: 'var(--success-bg)', borderRadius: 10, border: '1px solid var(--success)' }}>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--success-text)' }}>
               <strong>Base URL:</strong> https://{settings.uazapi_subdomain || 'api'}.uazapi.com
             </p>
-            <p style={{ fontSize: '0.75rem', color: '#166534', marginTop: 4 }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--success-text)', marginTop: 4 }}>
               Endpoints principais: <code>/instance/create</code>, <code>/instance/connect</code>, <code>/send/text</code>, <code>/send/media</code>
             </p>
           </div>
@@ -209,8 +209,8 @@ export const SuperAdminIntegracoes: React.FC = () => {
             </p>
           </div>
 
-          <div style={{ padding: 12, background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
-            <p style={{ fontSize: '0.8125rem', color: '#1e40af' }}>
+          <div style={{ padding: 12, background: 'var(--info-bg)', borderRadius: 8, border: '1px solid var(--info)' }}>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--info-text)' }}>
               O WABA ID e Phone Number ID são preenchidos por cada empresa ao conectar um canal oficial. Não são configurados aqui.
             </p>
           </div>
