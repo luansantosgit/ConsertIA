@@ -53,8 +53,8 @@ export interface ServiceOrder {
   completed_at?: string;
   technician_id?: string;
   origin?: string;
-  serial_number?: string;
-  equipment_name?: string;
+  serial_number?: string | null;
+  equipment_name?: string | null;
   short_code?: string;
   budget_items?: Array<{ name: string; value: number }>;
   priority: 'low' | 'medium' | 'high' | 'urgent';

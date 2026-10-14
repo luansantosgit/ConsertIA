@@ -79,8 +79,11 @@ export const ServiceOrders: React.FC = () => {
         subject: o.subject,
         description: o.description,
         budget_amount: o.budget_amount ?? undefined,
+        budget_items: o.budget_items ?? undefined,
         priority: o.priority,
         checklist_photos: o.checklist_photos,
+        equipment_name: o.equipmentLabel ?? null,
+        serial_number: o.serialNumber ?? null,
       });
       setOS(prev => prev.map(x => x.id === o.id ? { ...x, ...o } : x));
       setEditingOs(null);
@@ -117,7 +120,12 @@ export const ServiceOrders: React.FC = () => {
     try {
       const repo = new ServiceOrderRepository();
       const data = await repo.getAll();
-      setOS(data as OSRow[]);
+      // DB devolve snake_case; a UI usa camelCase (equipmentLabel/serialNumber)
+      setOS(data.map(o => ({
+        ...o,
+        equipmentLabel: (o as { equipment_name?: string }).equipment_name ?? (o as OSRow).equipmentLabel,
+        serialNumber: (o as { serial_number?: string }).serial_number ?? (o as OSRow).serialNumber,
+      } as OSRow)));
     } catch (err) {
       console.error('Failed to fetch service orders:', err);
       setError('Erro ao carregar ordens de serviço');
@@ -148,8 +156,11 @@ export const ServiceOrders: React.FC = () => {
         subject: newOS.subject,
         description: newOS.description,
         budgetAmount: newOS.budget_amount,
+        budgetItems: newOS.budget_items,
         priority: newOS.priority,
         checklistPhotos: newOS.checklist_photos,
+        serialNumber: newOS.serialNumber,
+        equipmentName: newOS.equipmentLabel,
       });
       await fetchOrders();
     } catch (err) {

@@ -325,7 +325,13 @@ export function useAttendance() {
 
         const orders = customerId ? await osRepo.getByCustomerId(customerId) : [];
         if (!cancelled) {
-          setClientOSMap(prev => ({ ...prev, [selectedId]: orders as unknown as OSRow[] }));
+          // DB devolve snake_case (equipment_name/serial_number); a UI usa camelCase
+          const rows: OSRow[] = orders.map(o => ({
+            ...o,
+            equipmentLabel: o.equipment_name ?? (o as OSRow).equipmentLabel,
+            serialNumber: o.serial_number ?? (o as OSRow).serialNumber,
+          } as OSRow));
+          setClientOSMap(prev => ({ ...prev, [selectedId]: rows }));
         }
       } catch (err) {
         console.error('Failed to load client service orders:', err);
