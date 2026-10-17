@@ -104,7 +104,7 @@ export const AiImportReport: React.FC<{
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
             <thead>
               <tr style={{ background: 'var(--hover-bg)' }}>
-                {['Produto', 'SKU', 'Preço', 'Custo', 'Estoque', 'Categoria'].map((h) => (
+                {['Produto', 'SKU', 'Preço', 'Custo', 'Estoque', 'Categoria', 'Marca', 'Modelo', 'Tipo'].map((h) => (
                   <th key={h} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 700, borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--hover-bg)' }}>{h}</th>
                 ))}
               </tr>
@@ -123,6 +123,9 @@ export const AiImportReport: React.FC<{
                   <td style={{ padding: '6px 10px' }}>{typeof p.cost === 'number' ? formatCurrency(p.cost) : '—'}</td>
                   <td style={{ padding: '6px 10px' }}>{p.stock_quantity ?? '—'}</td>
                   <td style={{ padding: '6px 10px', color: 'var(--text-secondary)' }}>{p.category || 'Outros'}</td>
+                  <td style={{ padding: '6px 10px', color: 'var(--text-secondary)' }}>{p.device_brand || '—'}</td>
+                  <td style={{ padding: '6px 10px', color: 'var(--text-secondary)' }}>{p.device_model || '—'}</td>
+                  <td style={{ padding: '6px 10px' }}>{p.part_type || '—'}</td>
                 </tr>
               ))}
             </tbody>

@@ -58,36 +58,39 @@ Recebe as PRIMEIRAS LINHAS CRUS de abas de uma planilha (qualquer formato, qualq
 
 1. "header_row": índice (0-based) da linha que contém os cabeçalhos reais. Planilhas costumam ter título/subtítulo/linhas em branco antes dos cabeçalhos.
 2. "columns": mapeie os ÍNDICES das colunas (0-based) para EXATAMENTE estes campos, quando existirem:
-   - "name" (nome/descrição do produto — OBRIGATÓRIO identificar)
-   - "sku" (código/SKU/ref)
-   - "price" (preço de venda)
-   - "cost" (preço de custo/compra)
-   - "stock_quantity" (quantidade em estoque/qtd/saldo)
-   - "min_stock_quantity" (estoque mínimo)
-   - "category" (categoria/família/grupo)
-   - "location" (localização/prateleira/gaveta)
-   - "device_brand" (marca do aparelho compatível)
-   - "device_model" (modelo do aparelho compatível)
-   NÃO invente colunas. Se um campo não existir, omita-o.
-3. "formats": para cada campo numérico, descreva o formato dos valores: "brl_comma" (R$ 1.234,56), "brl_dot" (1,234.56), "plain_comma" (1234,56), "plain" (1234). Para stock_quantity, se houver sufixos como "un", "pc", descreva "plain_with_suffix".
+   - "name" (nome/descrição/produto/serviço — OBRIGATÓRIO identificar)
+   - "sku" (código/SKU/ref/referência/cód)
+   - "price" (preço de venda/preço/valor/venda)
+   - "cost" (custo/compra/fornecedor/lucro base)
+   - "stock_quantity" (estoque/qtd/quantidade/saldo/atual)
+   - "min_stock_quantity" (mínimo/estoque mínimo/min)
+   - "category" (categoria/família/grupo/tipo de produto)
+   - "location" (localização/prateleira/gaveta/local/posição)
+   - "device_brand" (marca do aparelho compatível: Apple/Samsung/Motorola...)
+   - "device_model" (modelo do aparelho compatível: iPhone 14, Galaxy S23...)
+   - "part_type" (qualidade/tipo de peça: original, premium, compatível, genérica, lacradora, incell, refurb...)
+   IMPORTANTE: capture TODA coluna que contenha informação real de um destes campos — mesmo com cabeçalho incomum ou grafia errada. Só omita quando a coluna NÃO existir de fato.
+3. "formats": para cada campo numérico mapeado, descreva o formato: "brl_comma" (R$ 1.234,56), "brl_dot" (1,234.56), "plain_comma" (1234,56), "plain" (1234). Para stock_quantity com sufixos ("10 un"), use "plain_with_suffix".
 4. "confidence": 0 a 1 da sua certeza geral.
 5. "notes": breve observação em português sobre o que não conseguiu mapear.
 
 Responda SEMPRE com JSON válido no formato:
-{"sheets":[{"header_row":0,"columns":{"name":2},"formats":{"price":"brl_comma"},"confidence":0.95,"notes":""}]}
+{"sheets":[{"header_row":0,"columns":{"name":2,"part_type":7},"formats":{"price":"brl_comma"},"confidence":0.95,"notes":""}]}
 
 Regras: uma aba por entrada, na MESMA ORDEM recebida. Se uma aba não parecer uma tabela de produtos (vazia, texto solto), devolve columns vazio e confidence 0.`;
 
 const NORMALIZE_SYSTEM_PROMPT = `Você padroniza nomes de produtos de assistência técnica de celular (PT-BR).
-Para CADA nome cru recebido, devolva:
-- "name": nome limpo e padronizado em Title Case bem escrito (corrige abreviações comuns: Iph/Iphone → iPhone, Sam/Samsng → Samsung, Moto → Motorola, Xioami/Xiami → Xiaomi, LG, TelaDisp → Tela Display; expande "carga"→"Conector de Carga", "bateria bts"→"Bateria", "cam tras"→"Câmera Traseira"; separa marca/modelo quando embutidos).
-- "brand": marca ONLY se claramente identificável (Apple, Samsung, Motorola, Xiaomi, LG, Asus...). Senão omita.
+Para CADA nome cru recebido, devolva SEMPRE um item na resposta (nunca pule):
+- "name": nome limpo e padronizado em Title Case bem escrito. Corrija abreviações: Iph/Iphone/Iphon → iPhone; 11 Pro Max → iPhone 11 Pro Max; Sam/Samsng → Samsung; Moto → Motorola; Xioami/Xiami → Xiaomi; tela tft/oled → Tela OLED/TFT; "carga"→"Conector de Carga"; "cam tras"→"Câmera Traseira"; "bateria bts"→"Bateria". Preserve cores, tamanhos e números de modelo.
+- "brand": marca do APARELHO COMPATÍVEL (Apple, Samsung, Motorola, Xiaomi, LG, Asus...) quando identificável no nome — "iPhone", "11 Pro Max", "Iph" indicam Apple; "Galaxy", "S23" indicam Samsung. Se não houver indicação, omita.
+- "model": modelo do aparelho quando identificável ("iPhone 11 Pro Max", "Galaxy S23", "Redmi Note 12"). Se não houver, omita.
+- "part_type": qualidade/tipo de peça quando o nome indicar: "ORI"/"ORIGINAL" → "original"; "GEN"/"GENÉRICA"/"COPY" → "compatível"; "PREMIUM" → "premium"; "INC" / "INCELL" → "incell"; "REBUILD"/"REFURB"/"LACRADORA" → o termo por extenso. Se não houver, omita.
 - "category": categoria ONLY se óbvia (Telas, Baterias, Conectores de Carga, Câmeras, alto-falantes/Campainhas, Películas, Acessórios, Peças em geral). Senão omita.
 
-NUNCA invente preços, quantidades ou especificações. Preserve informação real do nome (cores, tamanhos, "original", "genérica", números do modelo).
+NUNCA invente preços, quantidades ou especificações. Mas SEMPRE devolva o item com o nome limpo, mesmo que só brand/model/part_type não sejam identificáveis (aí apenas os omita).
 Responda SEMPRE com JSON válido:
-{"items":[{"i":0,"name":"Tela iPhone 14 Pro","brand":"Apple","category":"Telas"}]}
-"i" = índice do item recebido (0-based). Todos os itens recebidos devem aparecer na resposta.`;
+{"items":[{"i":0,"name":"Tela iPhone 11 Pro Max","brand":"Apple","model":"iPhone 11 Pro Max","part_type":"original","category":"Telas"}]}
+"i" = índice do item recebido (0-based). A resposta deve ter EXATAMENTE o mesmo número de itens recebidos.`;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {

@@ -24,6 +24,8 @@ export interface NormalizedName {
   i: number;
   name: string;
   brand?: string;
+  model?: string;
+  part_type?: string;
   category?: string;
 }
 
@@ -83,23 +85,33 @@ export async function normalizeProductNames(
       if (Number.isInteger(idx) && idx >= 0 && idx < batch.length) {
         const raw = batch[idx];
         if (item.name && raw) {
-          result.set(raw, { i: idx, name: String(item.name), brand: item.brand, category: item.category });
+          result.set(raw, { i: idx, name: String(item.name), brand: item.brand, model: item.model, part_type: item.part_type, category: item.category });
         }
       }
     });
+  };
+
+  const runBatch = async (batch: string[]) => {
+    const res = await invokeImport<{ ok: boolean; items: NormalizedName[] }>({
+      action: 'normalize',
+      items: batch,
+    });
+    applyBatch(batch, res.items);
   };
 
   const worker = async () => {
     while (nextBatch < batches.length) {
       const batch = batches[nextBatch++];
       try {
-        const res = await invokeImport<{ ok: boolean; items: NormalizedName[] }>({
-          action: 'normalize',
-          items: batch,
-        });
-        applyBatch(batch, res.items);
+        await runBatch(batch);
       } catch (err) {
-        console.warn('[ai-import] lote de nomes falhou, mantendo originais:', err);
+        console.warn('[ai-import] lote falhou, tentando de novo:', err);
+        // Uma tentativa extra por lote: falha intermitente não pode perder dados
+        try {
+          await runBatch(batch);
+        } catch (retryErr) {
+          console.warn('[ai-import] lote falhou de novo, mantendo nomes originais:', retryErr);
+        }
       }
       done += batch.length;
       onProgress?.(Math.min(done, names.length), names.length);

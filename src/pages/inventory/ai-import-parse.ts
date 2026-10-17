@@ -12,6 +12,7 @@ export interface ImportProduct {
   min_stock_quantity?: number;
   category?: string;
   location?: string;
+  part_type?: string;
   device_brand?: string;
   device_model?: string;
   sheet: string;
@@ -30,7 +31,7 @@ export interface SheetReport {
 }
 
 const NUMERIC_FIELDS = ['price', 'cost', 'stock_quantity', 'min_stock_quantity'] as const;
-const TEXT_FIELDS = ['sku', 'category', 'location', 'device_brand', 'device_model'] as const;
+const TEXT_FIELDS = ['sku', 'category', 'location', 'part_type', 'device_brand', 'device_model'] as const;
 
 /** Lê TODAS as abas do arquivo (uma planilha pode ter várias páginas) */
 export function readAllSheets(buffer: ArrayBuffer): ParsedSheet[] {
@@ -130,13 +131,18 @@ export function dedupeProducts(products: ImportProduct[]): {
   return { unique, duplicates };
 }
 
-/** Aplica os nomes padronizados pela IA (nome, marca e categoria se vazio) */
-export function applyNormalizedNames(products: ImportProduct[], normalized: Map<string, { name: string; brand?: string; category?: string }>): void {
+/** Aplica os nomes padronizados pela IA (nome, marca, modelo, tipo e categoria se vazio) */
+export function applyNormalizedNames(
+  products: ImportProduct[],
+  normalized: Map<string, { name: string; brand?: string; model?: string; part_type?: string; category?: string }>,
+): void {
   for (const p of products) {
     const n = normalized.get(p.rawName);
     if (!n) continue;
     p.name = n.name || p.name;
     if (!p.device_brand && n.brand) p.device_brand = n.brand;
+    if (!p.device_model && n.model) p.device_model = n.model;
+    if (!p.part_type && n.part_type) p.part_type = n.part_type;
     if (!p.category && n.category) p.category = n.category;
   }
 }

@@ -176,6 +176,7 @@ export const useAiImportStore = create<AiImportState>()((set, get) => ({
         ...(p.min_stock_quantity !== undefined && { min_stock_quantity: p.min_stock_quantity }),
         category: p.category || 'Outros',
         ...(p.location && { location: p.location }),
+        ...(p.part_type && { part_type: p.part_type }),
         ...(p.device_brand && { device_brand: p.device_brand }),
         ...(p.device_model && { device_model: p.device_model }),
       };
