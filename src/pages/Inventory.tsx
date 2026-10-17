@@ -128,23 +128,17 @@ export const Inventory: React.FC = () => {
 
   const handleDeleteBulk = async () => {
     const ids = [...selectedIds];
-    // Otimista: some da lista na hora — o back trabalha em segundo plano,
-    // o usuário fica livre para fazer outra coisa (ex.: subir outra planilha)
+    // Otimista: some da lista na hora...
     setConfirmDelete({ isOpen: false, item: null, bulk: false });
     setItems(prev => prev.filter(it => !selectedIds.has(it.id)));
     setSelectedIds(new Set());
-
-    let failures = 0;
-    for (const id of ids) {
-      try {
-        await productRepo.delete(id);
-      } catch {
-        failures++;
-      }
-    }
-    // Falha parcial: recarrega a lista — os itens que não saíram voltam (verdade)
-    if (failures > 0) {
-      console.error(`[inventory] ${failures} item(ns) falharam ao excluir`);
+    // ...e a exclusão real é UMA chamada RPC no servidor: commit imediato,
+    // imune a reload da página (o loop anterior morria no meio)
+    try {
+      await productRepo.deleteMany(ids);
+    } catch (err) {
+      console.error('Failed to delete products:', err);
+      // Falhou: recarrega — os itens que não saíram voltam (verdade)
       fetchProducts(true);
     }
   };

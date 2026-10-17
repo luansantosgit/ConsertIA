@@ -78,6 +78,13 @@ export class ProductRepository extends BaseSupabaseRepository<Product> {
     );
   }
 
+  /** Exclusão em massa no servidor: uma chamada, commit imediato (imune a reload) */
+  async deleteMany(ids: string[]): Promise<number> {
+    const { data, error } = await supabase.rpc('delete_catalog_items', { p_ids: ids });
+    if (error) throw error;
+    return Number(data ?? 0);
+  }
+
   async getActive(): Promise<Product[]> {
     return this.getAll({ active: true });
   }
