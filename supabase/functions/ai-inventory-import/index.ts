@@ -81,24 +81,36 @@ Regras: uma aba por entrada, na MESMA ORDEM recebida. Se uma aba não parecer um
 
 const VALID_BRANDS = [
   "Apple", "Samsung", "Motorola", "Xiaomi", "Asus", "LG", "ZTE", "Huawei",
-  "Honor", "Realme", "Nokia", "Sony", "Multilaser", "Positivo",
+  "Honor", "Realme", "Nokia", "Sony", "Multilaser", "Positivo", "Infinix", "Tecno",
 ];
 
-const NORMALIZE_BASE_PROMPT = `Você padroniza nomes de produtos de assistência técnica de celular (PT-BR).
+const NORMALIZE_BASE_PROMPT = `Você é um especialista em peças de assistência técnica de celular e padroniza nomes de produtos (PT-BR).
+
+BASE DE CONHECIMENTO DO RAMO — NUNCA devolva em "unclear" nada desta lista (são termos conhecidos; mantenha no "name" quando aplicável):
+- Características de peça: "COM ARO"/"C/A" (com moldura/frame), "SEM ARO"/"S/A", "BORDA GROSSA", "BORDA FINA", "CURVADA", "OCA", "SOFT", "HARD", "LACRE", "CÓPIA"/"COPY". "IMPORTADA"/"NACIONAL" indicam apenas a ORIGEM da peça — mantenha no "name", NUNCA alteram o "part_type".
+- Famílias de aparelhos (em catálogo de assistência, letra+número é quase sempre MODELO — use a marca correta e preencha "model" SEM pedir):
+  · Apple: iPhone (8, 8 Plus, X, XR, XS, XS Max, 11..17, mini, SE, Pro, Pro Max). Número solto após contexto iPhone = modelo daquele iPhone.
+  · Samsung: Galaxy A (A01..A56, A05s, A13, A23 4G/5G...), Galaxy F (F34...), M, S (S20..S25, Ultra), Note, Z Flip/Fold.
+  · Xiaomi: Redmi (Note 8..14, 4G/5G/Pro/Plus/Lite), POCO (M5s, X3, F5...), MI 8 Lite. "MI NOTE N" = Redmi Note N; "NOTE N" após contexto Xiaomi = Redmi Note N.
+  · Motorola: Moto G (G22, G51, G52, G54, G60, G60s, G64, G71s, G82, G84... e variantes 5G/Plus), Edge (Edge 20/30/40/50, Edge Plus, Edge 30 Fusion), One (One Vision, One Action).
+  · Infinix: Hot (Hot 10 Play, Hot 11 Play, Hot 30), Smart, Note. Tecno: Pova (Pova Neo), Spark, Camon, KF7.
+  · Asus: Zenfone. Realme: números + série. Nokia: 1..9, G, C, X.
+- Variante só-sufixo herda o modelo base da mesma linha: "A16 4G / 5G" → "Galaxy A16 4G" + "Galaxy A16 5G"; "EDGE / EDGE PLUS" → "Motorola Edge" + "Motorola Edge Plus"; "A52/ A52S" → "Galaxy A52" + "Galaxy A52s".
+
 Para CADA nome cru recebido, devolva SEMPRE um item na resposta (nunca pule):
-- "name": nome limpo e padronizado em Title Case bem escrito. Corrija abreviações: Iph/Iphone/Iphon → iPhone; Sam/Samsng → Samsung; Moto → Motorola; Xioami/Xiami → Xiaomi. NÚMEROS SOLTOS após contexto iPhone significam o modelo: "11 Pro Max" → iPhone 11 Pro Max; "14" → iPhone 14; "S23" → Galaxy S23. "carga"→"Conector de Carga"; "cam tras"→"Câmera Traseira"; "bateria bts"→"Bateria". Preserve cores, tamanhos e números de modelo.
-- "brand": marca do APARELHO COMPATÍVEL — OBRIGATORIAMENTE uma destas: ${VALID_BRANDS.join(", ")}. "iPhone"/"Iph" indicam Apple (NUNCA devolva "IPHONE"/"Iphone" como marca). Se não der para identificar, omita.
-- "model": modelo do aparelho quando identificável ("iPhone 11", "iPhone 14 Pro Max", "Galaxy S23", "Redmi Note 12"). Se não houver, omita.
-- "MÚLTIPLOS MODELOS NA MESMA LINHA": quando o nome lista VÁRIOS aparelhos/modelos (separados por '/', '+', vírgula ou ' e ', e às vezes só por espaços quando óbvio), devolva UM ITEM PARA CADA MODELO — todos com o MESMO "i" do item recebido. Ex.: "NOTE 10 4G/ NOTE 10S / POCO M5S" (i=5) → três itens: {"i":5,"name":"...Redmi Note 10 4G...","brand":"Xiaomi","model":"Redmi Note 10 4G"}, {"i":5,"name":"...Redmi Note 10S...","brand":"Xiaomi","model":"Redmi Note 10S"}, {"i":5,"name":"...POCO M5s...","brand":"Xiaomi","model":"POCO M5s"}. "MI NOTE" = Xiaomi Redmi Note. Cada variante mantém a característica comum (ex.: CURVADA ORI → part_type "original" em todas).
-- "part_type": qualidade/tipo de peça em minúsculas canônico: "ORI"/"ORIGINAL" → "original"; "GEN"/"GENÉRICA"/"COPY"/"CÓPIA" → "compatível"; "PREMIUM" → "premium"; "INC"/"INCELL" → "incell"; "REBUILD"/"REFURB"/"LACRADORA" → "recondicionada". Se não houver, omita.
-- "category": categoria ONLY se óbvia (Telas, Baterias, Conectores de Carga, Câmeras, alto-falantes/Campainhas, Películas, Acessórios, Peças em geral). Senão omita.
-- "unclear": array com pedaços/tokens do nome que você NÃO conseguiu interpretar com segurança — siglas de qualidade/fabricante de peça que não são padrão de mercado (ex.: "JK", "OCA", "SOFT", "HARD", "AM"), códigos desconhecidos, modelos que não reconhece. NÃO chute o significado: devolva em "unclear" para a empresa esclarecer (mantenha o termo no "name"). Se entendeu tudo, devolva [].
+- "name": nome limpo em Title Case bem escrito, no formato [Tipo de peça] [Modelo] [características] (ex.: "Tela Galaxy A51 com Aro Borda Fina", "Tampa Traseira iPhone 12 Pro Premium"). Corrija abreviações: Iph/Iphone → iPhone; Sam/Samsng → Samsung; MI NOTE → Redmi Note.
+- "brand": marca do APARELHO COMPATÍVEL — OBRIGATORIAMENTE uma destas: ${VALID_BRANDS.join(", ")}. Use a base de conhecimento acima para identificar pela família (G82 → Motorola; A05 → Samsung; NOTE 10 → Xiaomi Redmi Note 10; EDGE 30 → Motorola; HOT 11 → Infinix). Se não der, omita.
+- "model": modelo do aparelho ("iPhone 11", "Galaxy A52", "Redmi Note 10 4G", "Moto G82", "Edge 30 Fusion", "One Action"). Se não houver, omita.
+- "part_type": qualidade em minúsculas canônico: "ORI"/"ORIGINAL" → "original"; "GEN"/"GENÉRICA"/"COPY"/"CÓPIA" → "compatível"; "PREMIUM" → "premium"; "INC"/"INCELL" → "incell"; "REBUILD"/"REFURB"/"LACRADORA" → "recondicionada". Se não houver, omita.
+- "category": categoria ONLY se óbvia (Telas, Baterias, Conectores de Carga, Câmeras, alto-falantes/Campainhas, Películas, Tampas Traseiras, Acessórios, Peças em geral). Senão omita.
+- "MÚLTIPLOS MODELOS NA MESMA LINHA": quando o nome lista VÁRIOS aparelhos/modelos (separados por '/', '+', vírgula ou ' e '), devolva UM ITEM PARA CADA MODELO — todos com o MESMO "i" do item recebido. Cada variante mantém as características comuns (COM ARO, CURVADA, part_type...). Ex.: "NOTE 10 4G/ NOTE 10S / POCO M5S" (i=5) → três itens com i=5.
+- "unclear": array com pedaços GENUINAMENTE desconhecidos — siglas regionais de fabricante/qualidade de peça que não estão na base acima (ex.: "JK", "BOY"), códigos sem contexto. NÃO chute o significado: devolva em "unclear" (mantendo o termo no "name") para a empresa esclarecer. Termos da base de conhecimento NUNCA entram em unclear. Se entendeu tudo, devolva [].
 - "confidence": 0 a 1 da sua certeza sobre a interpretação do item.
 
 NUNCA invente preços, quantidades ou especificações. Mas SEMPRE devolva o item com o nome limpo, mesmo que só brand/model/part_type não sejam identificáveis (aí apenas os omita).
 Responda SEMPRE com JSON válido:
 {"items":[{"i":0,"name":"Tela iPhone 11","brand":"Apple","model":"iPhone 11","part_type":"original","category":"Telas","unclear":[],"confidence":0.95}]}
-"i" = índice do item recebido (0-based). A resposta deve ter EXATAMENTE o mesmo número de itens recebidos.`;
+"i" = índice do item recebido (0-based). A resposta deve ter EXATAMENTE o mesmo número de itens recebidos (mais variantes de linhas multi-modelo, repetindo o "i").`;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
