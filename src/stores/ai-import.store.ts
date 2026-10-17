@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ProductRepository } from '@/repositories/product.repository';
-import { mapSheetColumns, normalizeProductNames, type SheetMapping } from '@/lib/ai-import.service';
+import { mapSheetColumns, normalizeProductNames, clarifyProductNames, type SheetMapping } from '@/lib/ai-import.service';
 import {
   readAllSheets, buildProductsFromSheet, dedupeProducts, applyNormalizedNames,
   type ImportProduct, type SheetReport,
@@ -17,9 +17,21 @@ import type { StockItemForm } from '@/pages/inventory/ProductFormModal';
  * A sessão é PERSISTIDA (localStorage): sobrevive a reload/F5.
  * - 'importing' → retoma o envio automaticamente (upsert é idempotente)
  * - 'analyzing' → avisa que a análise foi interrompida pelo reload
+ *
+ * Dúvidas da IA: itens com termos fora do padrão ficam agrupados no
+ * relatório; a empresa esclarece uma vez e a resposta vira glossário
+ * persistido (a IA não pergunta de novo nas próximas importações).
  */
 
 export type ImportStage = 'idle' | 'analyzing' | 'report' | 'importing' | 'done';
+
+export interface DoubtGroup {
+  key: string;
+  term: string;
+  rawNames: string[];
+  count: number;
+  resolved: boolean;
+}
 
 interface AnalyzeStep {
   label: string;
@@ -34,6 +46,8 @@ interface AiImportState {
   products: ImportProduct[];
   sheetReports: SheetReport[];
   issues: string[];
+  doubts: DoubtGroup[];
+  clarifyingKey: string | null;
   importProgress: { done: number; total: number };
   result: string | null;
   error: string | null;
@@ -44,6 +58,8 @@ interface AiImportState {
   restore: () => void;
   startAnalysis: (file: File) => Promise<void>;
   sendToCatalog: () => Promise<void>;
+  applyClarification: (key: string, meaning: string) => Promise<void>;
+  skipDoubt: (key: string) => void;
   reset: () => void;
 }
 
@@ -52,16 +68,18 @@ const MAX_PRODUCTS = 5000;
 export const useAiImportStore = create<AiImportState>()(
   persist(
     (set, get) => ({
-      stage: 'idle',
-      modalOpen: false,
-      minimized: false,
-      analyzeStep: { label: '', progress: 0 },
-      products: [],
-      sheetReports: [],
-      issues: [],
-      importProgress: { done: 0, total: 0 },
-      result: null,
-      error: null,
+  stage: 'idle',
+  modalOpen: false,
+  minimized: false,
+  analyzeStep: { label: '', progress: 0 },
+  products: [],
+  sheetReports: [],
+  issues: [],
+  doubts: [],
+  clarifyingKey: null,
+  importProgress: { done: 0, total: 0 },
+  result: null,
+  error: null,
 
   openModal: () => set({ modalOpen: true, minimized: false }),
 
@@ -88,6 +106,8 @@ export const useAiImportStore = create<AiImportState>()(
       products: [],
       sheetReports: [],
       issues: [],
+      doubts: [],
+      clarifyingKey: null,
       analyzeStep: { label: 'Lendo abas da planilha...', progress: 10 },
     });
     try {
@@ -133,10 +153,25 @@ export const useAiImportStore = create<AiImportState>()(
       });
       applyNormalizedNames(finalProducts, normalized);
 
+      // Dúvidas: IA marcou tokens que não entendeu — agrupa por termo
+      // para a empresa esclarecer UMA vez e valer para todos os itens
+      const doubtsMap = new Map<string, DoubtGroup>();
+      for (const p of finalProducts) {
+        const n = normalized.get(p.rawName);
+        const tokens = [...new Set((n?.unclear ?? []).map((t) => t.trim()).filter(Boolean))];
+        if (tokens.length === 0) continue;
+        const key = tokens.sort().join(' + ');
+        const group = doubtsMap.get(key);
+        if (group) group.rawNames.push(p.rawName);
+        else doubtsMap.set(key, { key, term: key, rawNames: [p.rawName], count: 0, resolved: false });
+      }
+      const doubts = [...doubtsMap.values()].map((g) => ({ ...g, count: g.rawNames.length }));
+
       set({
         products: finalProducts,
         sheetReports: reports,
         issues: allIssues,
+        doubts,
         analyzeStep: { label: 'Pronto!', progress: 100 },
         stage: 'report',
       });
@@ -210,6 +245,42 @@ export const useAiImportStore = create<AiImportState>()(
     });
   },
 
+  applyClarification: async (key, meaning) => {
+    const { doubts, products } = get();
+    const group = doubts.find((d) => d.key === key);
+    if (!group || !meaning.trim()) return;
+    set({ clarifyingKey: key });
+
+    try {
+      // Re-normaliza TODOS os itens do grupo com o esclarecimento da empresa;
+      // a edge salva a resposta no glossário do tenant (vale para as próximas)
+      const clarified = await clarifyProductNames(group.rawNames, group.term, meaning.trim());
+      for (const p of products) {
+        if (!group.rawNames.includes(p.rawName)) continue;
+        const n = clarified.get(p.rawName);
+        if (!n) continue;
+        if (n.name) p.name = n.name;
+        if (n.brand) p.device_brand = n.brand;
+        if (n.model) p.device_model = n.model;
+        if (n.part_type) p.part_type = n.part_type;
+        if (!p.category && n.category) p.category = n.category;
+      }
+      set({
+        products: [...products],
+        doubts: doubts.map((d) => (d.key === key ? { ...d, resolved: true } : d)),
+      });
+    } catch (err) {
+      console.error('[ai-import] falha ao aplicar esclarecimento:', err);
+      set({ error: 'Não foi possível aplicar o esclarecimento agora. Tente de novo.' });
+    } finally {
+      set({ clarifyingKey: null });
+    }
+  },
+
+  skipDoubt: (key) => {
+    set({ doubts: get().doubts.map((d) => (d.key === key ? { ...d, resolved: true } : d)) });
+  },
+
   reset: () => set({
     stage: 'idle',
     modalOpen: false,
@@ -218,6 +289,8 @@ export const useAiImportStore = create<AiImportState>()(
     products: [],
     sheetReports: [],
     issues: [],
+    doubts: [],
+    clarifyingKey: null,
     importProgress: { done: 0, total: 0 },
     result: null,
     error: null,
@@ -234,6 +307,7 @@ export const useAiImportStore = create<AiImportState>()(
         products: s.products,
         sheetReports: s.sheetReports,
         issues: s.issues,
+        doubts: s.doubts,
         importProgress: s.importProgress,
         result: s.result,
         error: s.error,

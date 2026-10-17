@@ -79,17 +79,24 @@ Responda SEMPRE com JSON válido no formato:
 
 Regras: uma aba por entrada, na MESMA ORDEM recebida. Se uma aba não parecer uma tabela de produtos (vazia, texto solto), devolve columns vazio e confidence 0.`;
 
-const NORMALIZE_SYSTEM_PROMPT = `Você padroniza nomes de produtos de assistência técnica de celular (PT-BR).
+const VALID_BRANDS = [
+  "Apple", "Samsung", "Motorola", "Xiaomi", "Asus", "LG", "ZTE", "Huawei",
+  "Honor", "Realme", "Nokia", "Sony", "Multilaser", "Positivo",
+];
+
+const NORMALIZE_BASE_PROMPT = `Você padroniza nomes de produtos de assistência técnica de celular (PT-BR).
 Para CADA nome cru recebido, devolva SEMPRE um item na resposta (nunca pule):
-- "name": nome limpo e padronizado em Title Case bem escrito. Corrija abreviações: Iph/Iphone/Iphon → iPhone; 11 Pro Max → iPhone 11 Pro Max; Sam/Samsng → Samsung; Moto → Motorola; Xioami/Xiami → Xiaomi; tela tft/oled → Tela OLED/TFT; "carga"→"Conector de Carga"; "cam tras"→"Câmera Traseira"; "bateria bts"→"Bateria". Preserve cores, tamanhos e números de modelo.
-- "brand": marca do APARELHO COMPATÍVEL (Apple, Samsung, Motorola, Xiaomi, LG, Asus...) quando identificável no nome — "iPhone", "11 Pro Max", "Iph" indicam Apple; "Galaxy", "S23" indicam Samsung. Se não houver indicação, omita.
-- "model": modelo do aparelho quando identificável ("iPhone 11 Pro Max", "Galaxy S23", "Redmi Note 12"). Se não houver, omita.
-- "part_type": qualidade/tipo de peça quando o nome indicar: "ORI"/"ORIGINAL" → "original"; "GEN"/"GENÉRICA"/"COPY" → "compatível"; "PREMIUM" → "premium"; "INC" / "INCELL" → "incell"; "REBUILD"/"REFURB"/"LACRADORA" → o termo por extenso. Se não houver, omita.
+- "name": nome limpo e padronizado em Title Case bem escrito. Corrija abreviações: Iph/Iphone/Iphon → iPhone; Sam/Samsng → Samsung; Moto → Motorola; Xioami/Xiami → Xiaomi. NÚMEROS SOLTOS após contexto iPhone significam o modelo: "11 Pro Max" → iPhone 11 Pro Max; "14" → iPhone 14; "S23" → Galaxy S23. "carga"→"Conector de Carga"; "cam tras"→"Câmera Traseira"; "bateria bts"→"Bateria". Preserve cores, tamanhos e números de modelo.
+- "brand": marca do APARELHO COMPATÍVEL — OBRIGATORIAMENTE uma destas: ${VALID_BRANDS.join(", ")}. "iPhone"/"Iph" indicam Apple (NUNCA devolva "IPHONE"/"Iphone" como marca). Se não der para identificar, omita.
+- "model": modelo do aparelho quando identificável ("iPhone 11", "iPhone 14 Pro Max", "Galaxy S23", "Redmi Note 12"). Se não houver, omita.
+- "part_type": qualidade/tipo de peça em minúsculas canônico: "ORI"/"ORIGINAL" → "original"; "GEN"/"GENÉRICA"/"COPY"/"CÓPIA" → "compatível"; "PREMIUM" → "premium"; "INC"/"INCELL" → "incell"; "REBUILD"/"REFURB"/"LACRADORA" → "recondicionada". Se não houver, omita.
 - "category": categoria ONLY se óbvia (Telas, Baterias, Conectores de Carga, Câmeras, alto-falantes/Campainhas, Películas, Acessórios, Peças em geral). Senão omita.
+- "unclear": array com pedaços/tokens do nome que você NÃO conseguiu interpretar com segurança (siglas estranhas, códigos desconhecidos, modelos que não reconhece). Ex.: "11 ORI BOY" → ["BOY"]. Se entendeu tudo, omita ou devolva [].
+- "confidence": 0 a 1 da sua certeza sobre a interpretação do item.
 
 NUNCA invente preços, quantidades ou especificações. Mas SEMPRE devolva o item com o nome limpo, mesmo que só brand/model/part_type não sejam identificáveis (aí apenas os omita).
 Responda SEMPRE com JSON válido:
-{"items":[{"i":0,"name":"Tela iPhone 11 Pro Max","brand":"Apple","model":"iPhone 11 Pro Max","part_type":"original","category":"Telas"}]}
+{"items":[{"i":0,"name":"Tela iPhone 11","brand":"Apple","model":"iPhone 11","part_type":"original","category":"Telas","unclear":[],"confidence":0.95}]}
 "i" = índice do item recebido (0-based). A resposta deve ter EXATAMENTE o mesmo número de itens recebidos.`;
 
 function json(data: unknown, status = 200) {
@@ -298,23 +305,62 @@ serve(async (req) => {
         return json({ ok: true, model: result.usedModel, sheets: mappings });
       }
 
-      if (action === "normalize") {
+      // normalize e clarify compartilham o mesmo pipeline: clarify inclui a
+      // resposta da empresa sobre um termo e a salva no glossário do tenant
+      if (action === "normalize" || action === "clarify") {
         const items: unknown[] = Array.isArray(body?.items) ? body.items : [];
         if (items.length === 0 || items.length > MAX_NAME_BATCH) {
           return json({ error: `Envie entre 1 e ${MAX_NAME_BATCH} nomes por lote` }, 400);
         }
         const names = items.map((n) => String(n ?? "").slice(0, 120));
+
+        // Glossário do tenant: respostas anteriores da empresa
+        const { data: glossaryRows } = await supabase
+          .from("ai_import_glossary")
+          .select("term, meaning")
+          .eq("tenant_id", tenantId)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        const clarification = action === "clarify"
+          ? { term: String(body?.term ?? "").slice(0, 60), meaning: String(body?.meaning ?? "").slice(0, 300) }
+          : null;
+
+        let systemPrompt = NORMALIZE_BASE_PROMPT;
+        const glossaryText = (glossaryRows ?? [])
+          .map((g: { term: string; meaning: string }) => `'${g.term}' = ${g.meaning}`)
+          .join("; ");
+        if (glossaryText) {
+          systemPrompt += `\n\nGlossário desta empresa (contexto já esclarecido por eles — use e NÃO pergunte de novo):\n${glossaryText}`;
+        }
+        if (clarification?.term && clarification.meaning) {
+          systemPrompt += `\n\nA empresa acabou de esclarecer: '${clarification.term}' significa: ${clarification.meaning}. Aplique esta interpretação aos nomes abaixo.`;
+        }
+
         const result = await callModel(
           apiKey,
-          NORMALIZE_SYSTEM_PROMPT,
+          systemPrompt,
           `Nomes crus (JSON):\n${JSON.stringify({ items: names })}`,
           4000,
         );
         inputTokens += result.inputTokens;
         outputTokens += result.outputTokens;
 
+        // Resposta útil da empresa vira glossário: próxima importação já sabe
+        if (clarification?.term && clarification.meaning) {
+          await supabase
+            .from("ai_import_glossary")
+            .upsert(
+              { tenant_id: tenantId, term: clarification.term, meaning: clarification.meaning },
+              { onConflict: "tenant_id,term" },
+            )
+            .then(() => undefined, (e: unknown) => {
+              console.warn("[ai-inventory-import] falha ao salvar glossário:", e);
+            });
+        }
+
         const parsed = result.data as {
-          items?: Array<{ i?: number; name?: string; brand?: string; category?: string }>;
+          items?: Array<{ i?: number; name?: string; brand?: string; model?: string; part_type?: string; category?: string; unclear?: string[]; confidence?: number }>;
         };
         const clean = Array.isArray(parsed?.items) ? parsed.items : [];
         await trackUsage(supabase, tenantId, inputTokens, outputTokens, 0);
@@ -322,7 +368,7 @@ serve(async (req) => {
         return json({ ok: true, model: result.usedModel, items: clean });
       }
 
-      return json({ error: "action inválida (use map ou normalize)" }, 400);
+      return json({ error: "action inválida (use map, normalize ou clarify)" }, 400);
     } catch (err) {
       await trackUsage(supabase, tenantId, inputTokens, outputTokens, 0);
       await logCall(supabase, tenantId, inputTokens, outputTokens, false, (err as Error).message, startedAt, IMPORT_MODELS[0]);

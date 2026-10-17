@@ -1,7 +1,7 @@
-import React from 'react';
-import { CheckCircle2, AlertTriangle, Sparkles, ListChecks } from 'lucide-react';
-import type { ImportProduct } from './ai-import-parse';
-import type { SheetReport } from './ai-import-parse';
+import React, { useState } from 'react';
+import { CheckCircle2, AlertTriangle, Sparkles, ListChecks, HelpCircle, Loader2, X } from 'lucide-react';
+import type { ImportProduct, SheetReport } from './ai-import-parse';
+import type { DoubtGroup } from '@/stores/ai-import.store';
 import { formatCurrency } from '@/lib/format';
 
 const FIELD_LABELS: Record<string, string> = {
@@ -17,17 +17,76 @@ const FIELD_LABELS: Record<string, string> = {
   device_model: 'Modelo',
 };
 
+/** Card de uma dúvida da IA: a empresa esclarece e vale para todos os itens do grupo */
+const DoubtCard: React.FC<{
+  doubt: DoubtGroup;
+  clarifying: boolean;
+  onClarify: (meaning: string) => void;
+  onSkip: () => void;
+}> = ({ doubt, clarifying, onClarify, onSkip }) => {
+  const [answer, setAnswer] = useState('');
+  const examples = doubt.rawNames.slice(0, 3);
+
+  return (
+    <div style={{ padding: '12px 14px', border: '1px solid var(--warning)', background: 'var(--warning-bg)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8, opacity: doubt.resolved ? 0.55 : 1 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <HelpCircle size={16} color="var(--warning-text)" style={{ flexShrink: 0, marginTop: 1 }} />
+        <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--warning-text)', flex: 1 }}>
+          A IA não reconheceu <strong>“{doubt.term}”</strong> em {doubt.count} produto(s)
+          {!doubt.resolved && <> — o que isso quer dizer?</>}
+          {doubt.resolved && ' — esclarecido ✓'}
+        </p>
+        {doubt.resolved && <CheckCircle2 size={14} color="var(--success)" style={{ flexShrink: 0 }} />}
+      </div>
+      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', paddingLeft: 24 }}>
+        Ex.: {examples.map((n) => `“${n}”`).join(' · ')}
+        {doubt.count > examples.length && ` e mais ${doubt.count - examples.length}`}
+      </p>
+      {!doubt.resolved && (
+        <div style={{ display: 'flex', gap: 8, paddingLeft: 24 }}>
+          <input
+            className="input"
+            style={{ flex: 1, minWidth: 0 }}
+            placeholder="Ex.: tela do iPhone 11 original"
+            value={answer}
+            disabled={clarifying}
+            onChange={e => setAnswer(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && answer.trim()) onClarify(answer.trim()); }}
+          />
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={clarifying || !answer.trim()}
+            onClick={() => onClarify(answer.trim())}
+          >
+            {clarifying
+              ? <><Loader2 size={13} className="spin" /> Aplicando...</>
+              : 'Aplicar aos ' + doubt.count}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={onSkip} disabled={clarifying} title="Manter como está">
+            <X size={13} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 /**
  * Relatório de leitura da IA: o usuário examina o que foi entendido
  * (contagem, mapeamento por aba, prévia e problemas) ANTES de enviar
- * os produtos para o catálogo.
+ * os produtos para o catálogo. Dúvidas da IA são esclarecidas aqui —
+ * uma resposta vale para todos os itens do grupo.
  */
 export const AiImportReport: React.FC<{
   products: ImportProduct[];
   sheets: SheetReport[];
   issues: string[];
+  doubts: DoubtGroup[];
+  clarifyingKey: string | null;
+  onClarify: (key: string, meaning: string) => void;
+  onSkipDoubt: (key: string) => void;
   previewLimit?: number;
-}> = ({ products, sheets, issues, previewLimit = 30 }) => {
+}> = ({ products, sheets, issues, doubts, clarifyingKey, onClarify, onSkipDoubt, previewLimit = 30 }) => {
   const withPrice = products.filter((p) => typeof p.price === 'number');
   const avgPrice = withPrice.length
     ? withPrice.reduce((a, p) => a + (p.price ?? 0), 0) / withPrice.length
@@ -79,6 +138,27 @@ export const AiImportReport: React.FC<{
           </div>
         ))}
       </div>
+
+      {/* Dúvidas da IA: esclareça e a resposta vale para o grupo inteiro */}
+      {doubts.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <HelpCircle size={13} color="var(--warning-text)" /> A IA precisa da sua ajuda
+            <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
+              · sua resposta fica salva para as próximas importações
+            </span>
+          </p>
+          {doubts.map((d) => (
+            <DoubtCard
+              key={d.key}
+              doubt={d}
+              clarifying={clarifyingKey === d.key}
+              onClarify={(meaning) => onClarify(d.key, meaning)}
+              onSkip={() => onSkipDoubt(d.key)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Problemas */}
       {issues.length > 0 && (

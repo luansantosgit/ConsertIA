@@ -27,6 +27,8 @@ export interface NormalizedName {
   model?: string;
   part_type?: string;
   category?: string;
+  unclear?: string[];
+  confidence?: number;
 }
 
 
@@ -69,6 +71,7 @@ const NAME_BATCH_SIZE = 100;
 export async function normalizeProductNames(
   names: string[],
   onProgress?: (done: number, total: number) => void,
+  clarification?: { term: string; meaning: string },
 ): Promise<Map<string, NormalizedName>> {
   const result = new Map<string, NormalizedName>();
   const batches: string[][] = [];
@@ -85,30 +88,31 @@ export async function normalizeProductNames(
       if (Number.isInteger(idx) && idx >= 0 && idx < batch.length) {
         const raw = batch[idx];
         if (item.name && raw) {
-          result.set(raw, { i: idx, name: String(item.name), brand: item.brand, model: item.model, part_type: item.part_type, category: item.category });
+          result.set(raw, { i: idx, name: String(item.name), brand: item.brand, model: item.model, part_type: item.part_type, category: item.category, unclear: item.unclear, confidence: item.confidence });
         }
       }
     });
   };
 
-  const runBatch = async (batch: string[]) => {
+  const runBatch = async (batch: string[], clarification?: { term: string; meaning: string }) => {
     const res = await invokeImport<{ ok: boolean; items: NormalizedName[] }>({
-      action: 'normalize',
+      action: clarification ? 'clarify' : 'normalize',
       items: batch,
+      ...(clarification && { term: clarification.term, meaning: clarification.meaning }),
     });
     applyBatch(batch, res.items);
   };
 
-  const worker = async () => {
+  const worker = async (clarification?: { term: string; meaning: string }) => {
     while (nextBatch < batches.length) {
       const batch = batches[nextBatch++];
       try {
-        await runBatch(batch);
+        await runBatch(batch, clarification);
       } catch (err) {
         console.warn('[ai-import] lote falhou, tentando de novo:', err);
         // Uma tentativa extra por lote: falha intermitente não pode perder dados
         try {
-          await runBatch(batch);
+          await runBatch(batch, clarification);
         } catch (retryErr) {
           console.warn('[ai-import] lote falhou de novo, mantendo nomes originais:', retryErr);
         }
@@ -118,10 +122,32 @@ export async function normalizeProductNames(
     }
   };
 
+  if (clarification) {
+    // Re-normalização com o esclarecimento da empresa (aplica em todos os lotes)
+    await Promise.all(
+      Array.from({ length: Math.min(3, batches.length) }, () => worker(clarification)),
+    );
+    return result;
+  }
   await Promise.all(
     Array.from({ length: Math.min(3, batches.length) }, () => worker()),
   );
   return result;
+}
+
+/**
+ * Etapa de dúvidas: re-normaliza os nomes com o esclarecimento da empresa
+ * sobre um termo ("11 ORI" = "tela do iPhone 11 original"). A resposta
+ * fica salva no glossário do tenant (a edge grava) — a próxima importação
+ * já aplica sem perguntar de novo.
+ */
+export async function clarifyProductNames(
+  names: string[],
+  term: string,
+  meaning: string,
+  onProgress?: (done: number, total: number) => void,
+): Promise<Map<string, NormalizedName>> {
+  return normalizeProductNames(names, onProgress, { term, meaning: meaning });
 }
 
 /**

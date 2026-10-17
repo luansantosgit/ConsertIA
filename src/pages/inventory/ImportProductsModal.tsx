@@ -12,9 +12,9 @@ export const ImportProductsModal: React.FC<{
   onImported: () => void;
 }> = ({ onClose, onImported }) => {
   const {
-    stage, analyzeStep, products, sheetReports, issues,
+    stage, analyzeStep, products, sheetReports, issues, doubts, clarifyingKey,
     importProgress, result, error,
-    startAnalysis, sendToCatalog, minimize, reset,
+    startAnalysis, sendToCatalog, applyClarification, skipDoubt, minimize, reset,
   } = useAiImportStore();
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -112,7 +112,15 @@ export const ImportProductsModal: React.FC<{
           {/* Etapa 3: relatório para examinar */}
           {stage === 'report' && (
             <>
-              <AiImportReport products={products} sheets={sheetReports} issues={issues} />
+              <AiImportReport
+                products={products}
+                sheets={sheetReports}
+                issues={issues}
+                doubts={doubts}
+                clarifyingKey={clarifyingKey}
+                onClarify={(key, meaning) => void applyClarification(key, meaning)}
+                onSkipDoubt={skipDoubt}
+              />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
                 <button className="btn btn-ghost" onClick={reset}>Descartar</button>
                 <button className="btn btn-primary" onClick={finishImport}>
