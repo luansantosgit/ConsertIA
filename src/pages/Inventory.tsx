@@ -11,7 +11,6 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ProductFormModal } from './inventory/ProductFormModal';
 import { useAiImportStore } from '@/stores/ai-import.store';
-import { useBulkDeleteStore } from '@/stores/bulk-delete.store';
 import { Pagination } from '@/components/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -128,24 +127,25 @@ export const Inventory: React.FC = () => {
   };
 
   const handleDeleteBulk = async () => {
-    const bulk = useBulkDeleteStore.getState();
-    if (bulk.status === 'running') return; // já está excluindo
     const ids = [...selectedIds];
-    // Modal fecha na hora: o balão global assume o progresso
+    // Otimista: some da lista na hora — o back trabalha em segundo plano,
+    // o usuário fica livre para fazer outra coisa (ex.: subir outra planilha)
     setConfirmDelete({ isOpen: false, item: null, bulk: false });
-    bulk.start(ids.length);
-    try {
-      // Remove da lista em tempo real: o usuário vê a qtd caindo
-      for (let i = 0; i < ids.length; i++) {
-        await productRepo.delete(ids[i]);
-        bulk.tick(i + 1);
-        setItems(prev => prev.filter(it => it.id !== ids[i]));
-        setSelectedIds(prev => { const n = new Set(prev); n.delete(ids[i]); return n; });
+    setItems(prev => prev.filter(it => !selectedIds.has(it.id)));
+    setSelectedIds(new Set());
+
+    let failures = 0;
+    for (const id of ids) {
+      try {
+        await productRepo.delete(id);
+      } catch {
+        failures++;
       }
-    } catch (error) {
-      console.error('Failed to delete products:', error);
-    } finally {
-      bulk.finish();
+    }
+    // Falha parcial: recarrega a lista — os itens que não saíram voltam (verdade)
+    if (failures > 0) {
+      console.error(`[inventory] ${failures} item(ns) falharam ao excluir`);
+      fetchProducts(true);
     }
   };
 
