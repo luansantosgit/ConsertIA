@@ -65,10 +65,11 @@ export function canonicalPartType(v: string): string {
   const s = v.trim().toUpperCase();
   if (!s) return v;
   if (s.includes('PREMIUM')) return 'premium';
-  if (s.includes('ORI') || s.includes('ORIGINAL')) return 'original';
-  if (s.includes('INCELL') || /\bINC\b/.test(s)) return 'incell';
-  if (s.includes('REBUILD') || s.includes('REFURB') || s.includes('LACRADORA')) return 'recondicionada';
-  if (s.includes('COMPAT') || /\bGEN\b|GEN[ÉE]RIC/.test(s) || s.includes('COPY') || s.includes('CÓPIA') || s.includes('COPIA')) return 'compatível';
+  // \b = fronteira de palavra: "ORI" isolado, nunca dentro de "CATEGORIA"
+  if (/\bORI\b|ORIGINAL/.test(s)) return 'original';
+  if (/INCELL|\bINC\b/.test(s)) return 'incell';
+  if (/REBUILD|REFURB|LACRADORA/.test(s)) return 'recondicionada';
+  if (/COMPAT|\bGEN\b|GEN[ÉE]RIC|\bCOPY\b|C[ÓO]PIA/.test(s)) return 'compatível';
   return v.trim();
 }
 
