@@ -16,8 +16,20 @@ import { quotaExceeded, trackUsage } from "../_shared/ai/settings.ts";
  */
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-// Modelo barato e estável para tarefas estruturadas (JSON): ~$0.10/M in, $0.40/M out
-const IMPORT_MODEL = "google/gemini-2.0-flash-001";
+// Cadeia de modelos baratos para tarefas estruturadas (JSON), do mais barato
+// para o mais caro. Se um modelo sair do catálogo ("No endpoints found"),
+// cai automaticamente para o próximo — imune a mudanças do OpenRouter.
+const IMPORT_MODELS = [
+  "meta-llama/llama-3.3-70b-instruct", // ~$0.10/M in · $0.32/M out
+  "deepseek/deepseek-v4.1-flash", // ~$0.15/M in · $0.60/M out
+  "google/gemini-3.1-flash-lite", // ~$0.25/M in · $1.50/M out (padrao da plataforma)
+];
+const MODEL_NOT_FOUND_HINTS = [
+  "no endpoints found",
+  "not a valid model",
+  "model_not_found",
+  "no allowed providers",
+];
 const MAX_SHEETS = 15;
 const MAX_SAMPLE_ROWS = 10;
 const MAX_NAME_BATCH = 60;
@@ -100,41 +112,69 @@ interface OpenRouterResponse {
   error?: { message?: string };
 }
 
+function isModelUnavailable(errorMessage: string): boolean {
+  const lower = errorMessage.toLowerCase();
+  return MODEL_NOT_FOUND_HINTS.some((h) => lower.includes(h));
+}
+
+/** Tenta a cadeia de modelos; "usedModel" = o que respondeu */
 async function callModel(
   apiKey: string,
   systemPrompt: string,
   userContent: string,
   maxTokens: number,
-): Promise<{ data: unknown; inputTokens: number; outputTokens: number }> {
-  const resp = await fetch(OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://deeperia.com.br",
-      "X-Title": "DeeperIA",
-    },
-    body: JSON.stringify({
-      model: IMPORT_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-      temperature: 0,
-      max_tokens: maxTokens,
-      response_format: { type: "json_object" },
-    }),
-  });
-  const body = (await resp.json()) as OpenRouterResponse;
-  if (!resp.ok || body.error) {
-    throw new Error(body.error?.message ?? `OpenRouter HTTP ${resp.status}`);
+): Promise<{ data: unknown; inputTokens: number; outputTokens: number; usedModel: string }> {
+  let lastError = "Nenhum modelo disponível";
+
+  for (const model of IMPORT_MODELS) {
+    let resp: Response;
+    try {
+      resp = await fetch(OPENROUTER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://deeperia.com.br",
+          "X-Title": "DeeperIA",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+          temperature: 0,
+          max_tokens: maxTokens,
+          response_format: { type: "json_object" },
+        }),
+      });
+    } catch (err) {
+      lastError = (err as Error).message;
+      continue;
+    }
+    const body = (await resp.json().catch(() => ({}))) as OpenRouterResponse;
+    const errorMessage = body.error?.message ?? "";
+
+    if (!resp.ok || errorMessage) {
+      lastError = errorMessage || `OpenRouter HTTP ${resp.status}`;
+      // Modelo saiu do catálogo / indisponível → tenta o próximo da cadeia
+      if (isModelUnavailable(lastError)) continue;
+      throw new Error(lastError);
+    }
+
+    const content = body.choices?.[0]?.message?.content ?? "";
+    if (!content) {
+      lastError = "Resposta vazia do modelo";
+      continue;
+    }
+    return {
+      data: extractJson(content),
+      inputTokens: body.usage?.prompt_tokens ?? 0,
+      outputTokens: body.usage?.completion_tokens ?? 0,
+      usedModel: model,
+    };
   }
-  const content = body.choices?.[0]?.message?.content ?? "";
-  return {
-    data: extractJson(content),
-    inputTokens: body.usage?.prompt_tokens ?? 0,
-    outputTokens: body.usage?.completion_tokens ?? 0,
-  };
+  throw new Error(lastError);
 }
 
 function truncateCell(v: unknown): string {
@@ -176,11 +216,12 @@ async function logCall(
   success: boolean,
   errorMessage: string | null,
   startedAt: number,
+  model: string,
 ) {
   await supabase.from("ai_logs").insert({
     tenant_id: tenantId,
     provider: "openrouter",
-    model: IMPORT_MODEL,
+    model,
     input_tokens: inputTokens,
     output_tokens: outputTokens,
     response_time_ms: Date.now() - startedAt,
@@ -250,8 +291,8 @@ serve(async (req) => {
         const parsed = result.data as { sheets?: SheetMapping[] };
         const mappings = Array.isArray(parsed?.sheets) ? parsed.sheets : [];
         await trackUsage(supabase, tenantId, inputTokens, outputTokens, 0);
-        await logCall(supabase, tenantId, inputTokens, outputTokens, true, null, startedAt);
-        return json({ ok: true, model: IMPORT_MODEL, sheets: mappings });
+        await logCall(supabase, tenantId, inputTokens, outputTokens, true, null, startedAt, result.usedModel);
+        return json({ ok: true, model: result.usedModel, sheets: mappings });
       }
 
       if (action === "normalize") {
@@ -274,14 +315,14 @@ serve(async (req) => {
         };
         const clean = Array.isArray(parsed?.items) ? parsed.items : [];
         await trackUsage(supabase, tenantId, inputTokens, outputTokens, 0);
-        await logCall(supabase, tenantId, inputTokens, outputTokens, true, null, startedAt);
-        return json({ ok: true, model: IMPORT_MODEL, items: clean });
+        await logCall(supabase, tenantId, inputTokens, outputTokens, true, null, startedAt, result.usedModel);
+        return json({ ok: true, model: result.usedModel, items: clean });
       }
 
       return json({ error: "action inválida (use map ou normalize)" }, 400);
     } catch (err) {
       await trackUsage(supabase, tenantId, inputTokens, outputTokens, 0);
-      await logCall(supabase, tenantId, inputTokens, outputTokens, false, (err as Error).message, startedAt);
+      await logCall(supabase, tenantId, inputTokens, outputTokens, false, (err as Error).message, startedAt, IMPORT_MODELS[0]);
       return json({ error: (err as Error).message }, 502);
     }
   } catch (err) {
