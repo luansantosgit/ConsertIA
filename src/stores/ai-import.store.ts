@@ -81,18 +81,40 @@ export const useAiImportStore = create<AiImportState>()(
   result: null,
   error: null,
 
-  openModal: () => set({ modalOpen: true, minimized: false }),
+  openModal: () => {
+    const { stage } = get();
+    // Sessão anterior parada (ex.: erro que já foi visto): começa limpa
+    if (stage === 'idle') {
+      set({
+        modalOpen: true,
+        minimized: false,
+        error: null,
+        result: null,
+        products: [],
+        sheetReports: [],
+        issues: [],
+        doubts: [],
+        analyzeStep: { label: '', progress: 0 },
+      });
+      return;
+    }
+    set({ modalOpen: true, minimized: false });
+  },
 
   // Fechar o modal NÃO mata o processo: se algo estiver rodando,
-  // vira minimizado (balão flutuante assume); sessão de relatório fica guardada
+  // vira minimizado (balão flutuante assume); relatório/concluído ficam
+  // guardados para reabrir; sessão parada com erro vira limpa (erro foi visto)
   closeModal: () => {
     const { stage } = get();
     if (stage === 'analyzing' || stage === 'importing') {
       set({ modalOpen: false, minimized: true });
       return;
     }
-    if (stage === 'idle') set({ modalOpen: false });
-    else set({ modalOpen: false }); // report/done ficam guardados; reabrir mostra o estado
+    if (stage === 'idle') {
+      get().reset();
+      return;
+    }
+    set({ modalOpen: false }); // report/done preservados
   },
 
   minimize: () => set({ modalOpen: false, minimized: true }),

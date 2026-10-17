@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Sparkles, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAiImportStore } from '@/stores/ai-import.store';
 
@@ -7,17 +8,25 @@ import { useAiImportStore } from '@/stores/ai-import.store';
  * minimizado (ou fechado com processo ativo), mostra o andamento e
  * PULSA quando há algo para o usuário conferir. Também avisa quando
  * a análise foi interrompida (reload da página) em vez de sumir.
+ *
+ * No chat (/atendimento) não aparece durante o processamento para não
+ * atrapalhar o atendente — só quando conclui, para ele abrir o modal
+ * e ver o que deve ser feito (responder dúvidas ou dar OK para subir).
  */
 export const AiImportBalloon: React.FC = () => {
   const { stage, minimized, modalOpen, analyzeStep, importProgress, result, error, restore } = useAiImportStore();
+  const location = useLocation();
+  const isChat = location.pathname.startsWith('/atendimento');
 
   const running = stage === 'analyzing' || stage === 'importing';
   const finished = stage === 'report' || stage === 'done';
   const interrupted = stage === 'idle' && Boolean(error);
 
   // Sem sessão ativa ou com modal aberto → não mostra o balão
-  const visible = minimized && !modalOpen && (running || finished || interrupted);
-  if (!visible) return null;
+  if (!minimized || modalOpen) return null;
+  if (!running && !finished && !interrupted) return null;
+  // No chat: só mostra quando termina (ou foi interrompida) — nunca durante o processo
+  if (isChat && (stage === 'analyzing' || stage === 'importing')) return null;
 
   const label = stage === 'analyzing'
     ? analyzeStep.label
