@@ -213,7 +213,7 @@ export const Inventory: React.FC = () => {
           </button>
         )}
         <button className="btn btn-secondary" onClick={() => setShowImportModal(true)}>
-          <FileSpreadsheet size={15} /> Importar planilha
+          <FileSpreadsheet size={15} /> Importar planilha com IA
         </button>
       </div>
 

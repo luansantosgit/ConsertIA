@@ -232,6 +232,11 @@ img { max-width: 100%; display: block; }
   100% { background-position: -200% 0; }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
 /* ============================================================
    APP LAYOUT
    ============================================================ */
