@@ -92,7 +92,7 @@ Para CADA nome cru recebido, devolva SEMPRE um item na resposta (nunca pule):
 - "MÚLTIPLOS MODELOS NA MESMA LINHA": quando o nome lista VÁRIOS aparelhos/modelos (separados por '/', '+', vírgula ou ' e ', e às vezes só por espaços quando óbvio), devolva UM ITEM PARA CADA MODELO — todos com o MESMO "i" do item recebido. Ex.: "NOTE 10 4G/ NOTE 10S / POCO M5S" (i=5) → três itens: {"i":5,"name":"...Redmi Note 10 4G...","brand":"Xiaomi","model":"Redmi Note 10 4G"}, {"i":5,"name":"...Redmi Note 10S...","brand":"Xiaomi","model":"Redmi Note 10S"}, {"i":5,"name":"...POCO M5s...","brand":"Xiaomi","model":"POCO M5s"}. "MI NOTE" = Xiaomi Redmi Note. Cada variante mantém a característica comum (ex.: CURVADA ORI → part_type "original" em todas).
 - "part_type": qualidade/tipo de peça em minúsculas canônico: "ORI"/"ORIGINAL" → "original"; "GEN"/"GENÉRICA"/"COPY"/"CÓPIA" → "compatível"; "PREMIUM" → "premium"; "INC"/"INCELL" → "incell"; "REBUILD"/"REFURB"/"LACRADORA" → "recondicionada". Se não houver, omita.
 - "category": categoria ONLY se óbvia (Telas, Baterias, Conectores de Carga, Câmeras, alto-falantes/Campainhas, Películas, Acessórios, Peças em geral). Senão omita.
-- "unclear": array com pedaços/tokens do nome que você NÃO conseguiu interpretar com segurança (siglas estranhas, códigos desconhecidos, modelos que não reconhece). Ex.: "11 ORI BOY" → ["BOY"]. Se entendeu tudo, omita ou devolva [].
+- "unclear": array com pedaços/tokens do nome que você NÃO conseguiu interpretar com segurança — siglas de qualidade/fabricante de peça que não são padrão de mercado (ex.: "JK", "OCA", "SOFT", "HARD", "AM"), códigos desconhecidos, modelos que não reconhece. NÃO chute o significado: devolva em "unclear" para a empresa esclarecer (mantenha o termo no "name"). Se entendeu tudo, devolva [].
 - "confidence": 0 a 1 da sua certeza sobre a interpretação do item.
 
 NUNCA invente preços, quantidades ou especificações. Mas SEMPRE devolva o item com o nome limpo, mesmo que só brand/model/part_type não sejam identificáveis (aí apenas os omita).
@@ -178,8 +178,17 @@ async function callModel(
       lastError = "Resposta vazia do modelo";
       continue;
     }
+    let data: unknown;
+    try {
+      data = extractJson(content);
+    } catch {
+      // JSON cortado (limite de tokens) ou malformado: tenta o próximo
+      // modelo da cadeia — cada um tem limite/velocidade diferentes
+      lastError = "Resposta com JSON truncado ou inválido";
+      continue;
+    }
     return {
-      data: extractJson(content),
+      data,
       inputTokens: body.usage?.prompt_tokens ?? 0,
       outputTokens: body.usage?.completion_tokens ?? 0,
       usedModel: model,
@@ -342,7 +351,7 @@ serve(async (req) => {
           apiKey,
           systemPrompt,
           `Nomes crus (JSON):\n${JSON.stringify({ items: names })}`,
-          4000,
+          8000,
         );
         inputTokens += result.inputTokens;
         outputTokens += result.outputTokens;

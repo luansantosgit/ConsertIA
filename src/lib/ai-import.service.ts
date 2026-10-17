@@ -64,7 +64,9 @@ export async function mapSheetColumns(sheets: SheetSample[]): Promise<SheetMappi
   return res.sheets ?? [];
 }
 
-const NAME_BATCH_SIZE = 100;
+// 50 itens/lote mantém a resposta (~3k tokens) longe do limite do modelo —
+// lote grande trunca o JSON e o lote inteiro é perdido
+const NAME_BATCH_SIZE = 50;
 
 /**
  * Etapa 2: padroniza nomes em lotes PARALELOS (3 simultâneos de 100),

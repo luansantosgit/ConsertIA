@@ -57,6 +57,22 @@ const cell = (row: unknown[], idx: number | undefined): string => {
 };
 
 /**
+ * Coluna de tipo/qualidade da planilha costuma vir como descrição completa
+ * ("TELA ORI IMPORTADA", "TAMPA TRASEIRA PREMIUM"). Extrai o valor canônico
+ * de qualidade usado pelo formulário; texto sem palavra-chave fica como veio.
+ */
+export function canonicalPartType(v: string): string {
+  const s = v.trim().toUpperCase();
+  if (!s) return v;
+  if (s.includes('PREMIUM')) return 'premium';
+  if (s.includes('ORI') || s.includes('ORIGINAL')) return 'original';
+  if (s.includes('INCELL') || /\bINC\b/.test(s)) return 'incell';
+  if (s.includes('REBUILD') || s.includes('REFURB') || s.includes('LACRADORA')) return 'recondicionada';
+  if (s.includes('COMPAT') || /\bGEN\b|GEN[ÉE]RIC/.test(s) || s.includes('COPY') || s.includes('CÓPIA') || s.includes('COPIA')) return 'compatível';
+  return v.trim();
+}
+
+/**
  * Aplica o mapa da IA numa aba: localiza a linha de cabeçalho, extrai
  * os dados e converte cada linha em produto padronizado (JS puro — zero custo).
  */
@@ -95,7 +111,7 @@ export function buildProductsFromSheet(
     }
     for (const f of TEXT_FIELDS) {
       const v = cell(arr, mapping.columns?.[f]);
-      if (v) p[f] = v;
+      if (v) p[f] = f === 'part_type' ? canonicalPartType(v) : v;
     }
     products.push(p);
   }
