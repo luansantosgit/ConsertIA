@@ -25,10 +25,22 @@ import type { StockItemForm } from '@/pages/inventory/ProductFormModal';
 
 export type ImportStage = 'idle' | 'analyzing' | 'report' | 'importing' | 'done';
 
+/** Referências do produto para a empresa entender de onde vem o termo em dúvida */
+export interface DoubtExample {
+  rawName: string;
+  sheet: string;
+  category?: string;
+  part_type?: string;
+  price?: number;
+  stock_quantity?: number;
+  location?: string;
+}
+
 export interface DoubtGroup {
   key: string;
   term: string;
   rawNames: string[];
+  examples: DoubtExample[];
   count: number;
   resolved: boolean;
 }
@@ -59,6 +71,7 @@ interface AiImportState {
   startAnalysis: (file: File) => Promise<void>;
   sendToCatalog: () => Promise<void>;
   applyClarification: (key: string, meaning: string) => Promise<void>;
+  discardDoubt: (key: string) => void;
   skipDoubt: (key: string) => void;
   reset: () => void;
 }
@@ -179,16 +192,32 @@ export const useAiImportStore = create<AiImportState>()(
       const { unique: finalProducts2 } = dedupeProducts(withSplits);
 
       // Dúvidas: IA marcou tokens que não entendeu — agrupa por termo
-      // para a empresa esclarecer UMA vez e valer para todos os itens
+      // para a empresa esclarecer UMA vez e valer para todos os itens.
+      // Cada grupo carrega as referências do produto (categoria, tipo,
+      // preço...) para o usuário entender de onde vem o termo.
       const doubtsMap = new Map<string, DoubtGroup>();
       for (const p of finalProducts2) {
         const n = normalized.get(p.rawName);
         const tokens = [...new Set((n?.[0]?.unclear ?? []).map((t) => t.trim()).filter(Boolean))];
         if (tokens.length === 0) continue;
         const key = tokens.sort().join(' + ');
-        const group = doubtsMap.get(key);
-        if (group) group.rawNames.push(p.rawName);
-        else doubtsMap.set(key, { key, term: key, rawNames: [p.rawName], count: 0, resolved: false });
+        let group = doubtsMap.get(key);
+        if (!group) {
+          group = { key, term: key, rawNames: [], examples: [], count: 0, resolved: false };
+          doubtsMap.set(key, group);
+        }
+        group.rawNames.push(p.rawName);
+        if (group.examples.length < 3) {
+          group.examples.push({
+            rawName: p.rawName,
+            sheet: p.sheet,
+            category: p.category,
+            part_type: p.part_type,
+            price: p.price,
+            stock_quantity: p.stock_quantity,
+            location: p.location,
+          });
+        }
       }
       const doubts = [...doubtsMap.values()].map((g) => ({ ...g, count: g.rawNames.length }));
 
@@ -296,6 +325,19 @@ export const useAiImportStore = create<AiImportState>()(
     } finally {
       set({ clarifyingKey: null });
     }
+  },
+
+  discardDoubt: (key) => {
+    const { doubts, products } = get();
+    const group = doubts.find((d) => d.key === key);
+    if (!group) return;
+    // Remove TODOS os produtos daquele grupo (linhas erradas da planilha):
+    // não serão enviados ao catálogo. A planilha original não é alterada.
+    const groupSet = new Set(group.rawNames);
+    set({
+      products: products.filter((p) => !groupSet.has(p.rawName)),
+      doubts: doubts.map((d) => (d.key === key ? { ...d, resolved: true } : d)),
+    });
   },
 
   skipDoubt: (key) => {

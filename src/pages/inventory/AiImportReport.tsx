@@ -1,8 +1,30 @@
 import React, { useState } from 'react';
-import { CheckCircle2, AlertTriangle, Sparkles, ListChecks, HelpCircle, Loader2, X } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Sparkles, ListChecks, HelpCircle, Loader2, X, Trash2 } from 'lucide-react';
 import type { ImportProduct, SheetReport } from './ai-import-parse';
-import type { DoubtGroup } from '@/stores/ai-import.store';
+import type { DoubtGroup, DoubtExample } from '@/stores/ai-import.store';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { formatCurrency } from '@/lib/format';
+
+const fmt = (n: number | undefined) => (typeof n === 'number' ? formatCurrency(n) : null);
+
+/** Linha de exemplo com as referências do produto (categoria, tipo, preço...) */
+const ExampleRow: React.FC<{ example: DoubtExample }> = ({ example }) => {
+  const refs = [
+    example.category && `Categoria: ${example.category}`,
+    example.part_type && `Tipo: ${example.part_type}`,
+    fmt(example.price),
+    typeof example.stock_quantity === 'number' && `Estoque: ${example.stock_quantity}`,
+    example.location && `Local: ${example.location}`,
+  ].filter(Boolean) as string[];
+  return (
+    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+      <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>“{example.rawName}”</strong>
+      {refs.length > 0 && (
+        <span style={{ color: 'var(--text-muted)' }}> — {refs.join(' · ')}</span>
+      )}
+    </p>
+  );
+};
 
 const FIELD_LABELS: Record<string, string> = {
   name: 'Nome',
@@ -22,10 +44,11 @@ const DoubtCard: React.FC<{
   doubt: DoubtGroup;
   clarifying: boolean;
   onClarify: (meaning: string) => void;
+  onDiscard: () => void;
   onSkip: () => void;
-}> = ({ doubt, clarifying, onClarify, onSkip }) => {
+}> = ({ doubt, clarifying, onClarify, onDiscard, onSkip }) => {
   const [answer, setAnswer] = useState('');
-  const examples = doubt.rawNames.slice(0, 3);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   return (
     <div style={{ padding: '12px 14px', border: '1px solid var(--warning)', background: 'var(--warning-bg)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8, opacity: doubt.resolved ? 0.55 : 1 }}>
@@ -38,15 +61,20 @@ const DoubtCard: React.FC<{
         </p>
         {doubt.resolved && <CheckCircle2 size={14} color="var(--success)" style={{ flexShrink: 0 }} />}
       </div>
-      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', paddingLeft: 24 }}>
-        Ex.: {examples.map((n) => `“${n}”`).join(' · ')}
-        {doubt.count > examples.length && ` e mais ${doubt.count - examples.length}`}
-      </p>
+      {/* Referências do produto: de onde o termo vem, para dar contexto à resposta */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 24 }}>
+        {doubt.examples.map((ex, i) => <ExampleRow key={i} example={ex} />)}
+        {doubt.count > doubt.examples.length && (
+          <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+            e mais {doubt.count - doubt.examples.length} produto(s) parecido(s)
+          </p>
+        )}
+      </div>
       {!doubt.resolved && (
-        <div style={{ display: 'flex', gap: 8, paddingLeft: 24 }}>
+        <div style={{ display: 'flex', gap: 8, paddingLeft: 24, flexWrap: 'wrap' }}>
           <input
             className="input"
-            style={{ flex: 1, minWidth: 0 }}
+            style={{ flex: 1, minWidth: 160 }}
             placeholder="Ex.: tela do iPhone 11 original"
             value={answer}
             disabled={clarifying}
@@ -62,11 +90,30 @@ const DoubtCard: React.FC<{
               ? <><Loader2 size={13} className="spin" /> Aplicando...</>
               : 'Aplicar aos ' + doubt.count}
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={onSkip} disabled={clarifying} title="Manter como está">
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ color: 'var(--danger)' }}
+            onClick={() => setConfirmDiscard(true)}
+            disabled={clarifying}
+            title="Remover estes produtos desta importação (linha errada na planilha)"
+          >
+            <Trash2 size={13} /> Descartar
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={onSkip} disabled={clarifying} title="Manter como está, sem responder">
             <X size={13} />
           </button>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmDiscard}
+        onClose={() => setConfirmDiscard(false)}
+        onConfirm={() => { setConfirmDiscard(false); onDiscard(); }}
+        title="Descartar produto(s)?"
+        message={`Estes ${doubt.count} produto(s) serão removidos desta importação e não serão enviados ao catálogo. Use quando a linha estiver errada na planilha. A planilha original não é alterada.`}
+        variant="danger"
+        confirmLabel="Descartar da importação"
+        cancelLabel="Manter"
+      />
     </div>
   );
 };
@@ -84,9 +131,10 @@ export const AiImportReport: React.FC<{
   doubts: DoubtGroup[];
   clarifyingKey: string | null;
   onClarify: (key: string, meaning: string) => void;
+  onDiscardDoubt: (key: string) => void;
   onSkipDoubt: (key: string) => void;
   previewLimit?: number;
-}> = ({ products, sheets, issues, doubts, clarifyingKey, onClarify, onSkipDoubt, previewLimit = 30 }) => {
+}> = ({ products, sheets, issues, doubts, clarifyingKey, onClarify, onDiscardDoubt, onSkipDoubt, previewLimit = 30 }) => {
   const withPrice = products.filter((p) => typeof p.price === 'number');
   const avgPrice = withPrice.length
     ? withPrice.reduce((a, p) => a + (p.price ?? 0), 0) / withPrice.length
@@ -154,6 +202,7 @@ export const AiImportReport: React.FC<{
               doubt={d}
               clarifying={clarifyingKey === d.key}
               onClarify={(meaning) => onClarify(d.key, meaning)}
+              onDiscard={() => onDiscardDoubt(d.key)}
               onSkip={() => onSkipDoubt(d.key)}
             />
           ))}

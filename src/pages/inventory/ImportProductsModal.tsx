@@ -14,7 +14,7 @@ export const ImportProductsModal: React.FC<{
   const {
     stage, analyzeStep, products, sheetReports, issues, doubts, clarifyingKey,
     importProgress, result, error,
-    startAnalysis, sendToCatalog, applyClarification, skipDoubt, minimize, reset,
+    startAnalysis, sendToCatalog, applyClarification, discardDoubt, skipDoubt, minimize, reset,
   } = useAiImportStore();
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -119,6 +119,7 @@ export const ImportProductsModal: React.FC<{
                 doubts={doubts}
                 clarifyingKey={clarifyingKey}
                 onClarify={(key, meaning) => void applyClarification(key, meaning)}
+                onDiscardDoubt={discardDoubt}
                 onSkipDoubt={skipDoubt}
               />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
