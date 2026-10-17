@@ -361,6 +361,19 @@ export const useAiImportStore = create<AiImportState>()(
     }),
     {
       name: 'deeperia-ai-import',
+      version: 2,
+      // Sessões salvas antes de "examples" existir: garante o campo
+      // para o DoubtCard nunca quebrar (.map de undefined)
+      migrate: (persisted: unknown) => {
+        const state = persisted as { doubts?: Array<Record<string, unknown>> };
+        if (Array.isArray(state?.doubts)) {
+          state.doubts = state.doubts.map((d) => ({
+            ...d,
+            examples: Array.isArray(d.examples) ? d.examples : [],
+          }));
+        }
+        return state as never;
+      },
       // Persiste só os dados da sessão (ações são recriadas pelo zustand)
       partialize: (s) => ({
         stage: s.stage,

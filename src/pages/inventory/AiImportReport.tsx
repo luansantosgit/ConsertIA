@@ -61,12 +61,19 @@ const DoubtCard: React.FC<{
         </p>
         {doubt.resolved && <CheckCircle2 size={14} color="var(--success)" style={{ flexShrink: 0 }} />}
       </div>
-      {/* Referências do produto: de onde o termo vem, para dar contexto à resposta */}
+      {/* Referências do produto: de onde o termo vem, para dar contexto à resposta.
+          Guard: sessões antigas podem ter dúvidas sem "examples" */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 24 }}>
-        {doubt.examples.map((ex, i) => <ExampleRow key={i} example={ex} />)}
-        {doubt.count > doubt.examples.length && (
+        {(doubt.examples ?? []).map((ex, i) => <ExampleRow key={i} example={ex} />)}
+        {doubt.count > (doubt.examples?.length ?? 0) && (
           <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-            e mais {doubt.count - doubt.examples.length} produto(s) parecido(s)
+            e mais {doubt.count - (doubt.examples?.length ?? 0)} produto(s) parecido(s)
+          </p>
+        )}
+        {(doubt.examples?.length ?? 0) === 0 && doubt.rawNames.length > 0 && (
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            Ex.: {doubt.rawNames.slice(0, 3).map((n) => `“${n}”`).join(' · ')}
+            {doubt.rawNames.length > 3 ? ` e mais ${doubt.rawNames.length - 3}` : ''}
           </p>
         )}
       </div>
