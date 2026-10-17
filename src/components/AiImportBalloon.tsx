@@ -1,20 +1,22 @@
 import React from 'react';
-import { Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Sparkles, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAiImportStore } from '@/stores/ai-import.store';
 
 /**
  * Balão flutuante da importação com IA: aparece quando o modal foi
  * minimizado (ou fechado com processo ativo), mostra o andamento e
- * PULSA quando há algo para o usuário conferir.
+ * PULSA quando há algo para o usuário conferir. Também avisa quando
+ * a análise foi interrompida (reload da página) em vez de sumir.
  */
 export const AiImportBalloon: React.FC = () => {
-  const { stage, minimized, modalOpen, analyzeStep, importProgress, result, restore } = useAiImportStore();
+  const { stage, minimized, modalOpen, analyzeStep, importProgress, result, error, restore } = useAiImportStore();
 
   const running = stage === 'analyzing' || stage === 'importing';
   const finished = stage === 'report' || stage === 'done';
+  const interrupted = stage === 'idle' && Boolean(error);
 
   // Sem sessão ativa ou com modal aberto → não mostra o balão
-  const visible = minimized && !modalOpen && (running || finished);
+  const visible = minimized && !modalOpen && (running || finished || interrupted);
   if (!visible) return null;
 
   const label = stage === 'analyzing'
@@ -23,7 +25,9 @@ export const AiImportBalloon: React.FC = () => {
       ? `Enviando ${importProgress.done} de ${importProgress.total} produto(s)...`
       : stage === 'report'
         ? 'Análise concluída! Toque para revisar e enviar'
-        : result ?? 'Importação concluída!';
+        : stage === 'done'
+          ? result ?? 'Importação concluída!'
+          : 'Importação interrompida — toque para ver';
 
   const progress = stage === 'analyzing'
     ? analyzeStep.progress
@@ -48,12 +52,14 @@ export const AiImportBalloon: React.FC = () => {
       <span style={{
         width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: finished ? 'var(--success-bg)' : 'var(--primary-light)',
-        color: finished ? 'var(--success)' : 'var(--primary-text)',
+        background: interrupted ? 'var(--danger-bg)' : finished ? 'var(--success-bg)' : 'var(--primary-light)',
+        color: interrupted ? 'var(--danger)' : finished ? 'var(--success)' : 'var(--primary-text)',
       }}>
         {running
           ? <RefreshCw size={17} className="spin" />
-          : <CheckCircle2 size={18} />}
+          : interrupted
+            ? <AlertTriangle size={18} />
+            : <CheckCircle2 size={18} />}
       </span>
       <span style={{ textAlign: 'left', minWidth: 0 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>

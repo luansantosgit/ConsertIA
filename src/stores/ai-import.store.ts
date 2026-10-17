@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { ProductRepository } from '@/repositories/product.repository';
 import { mapSheetColumns, normalizeProductNames, type SheetMapping } from '@/lib/ai-import.service';
 import {
@@ -12,6 +13,10 @@ import type { StockItemForm } from '@/pages/inventory/ProductFormModal';
  * não no modal — o usuário pode minimizar, navegar pelo sistema e
  * voltar sem perder nada. O balão flutuante (AiImportBalloon) acompanha
  * e pulsa quando há algo para conferir.
+ *
+ * A sessão é PERSISTIDA (localStorage): sobrevive a reload/F5.
+ * - 'importing' → retoma o envio automaticamente (upsert é idempotente)
+ * - 'analyzing' → avisa que a análise foi interrompida pelo reload
  */
 
 export type ImportStage = 'idle' | 'analyzing' | 'report' | 'importing' | 'done';
@@ -44,17 +49,19 @@ interface AiImportState {
 
 const MAX_PRODUCTS = 5000;
 
-export const useAiImportStore = create<AiImportState>()((set, get) => ({
-  stage: 'idle',
-  modalOpen: false,
-  minimized: false,
-  analyzeStep: { label: '', progress: 0 },
-  products: [],
-  sheetReports: [],
-  issues: [],
-  importProgress: { done: 0, total: 0 },
-  result: null,
-  error: null,
+export const useAiImportStore = create<AiImportState>()(
+  persist(
+    (set, get) => ({
+      stage: 'idle',
+      modalOpen: false,
+      minimized: false,
+      analyzeStep: { label: '', progress: 0 },
+      products: [],
+      sheetReports: [],
+      issues: [],
+      importProgress: { done: 0, total: 0 },
+      result: null,
+      error: null,
 
   openModal: () => set({ modalOpen: true, minimized: false }),
 
@@ -214,5 +221,39 @@ export const useAiImportStore = create<AiImportState>()((set, get) => ({
     importProgress: { done: 0, total: 0 },
     result: null,
     error: null,
-  }),
-}));
+    }),
+    }),
+    {
+      name: 'deeperia-ai-import',
+      // Persiste só os dados da sessão (ações são recriadas pelo zustand)
+      partialize: (s) => ({
+        stage: s.stage,
+        modalOpen: s.modalOpen,
+        minimized: s.minimized,
+        analyzeStep: s.analyzeStep,
+        products: s.products,
+        sheetReports: s.sheetReports,
+        issues: s.issues,
+        importProgress: s.importProgress,
+        result: s.result,
+        error: s.error,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (!state || state.stage === 'idle') return;
+        // Envio em curso quando a página recarregou: retoma (upsert idempotente)
+        if (state.stage === 'importing') {
+          void useAiImportStore.getState().sendToCatalog();
+          return;
+        }
+        // Análise em curso foi interrompida pelo reload: o arquivo se perdeu,
+        // então avisa em vez de sumir silenciosamente
+        if (state.stage === 'analyzing') {
+          useAiImportStore.setState({
+            stage: 'idle',
+            error: 'A análise foi interrompida porque a página foi recarregada. Envie a planilha novamente — depois pode minimizar e continuar usando o sistema.',
+          });
+        }
+      },
+    },
+  ),
+);
