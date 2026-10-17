@@ -27,7 +27,6 @@ export interface NormalizedName {
   category?: string;
 }
 
-const NAME_BATCH_SIZE = 50;
 
 async function invokeImport<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('ai-inventory-import', { body });
@@ -58,9 +57,12 @@ export async function mapSheetColumns(sheets: SheetSample[]): Promise<SheetMappi
   return res.sheets ?? [];
 }
 
+const NAME_BATCH_SIZE = 100;
+
 /**
- * Etapa 2: padroniza nomes em lotes, reportando progresso.
- * Falha em um lote não derruba os demais — os nomes crus são mantidos.
+ * Etapa 2: padroniza nomes em lotes PARALELOS (3 simultâneos de 100),
+ * reportando progresso. Falha em um lote não derruba os demais —
+ * os nomes crus são mantidos.
  */
 export async function normalizeProductNames(
   names: string[],
@@ -73,27 +75,40 @@ export async function normalizeProductNames(
   }
 
   let done = 0;
-  for (const batch of batches) {
-    try {
-      const res = await invokeImport<{ ok: boolean; items: NormalizedName[] }>({
-        action: 'normalize',
-        items: batch,
-      });
-      (res.items ?? []).forEach((item) => {
-        const idx = Number(item.i);
-        if (Number.isInteger(idx) && idx >= 0 && idx < batch.length) {
-          const raw = batch[idx];
-          if (item.name && raw) {
-            result.set(raw, { i: idx, name: String(item.name), brand: item.brand, category: item.category });
-          }
+  let nextBatch = 0;
+
+  const applyBatch = (batch: string[], items: NormalizedName[] | undefined) => {
+    (items ?? []).forEach((item) => {
+      const idx = Number(item.i);
+      if (Number.isInteger(idx) && idx >= 0 && idx < batch.length) {
+        const raw = batch[idx];
+        if (item.name && raw) {
+          result.set(raw, { i: idx, name: String(item.name), brand: item.brand, category: item.category });
         }
-      });
-    } catch (err) {
-      console.warn('[ai-import] lote de nomes falhou, mantendo originais:', err);
+      }
+    });
+  };
+
+  const worker = async () => {
+    while (nextBatch < batches.length) {
+      const batch = batches[nextBatch++];
+      try {
+        const res = await invokeImport<{ ok: boolean; items: NormalizedName[] }>({
+          action: 'normalize',
+          items: batch,
+        });
+        applyBatch(batch, res.items);
+      } catch (err) {
+        console.warn('[ai-import] lote de nomes falhou, mantendo originais:', err);
+      }
+      done += batch.length;
+      onProgress?.(Math.min(done, names.length), names.length);
     }
-    done += batch.length;
-    onProgress?.(Math.min(done, names.length), names.length);
-  }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(3, batches.length) }, () => worker()),
+  );
   return result;
 }
 

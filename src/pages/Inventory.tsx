@@ -10,7 +10,7 @@ import ErrorMessage from '@/components/ErrorMessage';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ProductFormModal } from './inventory/ProductFormModal';
-import { ImportProductsModal } from './inventory/ImportProductsModal';
+import { useAiImportStore } from '@/stores/ai-import.store';
 import { Pagination } from '@/components/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -33,7 +33,7 @@ export const Inventory: React.FC = () => {
   const [movQty, setMovQty] = useState('1');
   const [movRef, setMovRef] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
+  
   const [editingItem, setEditingItem] = useState<StockItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +61,13 @@ export const Inventory: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
+  }, [fetchProducts]);
+
+  // Importação com IA roda no store global: atualiza a lista quando terminar
+  useEffect(() => {
+    const handler = () => fetchProducts(true);
+    window.addEventListener('inventory-imported', handler);
+    return () => window.removeEventListener('inventory-imported', handler);
   }, [fetchProducts]);
 
   const filtered = items.filter(i =>
@@ -212,7 +219,7 @@ export const Inventory: React.FC = () => {
             Excluir {selectedIds.size} {selectedIds.size === 1 ? 'item' : 'itens'}
           </button>
         )}
-        <button className="btn btn-secondary" onClick={() => setShowImportModal(true)}>
+        <button className="btn btn-secondary" onClick={() => useAiImportStore.getState().openModal()}>
           <FileSpreadsheet size={15} /> Importar planilha com IA
         </button>
       </div>
@@ -356,13 +363,6 @@ export const Inventory: React.FC = () => {
         />
       )}
 
-      {showImportModal && (
-        <ImportProductsModal
-          existingItems={items}
-          onClose={() => setShowImportModal(false)}
-          onImported={() => fetchProducts(true)}
-        />
-      )}
       </>
       )}
 

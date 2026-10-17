@@ -20,9 +20,9 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 // para o mais caro. Se um modelo sair do catálogo ("No endpoints found"),
 // cai automaticamente para o próximo — imune a mudanças do OpenRouter.
 const IMPORT_MODELS = [
-  "meta-llama/llama-3.3-70b-instruct", // ~$0.10/M in · $0.32/M out
-  "deepseek/deepseek-v4.1-flash", // ~$0.15/M in · $0.60/M out
-  "google/gemini-3.1-flash-lite", // ~$0.25/M in · $1.50/M out (padrao da plataforma)
+  "deepseek/deepseek-v4.1-flash", // ~$0.15/M in · $0.60/M out — rápido
+  "google/gemini-3.1-flash-lite", // ~$0.25/M in · $1.50/M out — padrão da plataforma
+  "meta-llama/llama-3.3-70b-instruct", // ~$0.10/M in · $0.32/M out — mais lento
 ];
 const MODEL_NOT_FOUND_HINTS = [
   "no endpoints found",
@@ -32,7 +32,7 @@ const MODEL_NOT_FOUND_HINTS = [
 ];
 const MAX_SHEETS = 15;
 const MAX_SAMPLE_ROWS = 10;
-const MAX_NAME_BATCH = 60;
+const MAX_NAME_BATCH = 100;
 const MAX_CELL_CHARS = 40;
 
 const corsHeaders = {

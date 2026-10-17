@@ -1,184 +1,59 @@
 import React, { useRef, useState } from 'react';
-import { X, UploadCloud, FileSpreadsheet, CheckCircle2, Sparkles, RefreshCw } from 'lucide-react';
-import { ProductRepository } from '@/repositories/product.repository';
-import { mapSheetColumns, normalizeProductNames, type SheetMapping } from '@/lib/ai-import.service';
+import { X, UploadCloud, FileSpreadsheet, CheckCircle2, Sparkles, RefreshCw, Minimize2 } from 'lucide-react';
+import { useAiImportStore } from '@/stores/ai-import.store';
 import { AiImportReport } from './AiImportReport';
-import {
-  readAllSheets, buildProductsFromSheet, dedupeProducts, applyNormalizedNames,
-  type ImportProduct, type SheetReport,
-} from './ai-import-parse';
-import type { StockItemForm } from './ProductFormModal';
-
-const productRepo = new ProductRepository();
-const MAX_PRODUCTS = 5000;
-
-type Stage = 'drop' | 'analyzing' | 'report' | 'importing' | 'done';
-
-interface AnalyzeStep { label: string; progress: number }
 
 /**
- * Importação inteligente: o usuário envia a planilha DO JEITO DELE
- * (qualquer formato, várias abas) e a IA entende, padroniza e apresenta
- * um relatório para conferência antes de enviar ao catálogo.
+ * Modal de importação com IA — view da sessão global (ai-import.store).
+ * O processo sobrevive a minimizar/navegar; o balão flutuante acompanha.
  */
 export const ImportProductsModal: React.FC<{
-  existingItems: StockItemForm[];
   onClose: () => void;
   onImported: () => void;
-}> = ({ existingItems, onClose, onImported }) => {
-  const [stage, setStage] = useState<Stage>('drop');
+}> = ({ onClose, onImported }) => {
+  const {
+    stage, analyzeStep, products, sheetReports, issues,
+    importProgress, result, error,
+    startAnalysis, sendToCatalog, minimize, reset,
+  } = useAiImportStore();
   const [dragOver, setDragOver] = useState(false);
-  const [analyzeStep, setAnalyzeStep] = useState<AnalyzeStep>({ label: '', progress: 0 });
-  const [products, setProducts] = useState<ImportProduct[]>([]);
-  const [sheetReports, setSheetReports] = useState<SheetReport[]>([]);
-  const [issues, setIssues] = useState<string[]>([]);
-  const [importProgress, setImportProgress] = useState({ done: 0, total: 0 });
-  const [result, setResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const reset = () => {
-    setStage('drop');
-    setProducts([]);
-    setSheetReports([]);
-    setIssues([]);
-    setError(null);
-    setResult(null);
-    setAnalyzeStep({ label: '', progress: 0 });
-  };
-
-  const analyzeFile = async (file: File) => {
-    setError(null);
-    setStage('analyzing');
-    try {
-      setAnalyzeStep({ label: 'Lendo abas da planilha...', progress: 10 });
-      const buf = await file.arrayBuffer();
-      const sheets = readAllSheets(buf);
-      if (sheets.length === 0) throw new Error('Planilha vazia.');
-
-      setAnalyzeStep({ label: 'IA identificando as colunas...', progress: 30 });
-      const mappings: SheetMapping[] = await mapSheetColumns(
-        sheets.map((s) => ({ name: s.name, rows: s.sampleRows })),
-      );
-
-      setAnalyzeStep({ label: 'Extraindo e convertendo produtos...', progress: 55 });
-      const allIssues: string[] = [];
-      const reports: SheetReport[] = [];
-      const parsed: ImportProduct[] = [];
-      sheets.forEach((sheet, i) => {
-        const mapping = mappings[i] ?? { header_row: 0, columns: {}, formats: {}, confidence: 0 };
-        const { products: sheetProducts, issues: sheetIssues } = buildProductsFromSheet(sheet, mapping);
-        allIssues.push(...sheetIssues);
-        reports.push({ name: sheet.name, productCount: sheetProducts.length, mapping });
-        parsed.push(...sheetProducts);
-      });
-      if (parsed.length === 0) {
-        throw new Error('A IA não encontrou produtos. Confira se a planilha tem uma coluna com o nome dos itens.');
-      }
-
-      const { unique, duplicates } = dedupeProducts(parsed);
-      if (duplicates > 0) allIssues.push(`${duplicates} linha(s) duplicada(s) ignorada(s)`);
-      if (unique.length > MAX_PRODUCTS) {
-        allIssues.push(`Limite de ${MAX_PRODUCTS} produtos por importação — os primeiros ${MAX_PRODUCTS} serão enviados`);
-      }
-      const finalProducts = unique.slice(0, MAX_PRODUCTS);
-
-      setAnalyzeStep({ label: 'IA padronizando nomes...', progress: 65 });
-      const rawNames = [...new Set(finalProducts.map((p) => p.rawName))];
-      const normalized = await normalizeProductNames(rawNames, (done, total) => {
-        setAnalyzeStep({
-          label: `IA padronizando nomes (${done}/${total})...`,
-          progress: 65 + Math.round((done / Math.max(total, 1)) * 30),
-        });
-      });
-      applyNormalizedNames(finalProducts, normalized);
-
-      setAnalyzeStep({ label: 'Pronto!', progress: 100 });
-      setProducts(finalProducts);
-      setSheetReports(reports);
-      setIssues(allIssues);
-      setStage('report');
-    } catch (err) {
-      console.error('[ai-import] falha na análise:', err);
-      const message = (err as Error).message;
-      setError(
-        message === 'quota_exceeded'
-          ? 'Cota de tokens de IA esgotada neste mês. Compre mais tokens em Agente de IA para importar.'
-          : message === 'import_ai_unavailable'
-            ? 'A IA da plataforma não está habilitada para sua empresa. Fale com o suporte.'
-            : `Não foi possível analisar a planilha: ${message}`,
-      );
-      setStage('drop');
-    }
-  };
-
-  const sendToCatalog = async () => {
-    if (products.length === 0) return;
-    setStage('importing');
-    setError(null);
-    setResult(null);
-
-    const bySku = new Map(existingItems.map((i) => [i.sku.toLowerCase(), i]));
-    const byName = new Map(existingItems.filter((i) => i.name).map((i) => [i.name.trim().toLowerCase(), i]));
-    let created = 0;
-    let updated = 0;
-    const total = products.length;
-    setImportProgress({ done: 0, total });
-
-    for (let i = 0; i < total; i++) {
-      const p = products[i];
-      const sku = p.sku || `SKU-${Date.now()}-${i}`;
-      const existing = (p.sku && bySku.get(p.sku.toLowerCase())) || byName.get(p.name.trim().toLowerCase());
-      const payload: Record<string, unknown> = {
-        name: p.name,
-        ...(p.price !== undefined && { price: p.price }),
-        ...(p.cost !== undefined && { cost: p.cost }),
-        ...(p.stock_quantity !== undefined && { stock_quantity: p.stock_quantity }),
-        ...(p.min_stock_quantity !== undefined && { min_stock_quantity: p.min_stock_quantity }),
-        category: p.category || 'Outros',
-        ...(p.location && { location: p.location }),
-        ...(p.device_brand && { device_brand: p.device_brand }),
-        ...(p.device_model && { device_model: p.device_model }),
-      };
-      try {
-        if (existing) {
-          await productRepo.update(existing.id, payload as never);
-          updated++;
-        } else {
-          await productRepo.create({
-            ...payload,
-            sku,
-            stock_quantity: p.stock_quantity ?? 0,
-            active: true,
-          } as never);
-          created++;
-        }
-      } catch { /* segue com as próximas linhas */ }
-      setImportProgress({ done: i + 1, total });
-    }
-
-    setResult(`${created} produto(s) criado(s) · ${updated} atualizado(s)`);
-    setStage('done');
-    onImported();
-  };
 
   const busy = stage === 'analyzing' || stage === 'importing';
 
+  const handleFile = (file: File) => void startAnalysis(file);
+
+  const finishImport = async () => {
+    await sendToCatalog();
+    onImported();
+  };
+
   return (
-    <div className="modal-overlay" onClick={busy ? undefined : onClose}>
+    <div className="modal-overlay">
       <div className="modal" style={{ maxWidth: 720, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={18} color="var(--primary-text)" /> Importar com IA
           </h3>
-          <button className="btn btn-ghost btn-icon" onClick={onClose} disabled={busy} aria-label="Fechar"><X size={16} /></button>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {busy && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={minimize}
+                title="Minimizar — o processo continua e um balão mostra o andamento"
+              >
+                <Minimize2 size={14} /> Minimizar
+              </button>
+            )}
+            <button className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Fechar"><X size={16} /></button>
+          </div>
         </div>
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {error && <p style={{ color: 'var(--danger)', fontSize: '0.8125rem', margin: 0 }}>{error}</p>}
 
-          {/* Etapa 1: upload */}
-          {stage === 'drop' && (
+          {/* Etapa 1: upload (idle) */}
+          {stage === 'idle' && (
             <div
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
@@ -186,7 +61,7 @@ export const ImportProductsModal: React.FC<{
                 e.preventDefault();
                 setDragOver(false);
                 const file = e.dataTransfer.files?.[0];
-                if (file) void analyzeFile(file);
+                if (file) handleFile(file);
               }}
               onClick={() => inputRef.current?.click()}
               style={{
@@ -203,7 +78,7 @@ export const ImportProductsModal: React.FC<{
                 Qualquer formato, uma ou várias abas. A IA lê, entende as colunas, padroniza os nomes
                 e mostra um relatório para você conferir antes de enviar ao catálogo.
               </span>
-              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>.xlsx · .xls · .csv — até {MAX_PRODUCTS} produtos</span>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>.xlsx · .xls · .csv — até 5.000 produtos</span>
               <input
                 ref={inputRef}
                 type="file"
@@ -211,7 +86,7 @@ export const ImportProductsModal: React.FC<{
                 style={{ display: 'none' }}
                 onChange={e => {
                   const file = e.target.files?.[0];
-                  if (file) void analyzeFile(file);
+                  if (file) handleFile(file);
                   e.target.value = '';
                 }}
               />
@@ -229,7 +104,7 @@ export const ImportProductsModal: React.FC<{
                 </div>
               </div>
               <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                Isso costuma levar menos de um minuto. Os produtos só entram no catálogo quando você confirmar.
+                Pode minimizar e fazer outra coisa — avisamos quando terminar. Os produtos só entram no catálogo quando você confirmar.
               </p>
             </div>
           )}
@@ -239,8 +114,8 @@ export const ImportProductsModal: React.FC<{
             <>
               <AiImportReport products={products} sheets={sheetReports} issues={issues} />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                <button className="btn btn-ghost" onClick={reset} disabled={busy}>Enviar outra planilha</button>
-                <button className="btn btn-primary" onClick={sendToCatalog}>
+                <button className="btn btn-ghost" onClick={reset}>Descartar</button>
+                <button className="btn btn-primary" onClick={finishImport}>
                   <CheckCircle2 size={15} /> Enviar {products.length} produto(s) para o catálogo
                 </button>
               </div>
@@ -256,7 +131,7 @@ export const ImportProductsModal: React.FC<{
               <div style={{ height: 8, background: 'var(--progress-track)', borderRadius: 99, overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: 'var(--primary)', borderRadius: 99, width: `${(importProgress.done / Math.max(importProgress.total, 1)) * 100}%`, transition: 'width 0.15s' }} />
               </div>
-              <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Você pode acompanhar o progresso. Não feche esta janela.</p>
+              <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Pode minimizar — o envio continua. Não é preciso ficar nesta janela.</p>
             </div>
           )}
 

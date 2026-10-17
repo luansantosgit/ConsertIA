@@ -237,6 +237,11 @@ img { max-width: 100%; display: block; }
   50% { transform: translateY(-6px); }
 }
 
+@keyframes balloonPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
+  50% { transform: scale(1.05); box-shadow: 0 12px 36px var(--primary-ring); }
+}
+
 /* ============================================================
    APP LAYOUT
    ============================================================ */

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
 import { canAccess, firstAllowedPath } from '@/lib/permissions';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { AiImportSession } from '@/components/AiImportSession';
 
 // Tenant (eager — layout crítico)
 import { TenantLogin } from '@/pages/TenantLogin';
@@ -225,6 +226,8 @@ const App: React.FC = () => {
           }
         />
       </Routes>
+      {/* Sessão de importação com IA (modal/balão flutuante) — vive no store */}
+      <AiImportSession />
       </ErrorBoundary>
     </BrowserRouter>
   );
