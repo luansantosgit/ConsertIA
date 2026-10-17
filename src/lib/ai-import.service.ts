@@ -67,6 +67,12 @@ export async function mapSheetColumns(sheets: SheetSample[]): Promise<SheetMappi
 // 50 itens/lote mantém a resposta (~3k tokens) longe do limite do modelo —
 // lote grande trunca o JSON e o lote inteiro é perdido
 const NAME_BATCH_SIZE = 50;
+// 8 lotes simultâneos: 3.000 nomes = 60 lotes = ~8 rodadas (~2 min),
+// em vez de ~20 rodadas com 3 workers. Backoff cuida de rate-limit (429).
+const PARALLEL_WORKERS = 8;
+const RETRY_DELAYS = [1500, 4000];
+
+const sleep = (ms: number) => new Promise((r) => { setTimeout(r, ms); });
 
 /**
  * Etapa 2: padroniza nomes em lotes PARALELOS (3 simultâneos de 100),
@@ -115,31 +121,26 @@ export async function normalizeProductNames(
   const worker = async (clarification?: { term: string; meaning: string }) => {
     while (nextBatch < batches.length) {
       const batch = batches[nextBatch++];
-      try {
-        await runBatch(batch, clarification);
-      } catch (err) {
-        console.warn('[ai-import] lote falhou, tentando de novo:', err);
-        // Uma tentativa extra por lote: falha intermitente não pode perder dados
+      // Backoff progressivo: rate-limit (429) ou falha transitória não
+      // perde o lote — tenta até 3x com pausa crescente
+      let ok = false;
+      for (let attempt = 0; attempt <= RETRY_DELAYS.length && !ok; attempt++) {
         try {
           await runBatch(batch, clarification);
-        } catch (retryErr) {
-          console.warn('[ai-import] lote falhou de novo, mantendo nomes originais:', retryErr);
+          ok = true;
+        } catch (err) {
+          console.warn(`[ai-import] lote falhou (tentativa ${attempt + 1}/${RETRY_DELAYS.length + 1}):`, err);
+          if (attempt < RETRY_DELAYS.length) await sleep(RETRY_DELAYS[attempt]);
         }
       }
+      if (!ok) console.warn('[ai-import] lote falhou definitivamente, mantendo nomes originais');
       done += batch.length;
       onProgress?.(Math.min(done, names.length), names.length);
     }
   };
 
-  if (clarification) {
-    // Re-normalização com o esclarecimento da empresa (aplica em todos os lotes)
-    await Promise.all(
-      Array.from({ length: Math.min(3, batches.length) }, () => worker(clarification)),
-    );
-    return result;
-  }
   await Promise.all(
-    Array.from({ length: Math.min(3, batches.length) }, () => worker()),
+    Array.from({ length: Math.min(PARALLEL_WORKERS, batches.length) }, () => worker(clarification)),
   );
   return result;
 }
