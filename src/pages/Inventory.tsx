@@ -39,6 +39,7 @@ export const Inventory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; item: StockItem | null; bulk: boolean }>({ isOpen: false, item: null, bulk: false });
+  const [deleteProgress, setDeleteProgress] = useState<{ done: number; total: number } | null>(null);
 
   const fetchProducts = useCallback(async (silent = false) => {
     try {
@@ -127,16 +128,23 @@ export const Inventory: React.FC = () => {
   };
 
   const handleDeleteBulk = async () => {
+    if (deleteProgress) return; // já está excluindo
+    const ids = [...selectedIds];
+    setDeleteProgress({ done: 0, total: ids.length });
     try {
-      for (const id of selectedIds) {
-        await productRepo.delete(id);
+      // Remove da lista em tempo real: o usuário vê a qtd caindo
+      for (let i = 0; i < ids.length; i++) {
+        await productRepo.delete(ids[i]);
+        setDeleteProgress({ done: i + 1, total: ids.length });
+        setItems(prev => prev.filter(it => it.id !== ids[i]));
+        setSelectedIds(prev => { const n = new Set(prev); n.delete(ids[i]); return n; });
       }
-      setItems(prev => prev.filter(i => !selectedIds.has(i.id)));
-      setSelectedIds(new Set());
     } catch (error) {
       console.error('Failed to delete products:', error);
+    } finally {
+      setDeleteProgress(null);
+      setConfirmDelete({ isOpen: false, item: null, bulk: false });
     }
-    setConfirmDelete({ isOpen: false, item: null, bulk: false });
   };
 
   const toggleSelect = (id: string) => {
@@ -368,16 +376,28 @@ export const Inventory: React.FC = () => {
 
       <ConfirmModal
         isOpen={confirmDelete.isOpen}
-        onClose={() => setConfirmDelete({ isOpen: false, item: null, bulk: false })}
+        onClose={() => { if (!deleteProgress) setConfirmDelete({ isOpen: false, item: null, bulk: false }); }}
         onConfirm={confirmDelete.bulk ? handleDeleteBulk : handleDeleteSingle}
         title={confirmDelete.bulk ? 'Excluir Itens Selecionados' : 'Excluir Produto'}
         message={
-          confirmDelete.bulk
-            ? `Tem certeza que deseja excluir ${selectedIds.size} ${selectedIds.size === 1 ? 'item' : 'itens'}? Esta acao nao pode ser desfeita.`
-            : `Tem certeza que deseja excluir "${confirmDelete.item?.name || ''}"? Todo o historico de movimentacoes sera removido.`
+          deleteProgress
+            ? `Excluindo ${deleteProgress.done} de ${deleteProgress.total}...`
+            : confirmDelete.bulk
+              ? `Tem certeza que deseja excluir ${selectedIds.size} ${selectedIds.size === 1 ? 'item' : 'itens'}? Esta acao nao pode ser desfeita.`
+              : `Tem certeza que deseja excluir "${confirmDelete.item?.name || ''}"? Todo o historico de movimentacoes sera removido.`
         }
         variant="danger"
       />
+      {deleteProgress && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 300, padding: '12px 16px', borderRadius: 14, background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: '0 12px 32px rgba(0,0,0,0.18)', fontSize: '0.8125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ width: 240 }}>
+            <span style={{ display: 'block', height: 6, background: 'var(--progress-track)', borderRadius: 99, overflow: 'hidden' }}>
+              <span style={{ display: 'block', height: '100%', background: 'var(--danger)', borderRadius: 99, width: `${(deleteProgress.done / Math.max(deleteProgress.total, 1)) * 100}%`, transition: 'width 0.15s' }} />
+            </span>
+          </span>
+          Excluindo {deleteProgress.done}/{deleteProgress.total}…
+        </div>
+      )}
     </div>
   );
 };

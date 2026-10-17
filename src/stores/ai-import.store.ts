@@ -151,14 +151,16 @@ export const useAiImportStore = create<AiImportState>()(
           },
         });
       });
-      applyNormalizedNames(finalProducts, normalized);
+      const withSplits = applyNormalizedNames(finalProducts, normalized);
+      // Quebras de linha multi-modelo podem duplicar: dedupe de novo
+      const { unique: finalProducts2 } = dedupeProducts(withSplits);
 
       // Dúvidas: IA marcou tokens que não entendeu — agrupa por termo
       // para a empresa esclarecer UMA vez e valer para todos os itens
       const doubtsMap = new Map<string, DoubtGroup>();
-      for (const p of finalProducts) {
+      for (const p of finalProducts2) {
         const n = normalized.get(p.rawName);
-        const tokens = [...new Set((n?.unclear ?? []).map((t) => t.trim()).filter(Boolean))];
+        const tokens = [...new Set((n?.[0]?.unclear ?? []).map((t) => t.trim()).filter(Boolean))];
         if (tokens.length === 0) continue;
         const key = tokens.sort().join(' + ');
         const group = doubtsMap.get(key);
@@ -168,7 +170,7 @@ export const useAiImportStore = create<AiImportState>()(
       const doubts = [...doubtsMap.values()].map((g) => ({ ...g, count: g.rawNames.length }));
 
       set({
-        products: finalProducts,
+        products: finalProducts2,
         sheetReports: reports,
         issues: allIssues,
         doubts,
@@ -253,20 +255,16 @@ export const useAiImportStore = create<AiImportState>()(
 
     try {
       // Re-normaliza TODOS os itens do grupo com o esclarecimento da empresa;
-      // a edge salva a resposta no glossário do tenant (vale para as próximas)
+      // a edge salva a resposta no glossário do tenant (vale para as próximas).
+      // Também divide linhas multi-modelo que o contexto esclareceu.
       const clarified = await clarifyProductNames(group.rawNames, group.term, meaning.trim());
-      for (const p of products) {
-        if (!group.rawNames.includes(p.rawName)) continue;
-        const n = clarified.get(p.rawName);
-        if (!n) continue;
-        if (n.name) p.name = n.name;
-        if (n.brand) p.device_brand = n.brand;
-        if (n.model) p.device_model = n.model;
-        if (n.part_type) p.part_type = n.part_type;
-        if (!p.category && n.category) p.category = n.category;
-      }
+      const groupSet = new Set(group.rawNames);
+      const untouched = products.filter((p) => !groupSet.has(p.rawName));
+      const affected = products.filter((p) => groupSet.has(p.rawName));
+      const variants = applyNormalizedNames(affected, clarified);
+      const { unique: merged } = dedupeProducts([...untouched, ...variants]);
       set({
-        products: [...products],
+        products: merged,
         doubts: doubts.map((d) => (d.key === key ? { ...d, resolved: true } : d)),
       });
     } catch (err) {

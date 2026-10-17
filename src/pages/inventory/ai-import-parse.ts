@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { parseSheetNumber, type SheetMapping } from '@/lib/ai-import.service';
+import { parseSheetNumber, type SheetMapping, type NormalizedResults } from '@/lib/ai-import.service';
 
 /** Produto padronizado pronto para o catálogo (vindo da importação com IA) */
 export interface ImportProduct {
@@ -131,18 +131,34 @@ export function dedupeProducts(products: ImportProduct[]): {
   return { unique, duplicates };
 }
 
-/** Aplica os nomes padronizados pela IA (nome, marca, modelo, tipo e categoria se vazio) */
+/**
+ * Aplica os nomes padronizados pela IA. Um nome cru com VÁRIAS variantes
+ * (linha com múltiplos modelos: "NOTE 10/POCO M5S") é DIVIDIDO em um
+ * produto por modelo — preço/estoque/etc. são copiados para todos.
+ * Retorna a lista completa (originais + quebras).
+ */
 export function applyNormalizedNames(
   products: ImportProduct[],
-  normalized: Map<string, { name: string; brand?: string; model?: string; part_type?: string; category?: string }>,
-): void {
+  normalized: NormalizedResults,
+): ImportProduct[] {
+  const out: ImportProduct[] = [];
   for (const p of products) {
-    const n = normalized.get(p.rawName);
-    if (!n) continue;
-    p.name = n.name || p.name;
-    if (!p.device_brand && n.brand) p.device_brand = n.brand;
-    if (!p.device_model && n.model) p.device_model = n.model;
-    if (!p.part_type && n.part_type) p.part_type = n.part_type;
-    if (!p.category && n.category) p.category = n.category;
+    const variants = normalized.get(p.rawName);
+    if (!variants || variants.length === 0) {
+      out.push(p);
+      continue;
+    }
+    variants.forEach((n, vi) => {
+      const item: ImportProduct = vi === 0 ? p : { ...p };
+      if (n.name) item.name = n.name;
+      if (n.brand) item.device_brand = n.brand;
+      if (n.model) item.device_model = n.model;
+      if (n.part_type) item.part_type = n.part_type;
+      if (!item.category && n.category) item.category = n.category;
+      // Quebras de uma linha com SKU: sufixo mantém cada variante única
+      if (vi > 0 && item.sku) item.sku = `${item.sku}-${vi + 1}`;
+      out.push(item);
+    });
   }
+  return out;
 }

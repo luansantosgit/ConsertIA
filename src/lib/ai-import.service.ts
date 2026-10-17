@@ -31,6 +31,9 @@ export interface NormalizedName {
   confidence?: number;
 }
 
+/** Um nome cru pode gerar N variantes (linha com vários modelos: "NOTE 10/POCO M5S") */
+export type NormalizedResults = Map<string, NormalizedName[]>;
+
 
 async function invokeImport<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('ai-inventory-import', { body });
@@ -72,8 +75,8 @@ export async function normalizeProductNames(
   names: string[],
   onProgress?: (done: number, total: number) => void,
   clarification?: { term: string; meaning: string },
-): Promise<Map<string, NormalizedName>> {
-  const result = new Map<string, NormalizedName>();
+): Promise<NormalizedResults> {
+  const result = new Map<string, NormalizedName[]>();
   const batches: string[][] = [];
   for (let i = 0; i < names.length; i += NAME_BATCH_SIZE) {
     batches.push(names.slice(i, i + NAME_BATCH_SIZE));
@@ -88,7 +91,11 @@ export async function normalizeProductNames(
       if (Number.isInteger(idx) && idx >= 0 && idx < batch.length) {
         const raw = batch[idx];
         if (item.name && raw) {
-          result.set(raw, { i: idx, name: String(item.name), brand: item.brand, model: item.model, part_type: item.part_type, category: item.category, unclear: item.unclear, confidence: item.confidence });
+          const entry: NormalizedName = { i: idx, name: String(item.name), brand: item.brand, model: item.model, part_type: item.part_type, category: item.category, unclear: item.unclear, confidence: item.confidence };
+          // Múltiplas variantes do mesmo raw (linha com vários modelos): acumula
+          const existing = result.get(raw);
+          if (existing) existing.push(entry);
+          else result.set(raw, [entry]);
         }
       }
     });
@@ -146,7 +153,7 @@ export async function clarifyProductNames(
   term: string,
   meaning: string,
   onProgress?: (done: number, total: number) => void,
-): Promise<Map<string, NormalizedName>> {
+): Promise<NormalizedResults> {
   return normalizeProductNames(names, onProgress, { term, meaning: meaning });
 }
 
