@@ -66,13 +66,15 @@ export const StepCompanyData: React.FC<{
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="form-group">
-          <label className="form-label">Seu nome</label>
-          <input className="input" style={inputStyle} value={form.lead_name} onChange={e => set('lead_name')(e.target.value)} placeholder="Ex: João Silva" />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Nome da empresa</label>
-          <input className="input" style={inputStyle} value={form.company_name} onChange={e => set('company_name')(e.target.value)} placeholder="Ex: TechAssist Reparos" />
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Seu nome</label>
+            <input className="input" style={inputStyle} value={form.lead_name} onChange={e => set('lead_name')(e.target.value)} placeholder="Ex: João Silva" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Nome da empresa</label>
+            <input className="input" style={inputStyle} value={form.company_name} onChange={e => set('company_name')(e.target.value)} placeholder="Ex: TechAssist Reparos" />
+          </div>
         </div>
         <div className="form-row">
           <div className="form-group">
@@ -84,18 +86,20 @@ export const StepCompanyData: React.FC<{
             <input className="input" style={inputStyle} value={form.whatsapp} onChange={e => set('whatsapp')(maskPhone(e.target.value))} placeholder="(11) 99999-0000" />
           </div>
         </div>
-        <div className="form-group">
-          <label className="form-label">CPF ou CNPJ <span style={{ color: 'var(--text-muted)' }}>(para a fatura)</span></label>
-          <input className="input" style={inputStyle} value={form.cpf_cnpj} onChange={e => set('cpf_cnpj')(maskCpfCnpj(e.target.value))} placeholder="000.000.000-00" />
-        </div>
-        <div className="form-group">
-          <label className="form-label">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Bot size={13} color="var(--primary-text)" />
-              Endereço <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(a IA informa aos clientes)</span>
-            </span>
-          </label>
-          <input className="input" style={inputStyle} value={form.address} onChange={e => set('address')(e.target.value)} placeholder="Rua, número, bairro, cidade" />
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">CPF ou CNPJ <span style={{ color: 'var(--text-muted)' }}>(para a fatura)</span></label>
+            <input className="input" style={inputStyle} value={form.cpf_cnpj} onChange={e => set('cpf_cnpj')(maskCpfCnpj(e.target.value))} placeholder="000.000.000-00" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Bot size={13} color="var(--primary-text)" />
+                Endereço <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(a IA informa aos clientes)</span>
+              </span>
+            </label>
+            <input className="input" style={inputStyle} value={form.address} onChange={e => set('address')(e.target.value)} placeholder="Rua, número, bairro, cidade" />
+          </div>
         </div>
 
         {error && <p style={{ color: 'var(--danger)', fontSize: '0.8125rem', margin: 0 }}>{error}</p>}

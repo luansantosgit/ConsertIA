@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Rocket, MessageSquare, Zap, Clock } from 'lucide-react';
+import { MessageSquare, Zap, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useThemeStore } from '@/stores/theme.store';
 
 const HIGHLIGHTS = [
   { icon: MessageSquare, text: 'Seu WhatsApp vira um atendente de IA' },
@@ -10,6 +11,7 @@ const HIGHLIGHTS = [
 
 export const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const globalTheme = useThemeStore(s => s.globalTheme);
 
   // Vídeo de demonstração configurado pelo superadmin (opcional)
   useEffect(() => {
@@ -26,13 +28,20 @@ export const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
   return (
     <div style={{ textAlign: 'center', padding: '12px 0' }}>
+      {/* Ícone da marca do sistema (logo configurada ou inicial do nome) */}
       <div style={{
         width: 72, height: 72, borderRadius: 20, margin: '0 auto 20px',
-        background: 'var(--primary)', color: '#fff',
+        background: globalTheme.logoUrl ? 'transparent' : 'var(--primary)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 12px 32px var(--primary-light)',
+        boxShadow: '0 12px 32px var(--primary-light)', overflow: 'hidden',
       }}>
-        <Rocket size={36} />
+        {globalTheme.logoUrl ? (
+          <img src={globalTheme.logoUrl} alt={globalTheme.logoText || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        ) : (
+          <span style={{ fontSize: '2.25rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+            {(globalTheme.logoText || 'D').charAt(0).toUpperCase()}
+          </span>
+        )}
       </div>
       <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 8px', letterSpacing: -0.5 }}>
         Coloque sua assistência técnica para vender enquanto você repara
