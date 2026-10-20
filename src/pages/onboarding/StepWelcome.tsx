@@ -12,6 +12,9 @@ const HIGHLIGHTS = [
 export const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const globalTheme = useThemeStore(s => s.globalTheme);
+  // Ícone próprio só existe quando o tema é do tipo "icon" (logo completo
+  // é wordmark com o nome — não serve como ícone)
+  const hasIconImage = Boolean(globalTheme.logoUrl) && globalTheme.logoType === 'icon';
 
   // Vídeo de demonstração configurado pelo superadmin (opcional)
   useEffect(() => {
@@ -28,15 +31,16 @@ export const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
   return (
     <div style={{ textAlign: 'center', padding: '12px 0' }}>
-      {/* Ícone da marca do sistema (logo configurada ou inicial do nome) */}
+      {/* Ícone do sistema (nunca o logo completo): imagem quando o tema tem
+          ícone próprio; senão o mesmo ícone do favicon — quadrado com a inicial */}
       <div style={{
         width: 72, height: 72, borderRadius: 20, margin: '0 auto 20px',
-        background: globalTheme.logoUrl ? 'transparent' : 'var(--primary)',
+        background: hasIconImage ? 'transparent' : 'var(--primary)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: '0 12px 32px var(--primary-light)', overflow: 'hidden',
       }}>
-        {globalTheme.logoUrl ? (
-          <img src={globalTheme.logoUrl} alt={globalTheme.logoText || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        {hasIconImage ? (
+          <img src={globalTheme.logoUrl!} alt={globalTheme.logoText || 'Ícone'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         ) : (
           <span style={{ fontSize: '2.25rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
             {(globalTheme.logoText || 'D').charAt(0).toUpperCase()}
