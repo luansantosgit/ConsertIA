@@ -11,6 +11,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ProductFormModal } from './inventory/ProductFormModal';
 import { useAiImportStore } from '@/stores/ai-import.store';
+import { QUALITY_BADGES } from '@/lib/product-variant';
 import { Pagination } from '@/components/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -254,7 +255,19 @@ export const Inventory: React.FC = () => {
                     <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggleSelect(item.id)} />
                   </td>
                   <td style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{item.name}</p>
+                    <p style={{ fontWeight: 600, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {item.name}
+                      {item.part_type && QUALITY_BADGES[item.part_type.toLowerCase()] && (
+                        <span style={{
+                          fontSize: '0.625rem', fontWeight: 700, padding: '1px 8px', borderRadius: 99,
+                          background: QUALITY_BADGES[item.part_type.toLowerCase()].bg,
+                          color: QUALITY_BADGES[item.part_type.toLowerCase()].color,
+                          textTransform: 'uppercase', letterSpacing: 0.4,
+                        }}>
+                          {QUALITY_BADGES[item.part_type.toLowerCase()].label}
+                        </span>
+                      )}
+                    </p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{item.sku}</p>
                   </td>
                   <td><span className="badge badge-gray">{item.category}</span></td>

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ProductRepository } from '@/repositories/product.repository';
 import { mapSheetColumns, normalizeProductNames, clarifyProductNames, type SheetMapping } from '@/lib/ai-import.service';
+import { computeVariantKey } from '@/lib/product-variant';
 import {
   readAllSheets, buildProductsFromSheet, dedupeProducts, applyNormalizedNames,
   type ImportProduct, type SheetReport,
@@ -266,6 +267,9 @@ export const useAiImportStore = create<AiImportState>()(
       const existing = (p.sku && bySku.get(p.sku.toLowerCase())) || byName.get(p.name.trim().toLowerCase());
       const payload: Record<string, unknown> = {
         name: p.name,
+        // Agrupa o mesmo produto em várias qualidades (planilha com
+        // qualidade única não muda nada — chave única por linha)
+        variant_key: computeVariantKey({ name: p.name, device_brand: p.device_brand, device_model: p.device_model }),
         ...(p.price !== undefined && { price: p.price }),
         ...(p.cost !== undefined && { cost: p.cost }),
         ...(p.stock_quantity !== undefined && { stock_quantity: p.stock_quantity }),

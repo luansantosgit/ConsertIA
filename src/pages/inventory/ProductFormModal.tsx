@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import type { Product } from '@/types';
 import { ProductRepository } from '@/repositories/product.repository';
 import { CurrencyInput } from '@/components/CurrencyInput';
+import { computeVariantKey } from '@/lib/product-variant';
 
 const productRepo = new ProductRepository();
 
@@ -64,6 +65,12 @@ export const ProductFormModal: React.FC<{
         part_type: form.partType || null,
         device_brand: form.deviceBrand || null,
         device_model: form.deviceModel || null,
+        // Mantém o agrupamento por qualidade fresco também no cadastro manual
+        variant_key: computeVariantKey({
+          name: form.name.trim(),
+          device_brand: form.deviceBrand || null,
+          device_model: form.deviceModel || null,
+        }),
       } as Partial<Product> & Record<string, unknown>;
 
       if (editing) {

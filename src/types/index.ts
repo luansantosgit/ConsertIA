@@ -100,6 +100,7 @@ export interface Product {
   category?: string;
   location?: string;
   part_type?: string;
+  variant_key?: string | null;
   device_brand?: string;
   device_model?: string;
   active: boolean;
