@@ -226,7 +226,7 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      <div className="card card-p" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)' }}>
+      <div className="card card-p" style={{ background: 'var(--card-bg)', borderLeft: '3px solid #7c3aed' }}>
         <div className="card-header">
           <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={16} color="#7c3aed" /> Insights da IA
