@@ -360,7 +360,7 @@ const startedAt = Date.now();
     response_time_ms: Date.now() - startedAt,
     success: true,
   });
-  await trackUsage(ctx.supabase, ctx.tenantId, result.inputTokens, result.outputTokens, 0);
+  await trackUsage(ctx.supabase, ctx.tenantId, result.inputTokens, result.outputTokens, 0, ctx.tokenSource ?? "platform");
 
   return json({ ok: true, sent, handoff: ctx.handoffRequested });
 }

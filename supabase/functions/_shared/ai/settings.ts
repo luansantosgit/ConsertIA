@@ -13,7 +13,7 @@ export function currentPeriod(timezone: string): string {
   return periodOfDay(Number.isFinite(hour) ? hour : new Date().getHours());
 }
 
-async function loadEntitlement(supabase: any, ctx: Partial<AgentContext>): Promise<{ apiKey: string | null; tokenLimit: number; platformCovered: boolean; effectiveModel: string; transcriptionModel: string }> {
+async function loadEntitlement(supabase: any, ctx: Partial<AgentContext>): Promise<{ apiKey: string | null; tokenLimit: number; platformCovered: boolean; effectiveModel: string; transcriptionModel: string; tokenSource: string }> {
   const [{ data: platform }, { data: entitlement }, { data: tenant }] = await Promise.all([
     supabase.from("platform_ai_config").select("openrouter_token, distribution_mode, allowed_models, default_model, transcription_model").limit(1).maybeSingle(),
     supabase.from("tenant_ai_entitlements").select("use_platform_token, token_limit_override, allowed_models, default_model").eq("tenant_id", ctx.tenantId).limit(1).maybeSingle(),
@@ -45,9 +45,10 @@ async function loadEntitlement(supabase: any, ctx: Partial<AgentContext>): Promi
         entitlement
       ),
       transcriptionModel,
+      tokenSource: "platform",
     };
   }
-  return { apiKey: ctx.agent?.own_api_key ?? null, tokenLimit: 0, platformCovered: false, effectiveModel: ctx.agent?.openrouter_model ?? "", transcriptionModel };
+  return { apiKey: ctx.agent?.own_api_key ?? null, tokenLimit: 0, platformCovered: false, effectiveModel: ctx.agent?.openrouter_model ?? "", transcriptionModel, tokenSource: "own" };
 }
 
 /**
@@ -93,13 +94,14 @@ export async function quotaExceeded(supabase: any, tenantId: string, limit: numb
   return used >= effectiveLimit * 1.1;
 }
 
-export async function trackUsage(supabase: any, tenantId: string, tokensIn: number, tokensOut: number, cost: number): Promise<void> {
+export async function trackUsage(supabase: any, tenantId: string, tokensIn: number, tokensOut: number, cost: number, tokenSource = "platform"): Promise<void> {
   const period = new Date().toISOString().slice(0, 7);
   const { data: existing } = await supabase
     .from("ai_token_usage")
     .select("id, tokens_in, tokens_out, cost")
     .eq("tenant_id", tenantId)
     .eq("period", period)
+    .eq("token_source", tokenSource)
     .limit(1)
     .maybeSingle();
 
@@ -116,7 +118,7 @@ export async function trackUsage(supabase: any, tenantId: string, tokensIn: numb
   }
   await supabase
     .from("ai_token_usage")
-    .insert({ tenant_id: tenantId, period, tokens_in: tokensIn, tokens_out: tokensOut, cost });
+    .insert({ tenant_id: tenantId, period, token_source: tokenSource, tokens_in: tokensIn, tokens_out: tokensOut, cost });
 }
 
 function normalizeQuoteContext(raw: any): QuoteContext | null {
@@ -285,6 +287,7 @@ export async function loadAgentContext(supabase: any, conversationId: string): P
   partial.tokenLimit = entitlement.tokenLimit;
   partial.effectiveModel = entitlement.effectiveModel;
   partial.transcriptionModel = entitlement.transcriptionModel;
+  partial.tokenSource = entitlement.tokenSource ?? "platform";
 
   const allowed = new Set<number>();
   const qc = partial.quoteContext;

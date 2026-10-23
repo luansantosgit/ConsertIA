@@ -11,6 +11,8 @@ import { SkeletonStats, SkeletonCard } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useTranslation } from '@/hooks/useTranslation';
+import { supabase } from '@/lib/supabase';
+import { Sparkles } from 'lucide-react';
 
 const MiniBar: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
   const max = Math.max(...data);
@@ -105,6 +107,7 @@ export const Reports: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [totalIncome, setTotalIncome] = useState(0);
+  const [aiInsight, setAiInsight] = useState<{ insights: string; created_at: string } | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -126,6 +129,14 @@ export const Reports: React.FC = () => {
         setTransactions(allTransactions);
         setLeads(allLeads);
         setTotalIncome(income);
+
+        const { data: insight } = await supabase
+          .from('ai_insights')
+          .select('insights, created_at')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (insight) setAiInsight({ insights: insight.insights, created_at: insight.created_at });
       } catch (err) {
         console.error('Reports fetch error:', err);
         setError('Erro ao carregar relatórios');
@@ -149,13 +160,26 @@ export const Reports: React.FC = () => {
   );
   const MAX_REV = Math.max(...revenueByMonth, 1);
 
+  const now = new Date();
+  const monthIdx = now.getMonth();
+  const prevIdx = monthIdx === 0 ? 11 : monthIdx - 1;
+  const inMonth = <T extends { created_at?: string; completed_at?: string }>(arr: T[], idx: number, field: 'created_at' | 'completed_at' = 'created_at'): T[] =>
+    arr.filter(x => { const v = x[field]; if (!v) return false; const d = new Date(v); return d.getMonth() === idx && d.getFullYear() === now.getFullYear(); });
+  const sumIncome = (idx: number) => inMonth(transactions, idx).filter(t => t.type === 'income' && t.status === 'completed').reduce((s, t) => s + (t.amount || 0), 0);
+  const incomeNow = sumIncome(monthIdx);
+  const incomePrev = sumIncome(prevIdx);
+  const deltaPct = (curr: number, prev: number) => prev > 0 ? Math.round(((curr - prev) / prev) * 100) : null;
+  const completedNow = inMonth(serviceOrders, monthIdx, 'completed_at').length;
+  const completedPrev = inMonth(serviceOrders, prevIdx, 'completed_at').length;
+  const budgetMonth = inMonth(serviceOrders, monthIdx).reduce((s, o) => s + (o.budget_amount || 0), 0);
+
   const kpis = [
-    { label: 'Faturamento Mês', value: formatCurrency(totalIncome), change: '+18%', positive: true, icon: DollarSign, color: 'var(--primary-text)', bg: 'var(--primary-light)', chartData: revenueByMonth.slice(-7) },
-    { label: 'OS Concluídas', value: String(completedOrders.length), change: '+11%', positive: true, icon: FileText, color: '#10b981', bg: '#ecfdf5', chartData: [completedOrders.length * 0.7, completedOrders.length * 0.8, completedOrders.length * 0.85, completedOrders.length * 0.9, completedOrders.length * 0.95, completedOrders.length * 0.98, completedOrders.length] },
-    { label: 'Ticket Médio', value: formatCurrency(ticketMedio), change: '+5%', positive: true, icon: Target, color: 'var(--primary-text)', bg: 'var(--primary-light)', chartData: [ticketMedio * 0.8, ticketMedio * 0.85, ticketMedio * 0.9, ticketMedio * 0.95, ticketMedio, ticketMedio, ticketMedio] },
-    { label: 'Tempo Médio Reparo', value: avgRepairTime, change: '-0.3d', positive: true, icon: Clock, color: '#f59e0b', bg: '#fffbeb', chartData: [3, 2.8, 2.5, 2.9, 2.6, 2.4, 2.4] },
-    { label: 'Taxa Conversão', value: `${conversionRate}%`, change: '+4%', positive: true, icon: TrendingUp, color: '#ec4899', bg: '#fdf2f8', chartData: [55, 60, 58, 62, 65, 70, conversionRate] },
-    { label: 'Orçamentos Recuperados', value: formatCurrency(transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((s, t) => s + (t.amount || 0), 0) * 0.25), change: 'IA recuperou 8', positive: true, icon: Zap, color: '#8b5cf6', bg: 'var(--primary-light)', chartData: [0, 500, 1200, 2000, 2600, 3200, 3200] },
+    { label: 'Faturamento Mês', value: formatCurrency(incomeNow), change: deltaPct(incomeNow, incomePrev) != null ? (deltaPct(incomeNow, incomePrev)! > 0 ? '+' : '') + deltaPct(incomeNow, incomePrev) + '%' : '', positive: (incomeNow ?? 0) >= incomePrev, icon: DollarSign, color: 'var(--primary-text)', bg: 'var(--primary-light)', chartData: revenueByMonth.slice(-7) },
+    { label: 'OS Concluídas (Mês)', value: String(completedNow), change: deltaPct(completedNow, completedPrev) != null ? (deltaPct(completedNow, completedPrev)! > 0 ? '+' : '') + deltaPct(completedNow, completedPrev) + '%' : '', positive: completedNow >= completedPrev, icon: FileText, color: '#10b981', bg: '#ecfdf5', chartData: revenueByMonth.slice(-7) },
+    { label: 'Ticket Médio', value: formatCurrency(ticketMedio), change: '', positive: true, icon: Target, color: 'var(--primary-text)', bg: 'var(--primary-light)', chartData: [] },
+    { label: 'Tempo Médio Reparo', value: avgRepairTime, change: '', positive: true, icon: Clock, color: '#f59e0b', bg: '#fffbeb', chartData: [] },
+    { label: 'Taxa Conversão', value: conversionRate + '%', change: '', positive: true, icon: TrendingUp, color: '#ec4899', bg: '#fdf2f8', chartData: [] },
+    { label: 'Valor Orçado (Mês)', value: formatCurrency(budgetMonth), change: '', positive: true, icon: Zap, color: '#8b5cf6', bg: 'var(--primary-light)', chartData: [] },
   ];
 
   const topTechnicians = analyzeTechnicians(serviceOrders);
@@ -202,18 +226,28 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ padding: '16px 20px', background: 'var(--primary-light)', border: '1px solid var(--primary-ring)', borderRadius: 12, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Zap size={20} color="#fff" />
+      <div className="card card-p" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)' }}>
+        <div className="card-header">
+          <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={16} color="#7c3aed" /> Insights da IA
+          </h3>
+          {aiInsight && (
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+              {new Date(aiInsight.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · análise automática a cada 12h
+            </span>
+          )}
         </div>
-        <div>
-          <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--primary-text)', marginBottom: 4 }}>Insight da IA — Agosto 2026</p>
-          <p style={{ fontSize: '0.875rem', color: 'var(--primary-text)', lineHeight: 1.6 }}>
-            Você tem <strong>{formatCurrency(transactions.filter(t => t.type === 'income' && t.status === 'pending').reduce((s, t) => s + (t.amount || 0), 0))} em orçamentos parados</strong> este mês — a IA de recuperação já recuperou 8 deles.
-            Seu técnico {topTechnicians[0]?.name || '—'} tem o menor tempo médio de reparo ({topTechnicians[0]?.avgTime || '—'}). Considere alocar mais OS de alta prioridade para ele.
-            O defeito mais recorrente é <strong>{topDefects[0]?.defect || '—'} ({topDefects[0]?.pct || 0}%)</strong> — estoque em nível crítico (5 unidades).
+        {aiInsight ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {aiInsight.insights.split(/\n+/).filter(Boolean).map((line, idx) => (
+              <p key={idx} style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--text-primary)' }}>{line.trim()}</p>
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+            A primeira análise automática chega em até 12 horas — leitura completa de OS, financeiro, clientes e agenda.
           </p>
-        </div>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>

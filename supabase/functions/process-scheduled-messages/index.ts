@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { processAppointmentConfirmations } from "../_shared/appointment-confirmations.ts";
+import { processAiInsights } from "../_shared/ai/insights.ts";
 
 // Processa a fila de mensagens agendadas (chamada pelo pg_cron a cada 30s).
 // Nao requer JWT — e acionada internamente pelo cron do banco.
@@ -20,7 +21,15 @@ serve(async () => {
 
     // Confirmações automáticas de agendamento (roda mesmo com fila vazia)
     const { sent: confirmationsSent, debug: confirmDebug } = await processAppointmentConfirmations(supabase, baseUrl);
-    console.log("[worker] confirmations:", confirmationsSent, "debug:", confirmDebug.join(' | '));
+
+  // Insights de IA para relatórios: análise a cada ~12h por tenant
+  let insightsGenerated = 0;
+  try {
+    insightsGenerated = await processAiInsights(supabase);
+  } catch (err) {
+    console.warn("[insights] worker failed:", (err as Error).message);
+  }
+    console.log("[worker] confirmations:", confirmationsSent, insightsGenerated, "debug:", confirmDebug.join(' | '));
 
     // Lembretes do chat (botão sino no chat): envia mensagens agendadas
     let remindersSent = 0;
@@ -102,7 +111,7 @@ serve(async () => {
     }
 
     if (!rows || rows.length === 0) {
-      return new Response(JSON.stringify({ ok: true, processed: 0, confirmationsSent, confirmDebug }), {
+      return new Response(JSON.stringify({ ok: true, processed: 0, confirmationsSent, insightsGenerated, confirmDebug }), {
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -210,7 +219,7 @@ serve(async () => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, processed, confirmationsSent }), {
+    return new Response(JSON.stringify({ ok: true, processed, confirmationsSent, insightsGenerated }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {

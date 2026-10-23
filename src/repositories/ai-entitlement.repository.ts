@@ -18,13 +18,14 @@ export class AiEntitlementRepository {
     return data as TenantAiEntitlement | null;
   }
 
-  async getUsage(period?: string): Promise<AiTokenUsage | null> {
+  async getUsage(period?: string, tokenSource?: string): Promise<AiTokenUsage | null> {
     const month = period ?? new Date().toISOString().slice(0, 7);
     const { data, error } = await supabase
       .from('ai_token_usage')
       .select('*')
       .eq('tenant_id', this.tenantId)
       .eq('period', month)
+      .eq('token_source', tokenSource ?? 'platform')
       .limit(1)
       .maybeSingle();
     if (error) throw error;

@@ -30,6 +30,7 @@ export function useAiSettings() {
   const [allowedModels, setAllowedModels] = useState<string[]>([]);
   const [defaultModel, setDefaultModel] = useState('');
   const [usageTokens, setUsageTokens] = useState(0);
+  const [usageCost, setUsageCost] = useState(0);
   const [tokenLimit, setTokenLimit] = useState<number | null>(null);
   const [agentDesc, setAgentDesc] = useState('');
 
@@ -45,13 +46,12 @@ export function useAiSettings() {
     async function fetchData() {
       setLoading(true);
       try {
-        const [agentData, quoteData, diagnosisData, templateData, entitlement, usage, planLimit, activeConfig, logs, count, cost] = await Promise.all([
+        const [agentData, quoteData, diagnosisData, templateData, entitlement, planLimit, activeConfig, logs, count, cost] = await Promise.all([
           agentRepo.get(),
           quoteRepo.get(),
           diagnosisRepo.get(),
           templateRepo.getAll(),
           entitlementRepo.getEntitlement(),
-          entitlementRepo.getUsage(),
           entitlementRepo.getPlanLimit().catch(() => 0),
           aiConfigRepo.getActive().catch(() => null),
           aiLogRepo.getPage(1, LOGS_PAGE_SIZE),
@@ -63,12 +63,16 @@ export function useAiSettings() {
         setQuote(quoteData);
         setDiagnosis(diagnosisData);
         setTemplates(templateData);
-        setUsesPlatformToken(entitlement?.use_platform_token !== false);
+        const usesPlatform = entitlement?.use_platform_token !== false;
+        setUsesPlatformToken(usesPlatform);
+        const usageSrc = await entitlementRepo.getUsage(undefined, usesPlatform ? 'platform' : 'own');
+        setUsageTokens((usageSrc?.tokens_in ?? 0) + (usageSrc?.tokens_out ?? 0));
+        setUsageCost(Number(usageSrc?.cost ?? 0));
         entitlementRepo.getEffectiveModels().then(m => {
           setAllowedModels(m.allowedModels);
           setDefaultModel(m.defaultModel);
         }).catch(() => {});
-      setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
+
       // Cota efetiva: limite do plano/override + tokens comprados
       const extra = entitlement?.extra_tokens ?? 0;
       setTokenLimit((entitlement?.token_limit_override ?? planLimit) + (extra || 0));
@@ -112,12 +116,14 @@ export function useAiSettings() {
   // Recarrega cota/uso (após compra de tokens, por exemplo)
   const refreshUsage = useCallback(async () => {
     try {
-      const [entitlement, usage, planLimit] = await Promise.all([
+      const [entitlement, planLimit] = await Promise.all([
         entitlementRepo.getEntitlement(),
-        entitlementRepo.getUsage(),
         entitlementRepo.getPlanLimit().catch(() => 0),
       ]);
+      const usesPlatform = entitlement?.use_platform_token !== false;
+      const usage = await entitlementRepo.getUsage(undefined, usesPlatform ? 'platform' : 'own');
       setUsageTokens((usage?.tokens_in ?? 0) + (usage?.tokens_out ?? 0));
+      setUsageCost(Number(usage?.cost ?? 0));
       const extra = entitlement?.extra_tokens ?? 0;
       setTokenLimit((entitlement?.token_limit_override ?? planLimit) + (extra || 0));
     } catch { /* silencioso */ }
@@ -218,7 +224,7 @@ export function useAiSettings() {
     activeSection, setActiveSection,
     loading, saving, saved,
     agent, quote, diagnosis, templates,
-    usesPlatformToken, usageTokens, tokenLimit, allowedModels, defaultModel,
+    usesPlatformToken, usageTokens, usageCost, tokenLimit, allowedModels, defaultModel,
     refreshUsage,
     agentDesc, setAgentDesc,
     saveAgent, savePersonality, saveQuote, saveDiagnosis,
