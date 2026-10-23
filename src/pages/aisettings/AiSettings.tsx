@@ -142,6 +142,7 @@ export const AiSettings: React.FC = () => {
                 agent={h.agent}
                 usesPlatformToken={h.usesPlatformToken}
                 usageTokens={h.usageTokens}
+                usageCost={h.usageCost}
                 tokenLimit={h.tokenLimit}
                 allowedModels={h.allowedModels}
                 defaultModel={h.defaultModel}
