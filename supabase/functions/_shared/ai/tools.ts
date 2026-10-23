@@ -167,6 +167,18 @@ interface FindPartsRow {
   model_exact: boolean;
 }
 
+function partDisplayPrice(ctx: AgentContext, base: number): { display_price: number; price_detail?: string } {
+  const labor = ctx.quote.labor_enabled
+    ? normalizeMoney(ctx.quote.labor_type === "fixed" ? Number(ctx.quote.labor_value) : base * Number(ctx.quote.labor_value) / 100)
+    : 0;
+  const total = normalizeMoney(base + labor);
+  if (!ctx.quote.labor_enabled) return { display_price: total };
+  if (ctx.quote.labor_mode === "separate") {
+    return { display_price: total, price_detail: `peça ${formatMoney(base)} + mão de obra ${formatMoney(labor)}` };
+  }
+  return { display_price: total };
+}
+
 async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
   const model = (args.model ?? "").toString().trim();
   const part = (args.part_type ?? "").toString().trim();
@@ -195,16 +207,22 @@ async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
   const modelExact = list.filter((r) => r.model_exact === true);
   const chosen = modelExact.length > 0 ? modelExact : list.filter((r) => r.match_level === "exato");
   const finalList = chosen.length > 0 ? chosen : list;
-  for (const r of finalList) ctx.allowedValues.add(normalizeMoney(Number(r.price)));
-
-  const mapPart = (r: FindPartsRow) => ({
-    id: r.id,
-    name: r.name,
-    price: normalizeMoney(Number(r.price)),
-    stock: r.stock,
-    type: r.part_type,
-    device_model: r.device_model,
-  });
+  const mapPart = (r: FindPartsRow) => {
+    const base = normalizeMoney(Number(r.price));
+    const disp = partDisplayPrice(ctx, base);
+    ctx.allowedValues.add(base);
+    ctx.allowedValues.add(disp.display_price);
+    return {
+      id: r.id,
+      name: r.name,
+      price: base,
+      display_price: disp.display_price,
+      price_detail: disp.price_detail,
+      stock: r.stock,
+      type: r.part_type,
+      device_model: r.device_model,
+    };
+  };
 
   // Múltiplas peças do modelo exato = VARIAÇÕES (qualidades/acabamentos)
   if (modelExact.length > 1) {
@@ -213,7 +231,7 @@ async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
       found: true,
       match: "exato",
       variations: modelExact.map(mapPart),
-      message: "Há " + modelExact.length + " variações desta peça para o modelo pedido (qualidades/acabamentos diferentes). Apresente TODAS as opções ao cliente com nome e preço, do mais barato ao mais caro, e AGUARDE ele escolher ANTES de orçar. NÃO orça nenhuma variação sem a escolha explícita do cliente.",
+      message: "Há " + modelExact.length + " variações desta peça para o modelo pedido (qualidades/acabamentos diferentes). Apresente TODAS as opções ao cliente usando o display_price (JÁ É O VALOR FINAL conforme a configuração da empresa: mão de obra inclusa quando for o caso), do mais barato ao mais caro, e AGUARDE ele escolher ANTES de orçar. NÃO orça nenhuma variação sem a escolha explícita do cliente. NÃO cite o campo price bruto ao cliente — use SEMPRE o display_price.",
     };
   }
 
