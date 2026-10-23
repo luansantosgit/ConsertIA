@@ -164,6 +164,7 @@ interface FindPartsRow {
   device_model: string | null;
   score: number;
   match_level: string;
+  model_exact: boolean;
 }
 
 async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
@@ -190,23 +191,38 @@ async function findPart(ctx: AgentContext, args: any): Promise<ToolResult> {
     };
   }
 
-  const exact = list.filter((r) => r.match_level === "exato");
-  const chosen = exact.length > 0 ? exact : list;
-  for (const r of chosen) ctx.allowedValues.add(normalizeMoney(Number(r.price)));
+  // Prioridade absoluta: variações do modelo EXATO pedido
+  const modelExact = list.filter((r) => r.model_exact === true);
+  const chosen = modelExact.length > 0 ? modelExact : list.filter((r) => r.match_level === "exato");
+  const finalList = chosen.length > 0 ? chosen : list;
+  for (const r of finalList) ctx.allowedValues.add(normalizeMoney(Number(r.price)));
+
+  const mapPart = (r: FindPartsRow) => ({
+    id: r.id,
+    name: r.name,
+    price: normalizeMoney(Number(r.price)),
+    stock: r.stock,
+    type: r.part_type,
+    device_model: r.device_model,
+  });
+
+  // Múltiplas peças do modelo exato = VARIAÇÕES (qualidades/acabamentos)
+  if (modelExact.length > 1) {
+    return {
+      ok: true,
+      found: true,
+      match: "exato",
+      variations: modelExact.map(mapPart),
+      message: "Há " + modelExact.length + " variações desta peça para o modelo pedido (qualidades/acabamentos diferentes). Apresente TODAS as opções ao cliente com nome e preço, do mais barato ao mais caro, e AGUARDE ele escolher ANTES de orçar. NÃO orça nenhuma variação sem a escolha explícita do cliente.",
+    };
+  }
 
   return {
     ok: true,
     found: true,
-    match: exact.length > 0 ? "exato" : "aproximado",
-    parts: chosen.map((r) => ({
-      id: r.id,
-      name: r.name,
-      price: normalizeMoney(Number(r.price)),
-      stock: r.stock,
-      type: r.part_type,
-      device_model: r.device_model,
-    })),
-    message: exact.length > 0
+    match: modelExact.length === 1 || chosen.length > 0 ? "exato" : "aproximado",
+    parts: finalList.map(mapPart),
+    message: (modelExact.length === 1 || chosen.length > 0)
       ? undefined
       : "ATENÇÃO: match APROXIMADO — a peça pode ser de um modelo parecido, não do exato pedido. Confirme com o cliente o modelo exato do aparelho antes de orçar; se divergir, NÃO orce e encaminhe ao time técnico.",
   };
