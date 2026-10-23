@@ -83,40 +83,12 @@ function initSupportLinks(number) {
   });
 }
 
-/**
- * Aplica o branding do sistema: quando existe logo completa carregada,
- * mostra apenas a imagem (esconde marca e nome). Nome é só fallback.
- * Favicon usa o favicon dedicado do painel (favicon_url), não a logo.
- */
-function applyBranding(logoUrl, logoText, faviconUrl) {
-  if (logoText) {
-    document.querySelectorAll('[data-brand-text]').forEach((el) => {
-      el.textContent = logoText;
-    });
-  }
-  if (faviconUrl) {
-    const favicon = document.querySelector('link[rel="icon"]');
-    if (favicon) favicon.href = faviconUrl;
-  }
-  if (!logoUrl) return;
-
-  document.querySelectorAll('.brand').forEach((brand) => {
-    const img = brand.querySelector('img.brand-logo');
-    if (!img) return;
-    img.src = logoUrl;
-    img.style.display = '';
-    brand.querySelector('.brand-mark')?.style.setProperty('display', 'none');
-    brand.querySelector('[data-brand-text]')?.style.setProperty('display', 'none');
-  });
-}
-
 async function loadConfig() {
   try {
-    const res = await fetch(LANDING_LEAD_ENDPOINT, { method: 'GET' });
-    if (!res.ok) throw new Error('config');
-    const cfg = await res.json();
+    // Reutiliza o fetch iniciado pelo branding-boot.js (sem duplicar request)
+    const cfg = await (window.__DIA_CONFIG_READY || fetch(LANDING_LEAD_ENDPOINT).then((r) => r.json()));
+    if (!cfg) throw new Error('config');
     initSupportLinks(cfg.support_whatsapp);
-    applyBranding(cfg.branding?.logo_url, cfg.branding?.logo_text, cfg.branding?.favicon_url);
     renderPlans(normalizePlans(cfg.plans));
   } catch {
     initSupportLinks(DEFAULT_SUPPORT_WA);
@@ -381,12 +353,22 @@ function initReveal() {
   document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 }
 
+/* Logo pequena no header só aparece quando a página rola */
+function initScrollHeader() {
+  const header = document.querySelector('.site-header');
+  if (!header) return;
+  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 120);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
 if (typeof document !== 'undefined' && document.getElementById('site-root')) {
   loadConfig();
   initCalculator();
   initLeadModal();
   initNav();
   initReveal();
+  initScrollHeader();
   document.querySelectorAll('[data-scenario]').forEach((btn) =>
     btn.addEventListener('click', () => runScenario(btn.dataset.scenario))
   );
