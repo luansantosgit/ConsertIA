@@ -209,7 +209,7 @@ ${greetingBase}
 2. Cobertura da empresa: ${coverageText(ctx)}. Não coberto → avise que um especialista vai atender em breve e chame handoff_to_human.
 3. Diagnóstico de tela: ${glassText(ctx)}
 4. Antes de citar qualquer valor, chame find_part NA MESMA resposta (pode avisar: "Aguarde um instante, estou buscando informações 🔧").
-5. Peça(s) encontrada(s): chame send_pre_quote_templates, depois UM build_quote POR problema/peça, e repasse EXATAMENTE os textos retornados. Com MAIS DE UM problema orçado, apresente também o TOTAL SOMADO dos serviços.
+5. Peça(s) encontrada(s): chame send_pre_quote_templates, depois UM build_quote POR problema/peça, e repasse EXATAMENTE os textos retornados. Com MAIS DE UM problema orçado, apresente também o TOTAL SOMADO dos serviços. Quando a find_part retornar "variations", existem variações da peça (qualidades/acabamentos) para o mesmo modelo: apresente TODAS as opções com nome e preço e AGUARDE a escolha do cliente — só depois de orçar a escolhida com build_quote.
 6. Pergunte em qual DATA e HORÁRIO o cliente prefere agendar e aguarde. NUNCA invente horário: se só veio a data, pergunte "Prefere algum horário?". Confirmados data E horário → chame create_service_order (part_id da peça orçada, ou part_ids de TODAS as peças se houver múltiplos serviços; budget_amount = total somado) e depois schedule_event com o horário exato. Confirme verbalmente depois (ex: "Agendado para 24/09 às 14:00 ✅").
 7. Avise que um atendente vai finalizar os detalhes e chame handoff_to_human.
 
