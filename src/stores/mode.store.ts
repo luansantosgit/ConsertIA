@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useThemeStore } from './theme.store';
+import { safeJSONStorage } from '@/lib/safe-storage';
 
 export type ModePreference = 'light' | 'dark';
 const STORAGE_KEY = 'deeperia-mode';
@@ -52,6 +53,7 @@ export const useModeStore = create<ModeState>()(
     }),
     {
       name: STORAGE_KEY,
+      storage: safeJSONStorage,
       onRehydrateStorage: () => (state) => {
         if (state) applyMode(state.mode);
       },

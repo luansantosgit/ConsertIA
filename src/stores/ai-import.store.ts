@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ProductRepository } from '@/repositories/product.repository';
+import { safeJSONStorage } from '@/lib/safe-storage';
 import { mapSheetColumns, normalizeProductNames, clarifyProductNames, type SheetMapping } from '@/lib/ai-import.service';
 import { computeVariantKey } from '@/lib/product-variant';
 import {
@@ -366,6 +367,7 @@ export const useAiImportStore = create<AiImportState>()(
     {
       name: 'deeperia-ai-import',
       version: 2,
+      storage: safeJSONStorage,
       // Sessões salvas antes de "examples" existir: garante o campo
       // para o DoubtCard nunca quebrar (.map de undefined)
       migrate: (persisted: unknown) => {

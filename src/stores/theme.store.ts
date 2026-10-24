@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
+import { safeJSONStorage } from '@/lib/safe-storage';
 
 export interface TenantTheme {
   tenantId: string;
@@ -240,6 +241,43 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'deeperia-theme',
-    }
-  )
+      version: 2,
+      storage: safeJSONStorage,
+      // Logos (base64, às vezes MBs) NUNCA vão para o localStorage —
+      // elas estouram a cota de 5MB. O boot busca do banco via
+      // loadGlobalTheme/loadTenantTheme. Aqui persistimos só o que é
+      // barato: cores, textos e flags (tema instantâneo no boot).
+      partialize: (s) => ({
+        globalTheme: { ...s.globalTheme, logoUrl: null, darkLogoUrl: null, faviconUrl: null },
+        activeTheme: { ...s.activeTheme, logoUrl: null, darkLogoUrl: null, faviconUrl: null },
+        tenantThemes: Object.fromEntries(
+          Object.entries(s.tenantThemes).map(([id, t]) => [
+            id,
+            { ...t, logoUrl: null, darkLogoUrl: null, faviconUrl: null },
+          ])
+        ),
+        lastTenantId: s.lastTenantId,
+      }),
+      // Payload antigo (v1) carregava logos base64 (MBs) — a migração
+      // descarta e devolve o espaço da cota na primeira escrita
+      migrate: (persisted: unknown) => {
+        const state = persisted as {
+          globalTheme?: Record<string, unknown>;
+          activeTheme?: Record<string, unknown>;
+          tenantThemes?: Record<string, Record<string, unknown>>;
+        } | null;
+        if (!state) return state as never;
+        const strip = (t: Record<string, unknown> | undefined) =>
+          t ? { ...t, logoUrl: null, darkLogoUrl: null, faviconUrl: null } : t;
+        return {
+          ...state,
+          globalTheme: strip(state.globalTheme),
+          activeTheme: strip(state.activeTheme),
+          tenantThemes: state.tenantThemes
+            ? Object.fromEntries(Object.entries(state.tenantThemes).map(([id, t]) => [id, strip(t)]))
+            : undefined,
+        } as never;
+      },
+    },
+  ),
 );
