@@ -198,7 +198,7 @@ export const SuperAdminPlans: React.FC = () => {
         {plans.map((p) => (
           <div key={p.id} className="stat-card">
             <div className="stat-card-header">
-              <div className="stat-card-icon" style={{ background: '#ede9fe' }}>
+              <div className="stat-card-icon" style={{ background: 'var(--primary-light)' }}>
                 <CreditCard size={20} color="#6366f1" />
               </div>
               {p.featured && (
@@ -216,7 +216,7 @@ export const SuperAdminPlans: React.FC = () => {
         ))}
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-card-icon" style={{ background: '#d1fae5' }}>
+            <div className="stat-card-icon" style={{ background: 'var(--success-bg)' }}>
               <Users size={20} color="#10b981" />
             </div>
           </div>

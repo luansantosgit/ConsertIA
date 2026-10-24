@@ -32,8 +32,8 @@ export function ConfirmModal({
   if (!isOpen) return null;
 
   const variantStyles = {
-    danger: { bg: '#fef2f2', color: 'var(--danger)', icon: Trash2 },
-    warning: { bg: '#fffbeb', color: 'var(--warning)', icon: AlertTriangle },
+    danger: { bg: 'var(--danger-bg)', color: 'var(--danger)', icon: Trash2 },
+    warning: { bg: 'var(--warning-bg)', color: 'var(--warning)', icon: AlertTriangle },
     info: { bg: 'var(--primary-light)', color: 'var(--primary-text)', icon: AlertTriangle },
   };
 

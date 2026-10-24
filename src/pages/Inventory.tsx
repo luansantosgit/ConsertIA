@@ -184,10 +184,10 @@ export const Inventory: React.FC = () => {
       {!error && !loading && (
       <>
       {lowStock.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, color: '#92400e' }}>
-          <AlertTriangle size={16} color="#f59e0b" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--warning-bg)', border: '1px solid var(--warning)', borderRadius: 10, color: 'var(--warning-text)' }}>
+          <AlertTriangle size={16} color="var(--warning)" />
           <p style={{ fontSize: '0.875rem' }}>
-            <strong>{lowStock.length} {lowStock.length === 1 ? 'item' : 'itens'} com estoque baixo</strong> — {outOfStock.length > 0 && <span style={{ color: '#dc2626' }}>{outOfStock.length} sem estoque</span>}
+            <strong>{lowStock.length} {lowStock.length === 1 ? 'item' : 'itens'} com estoque baixo</strong> — {outOfStock.length > 0 && <span style={{ color: 'var(--danger)' }}>{outOfStock.length} sem estoque</span>}
           </p>
         </div>
       )}
