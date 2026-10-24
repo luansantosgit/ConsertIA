@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
 import { Palette, Upload, Check, Eye } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { fileToResizedDataUrl } from '@/lib/image-utils';
 
 const PRESET_COLORS = [
   { name: 'Azul', color: '#2563eb' },
@@ -22,6 +23,7 @@ export const SuperAdminTheme: React.FC = () => {
   const { globalTheme, tenantThemes, setGlobalTheme, setTenantTheme, applyTheme, loadGlobalTheme } = useThemeStore();
   const [selectedTenant, setSelectedTenant] = useState<string>('global');
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
@@ -73,6 +75,7 @@ export const SuperAdminTheme: React.FC = () => {
   };
 
   const handleSave = async () => {
+    setSaveError(null);
     try {
       if (selectedTenant === 'global') {
         const payload = {
@@ -88,14 +91,16 @@ export const SuperAdminTheme: React.FC = () => {
           updated_at: new Date().toISOString(),
         };
         for (const t of tenants) {
-          await supabase
+          const { error: tenantErr } = await supabase
             .from('tenant_themes')
             .upsert({ ...payload, tenant_id: t.id }, { onConflict: 'tenant_id' });
+          if (tenantErr) throw new Error(`Falha ao aplicar em uma empresa: ${tenantErr.message}`);
         }
-        await supabase
+        const { error: globalErr } = await supabase
           .from('global_settings')
           .update({ theme: payload, updated_at: new Date().toISOString() })
           .eq('id', '00000000-0000-0000-0000-000000000001');
+        if (globalErr) throw new Error(`Falha ao salvar o tema global: ${globalErr.message}`);
         applyTheme();
       } else {
         const payload = {
@@ -114,38 +119,41 @@ export const SuperAdminTheme: React.FC = () => {
         const { error } = await supabase
           .from('tenant_themes')
           .upsert(payload, { onConflict: 'tenant_id' });
-        if (error) {
-          console.error('Failed to save tenant theme:', error);
-        }
+        if (error) throw new Error(`Falha ao salvar: ${error.message}`);
         applyTheme(selectedTenant);
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
       console.error('Error saving theme:', err);
+      setSaveError((err as Error).message);
     }
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'icon' | 'full') => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'icon' | 'full') => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      updateTheme({ logoUrl: ev.target?.result as string, logoType: type });
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Redimensiona: evita logos de MBs quebrando cota/limite de payload
+      const dataUrl = await fileToResizedDataUrl(file, type === 'icon' ? 256 : 640);
+      updateTheme({ logoUrl: dataUrl, logoType: type });
+    } catch (err) {
+      setSaveError(`Falha ao processar a logo: ${(err as Error).message}`);
+    }
     // limpa o input para permitir reupar o mesmo arquivo
     e.target.value = '';
   };
 
-  const handleFaviconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      updateTheme({ faviconUrl: ev.target?.result as string });
-    };
-    reader.readAsDataURL(file);
+    try {
+      const dataUrl = await fileToResizedDataUrl(file, 128);
+      updateTheme({ faviconUrl: dataUrl });
+    } catch (err) {
+      setSaveError(`Falha ao processar o favicon: ${(err as Error).message}`);
+    }
+    e.target.value = '';
   };
 
   return (
@@ -167,6 +175,12 @@ export const SuperAdminTheme: React.FC = () => {
           {saved ? <><Check size={16} /> Salvo!</> : <><Palette size={16} /> Aplicar tema</>}
         </button>
       </div>
+
+      {saveError && (
+        <p style={{ color: 'var(--danger)', fontSize: '0.8125rem', margin: '0 0 8px', fontWeight: 600 }}>
+          {saveError}
+        </p>
+      )}
 
       <div className="grid-2" style={{ alignItems: 'start' }}>
         {/* Controls */}
@@ -359,12 +373,15 @@ export const SuperAdminTheme: React.FC = () => {
                       type="file"
                       accept="image/*"
                       style={{ display: 'none' }}
-                      onChange={e => {
+                      onChange={async e => {
                         const file = e.target.files?.[0];
                         if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = (ev) => updateTheme({ darkLogoUrl: ev.target?.result as string });
-                        reader.readAsDataURL(file);
+                        try {
+                          const dataUrl = await fileToResizedDataUrl(file, 640);
+                          updateTheme({ darkLogoUrl: dataUrl });
+                        } catch (err) {
+                          setSaveError(`Falha ao processar a logo escura: ${(err as Error).message}`);
+                        }
                         e.target.value = '';
                       }}
                     />
