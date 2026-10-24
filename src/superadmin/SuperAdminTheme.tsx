@@ -51,6 +51,8 @@ export const SuperAdminTheme: React.FC = () => {
           logoText: data.logo_text || globalTheme.logoText,
           faviconUrl: data.favicon_url ?? globalTheme.faviconUrl,
           sidebarDark: data.sidebar_dark ?? false,
+          darkLogoUrl: (data as { dark_logo_url?: string }).dark_logo_url ?? globalTheme.darkLogoUrl,
+          logoDarkMode: (data as { logo_dark_mode?: boolean }).logo_dark_mode ?? globalTheme.logoDarkMode,
         });
       }
     };
@@ -81,6 +83,8 @@ export const SuperAdminTheme: React.FC = () => {
           logo_text: currentTheme.logoText || 'DeeperIA',
           favicon_url: currentTheme.faviconUrl || null,
           sidebar_dark: currentTheme.sidebarDark || false,
+          dark_logo_url: currentTheme.darkLogoUrl || null,
+          logo_dark_mode: currentTheme.logoDarkMode || false,
           updated_at: new Date().toISOString(),
         };
         for (const t of tenants) {
@@ -103,6 +107,8 @@ export const SuperAdminTheme: React.FC = () => {
           logo_text: currentTheme.logoText || 'DeeperIA',
           favicon_url: currentTheme.faviconUrl || null,
           sidebar_dark: currentTheme.sidebarDark || false,
+          dark_logo_url: currentTheme.darkLogoUrl || null,
+          logo_dark_mode: currentTheme.logoDarkMode || false,
           updated_at: new Date().toISOString(),
         };
         const { error } = await supabase
@@ -306,6 +312,85 @@ export const SuperAdminTheme: React.FC = () => {
               </label>
             </div>
           </div>
+
+          {/* Logo dedicada ao modo escuro — apenas tema global */}
+          {selectedTenant === 'global' && (
+            <div className="card card-p" style={{ marginTop: 16 }}>
+              <h3 className="card-title" style={{ marginBottom: 4 }}>Logo para o modo escuro</h3>
+              <p className="form-hint" style={{ marginBottom: 12 }}>
+                Afeta apenas a parte interna do sistema — o login usa sempre a logo clara.
+                Desativado: uma única logo nos dois modos. Ativado: uma logo para cada modo.
+              </p>
+
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '12px 14px', borderRadius: 'var(--radius-md)',
+                border: `1.5px solid ${currentTheme.logoDarkMode ? 'var(--primary-text)' : 'var(--border)'}`,
+                background: currentTheme.logoDarkMode ? 'var(--primary-light)' : 'transparent',
+                cursor: 'pointer', marginBottom: currentTheme.logoDarkMode ? 12 : 0,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={currentTheme.logoDarkMode}
+                  onChange={e => updateTheme({ logoDarkMode: e.target.checked })}
+                  style={{ width: 16, height: 16, accentColor: 'var(--primary-text)' }}
+                />
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                  Ativar logo separada para o modo escuro
+                </span>
+              </label>
+
+              {currentTheme.logoDarkMode && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: 8, padding: '12px',
+                    border: `2px dashed ${currentTheme.darkLogoUrl ? 'var(--primary-text)' : 'var(--border)'}`,
+                    borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                    transition: 'border-color 0.15s', fontSize: '0.875rem', color: 'var(--text-muted)',
+                    background: currentTheme.darkLogoUrl ? 'var(--primary-light)' : 'transparent',
+                  }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = currentTheme.darkLogoUrl ? 'var(--primary-text)' : 'var(--border)')}
+                  >
+                    <Upload size={16} />
+                    {currentTheme.darkLogoUrl ? '✓ Logo do modo escuro carregada — clique para trocar' : 'Upload da logo escura (PNG/SVG)'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (ev) => updateTheme({ darkLogoUrl: ev.target?.result as string });
+                        reader.readAsDataURL(file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  {currentTheme.darkLogoUrl && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{
+                        padding: 10, borderRadius: 10,
+                        background: '#0b0c10', border: '1px solid var(--border)',
+                        display: 'inline-flex',
+                      }}>
+                        <img src={currentTheme.darkLogoUrl} alt="Logo dark" style={{ maxHeight: 36, maxWidth: 160, objectFit: 'contain' }} />
+                      </span>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ color: 'var(--danger)' }}
+                        onClick={() => updateTheme({ darkLogoUrl: null })}
+                      >
+                        Remover logo escura
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Favicon */}
           <div className="card card-p">

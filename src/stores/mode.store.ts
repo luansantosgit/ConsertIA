@@ -30,9 +30,10 @@ function applyMode(mode: ModePreference) {
   // Transição suave apenas durante a troca (não afeta hovers depois)
   root.classList.add('mode-transition');
   root.dataset.theme = mode;
-  // Recalcula --primary-text e derivadas da marca para o novo modo
+  // Re-aplica o tema COMPLETO: recalcula --primary-text/derivadas e troca a
+  // logo quando o modo escuro tem logo dedicada (logoDarkMode ativo)
   try {
-    useThemeStore.getState().reapplyCSS();
+    useThemeStore.getState().applyTheme();
   } catch { /* tema ainda não carregado */ }
   window.setTimeout(() => root.classList.remove('mode-transition'), 350);
 }

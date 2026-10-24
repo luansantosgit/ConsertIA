@@ -11,6 +11,10 @@ export interface TenantTheme {
   logoText: string;
   faviconUrl: string | null;
   sidebarDark: boolean;
+  /** Logo dedicada ao modo escuro (parte interna do sistema) */
+  darkLogoUrl: string | null;
+  /** Ativo = usa logo separada por modo; inativo = logo única nos dois modos */
+  logoDarkMode: boolean;
 }
 
 interface ThemeState {
@@ -36,6 +40,8 @@ const DEFAULT_THEME: Omit<TenantTheme, 'tenantId'> = {
   logoText: 'DeeperIA',
   faviconUrl: null,
   sidebarDark: false,
+  darkLogoUrl: null,
+  logoDarkMode: false,
 };
 
 // Mistura a cor com branco (amount 0-1) — usado para clarear
@@ -129,7 +135,17 @@ export const useThemeStore = create<ThemeState>()(
         const resolvedId = tenantId || lastTenantId || undefined;
         const tenantTheme = resolvedId && tenantThemes[resolvedId] ? tenantThemes[resolvedId] : null;
         const hasTenantLogo = Boolean(tenantTheme?.logoUrl);
-        const logoUrl = tenantTheme?.logoUrl ?? globalTheme.logoUrl;
+        const lightLogoUrl = tenantTheme?.logoUrl ?? globalTheme.logoUrl;
+
+        // Logo por modo: no escuro, a logo dark da PLATAFORMA substitui a logo
+        // global (logo de tenant próprio sempre vence). Só afeta a parte
+        // interna — login e wizard são sempre claros (escopo .theme-light).
+        const isDark = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark';
+        const useDarkLogo = !hasTenantLogo
+          && isDark
+          && globalTheme.logoDarkMode
+          && Boolean(globalTheme.darkLogoUrl);
+        const logoUrl = useDarkLogo ? globalTheme.darkLogoUrl : lightLogoUrl;
         const logoType = hasTenantLogo
           ? (tenantTheme?.logoType || 'icon')
           : (globalTheme.logoType || 'icon');
@@ -142,6 +158,8 @@ export const useThemeStore = create<ThemeState>()(
           logoText: tenantTheme?.logoText || globalTheme.logoText,
           faviconUrl: tenantTheme?.faviconUrl ?? globalTheme.faviconUrl,
           sidebarDark: tenantTheme?.sidebarDark ?? globalTheme.sidebarDark,
+          darkLogoUrl: globalTheme.darkLogoUrl,
+          logoDarkMode: globalTheme.logoDarkMode,
         };
         set({ activeTheme: theme });
         applyCSS(theme, get().globalTheme.logoText);
@@ -171,6 +189,8 @@ export const useThemeStore = create<ThemeState>()(
                 logoText: (raw.logo_text as string) || DEFAULT_THEME.logoText,
                 faviconUrl: (raw.favicon_url as string) ?? null,
                 sidebarDark: (raw.sidebar_dark as boolean) ?? false,
+                darkLogoUrl: (raw.dark_logo_url as string) ?? null,
+                logoDarkMode: (raw.logo_dark_mode as boolean) ?? false,
               },
             });
             get().applyTheme();
