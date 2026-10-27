@@ -52,7 +52,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   };
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView();
+    // block:'nearest' — evita rolar containers ancestrais (ex.: pane mobile) junto
+    bottomRef.current?.scrollIntoView({ block: 'nearest' });
   }, [selectedId, loadingMessages]);
 
   // Busca: rola a lista até a ocorrência ativa (centralizada)
@@ -64,7 +65,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [activeMessageId]);
 
   useEffect(() => {
-    if (isNearBottom()) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isNearBottom()) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   const quoteMap = new Map(messages.map(m => [m.id, m]));

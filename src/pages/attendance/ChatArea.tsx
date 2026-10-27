@@ -127,7 +127,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   return (
     <div
-      style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--card-bg)', position: 'relative' }}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, background: 'var(--card-bg)', position: 'relative' }}
       onDragEnter={e => {
         e.preventDefault();
         dragDepthRef.current += 1;

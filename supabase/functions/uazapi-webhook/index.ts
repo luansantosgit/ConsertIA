@@ -282,12 +282,29 @@ serve(async (req) => {
           }
 
           conversation = newConv;
-        } else if (avatarUrl && avatarUrl !== conversation.contact_avatar) {
-          // Atualiza avatar do lead apenas se mudou (evita update por mensagem)
-          await supabase
-            .from("conversations")
-            .update({ contact_avatar: avatarUrl })
-            .eq("id", conversation.id);
+        } else {
+          // Atualiza avatar do lead apenas se mudou (evita update por mensagem).
+          // Conversas abertas só com o número (sem nome salvo — ex: iniciadas pelo
+          // atendente no modal "Nova Conversa") ganham o nome do perfil do
+          // WhatsApp do lead na primeira resposta.
+          const updates: Record<string, string | null> = {};
+          if (avatarUrl && avatarUrl !== conversation.contact_avatar) {
+            updates.contact_avatar = avatarUrl;
+          }
+          if (!conversation.contact_name) {
+            const providerName = isGroup
+              ? (chatData?.name || senderName || null)
+              : (isFromMe ? (chatData?.name || null) : (senderName || chatData?.name || null));
+            if (providerName && providerName !== phone) {
+              updates.contact_name = providerName;
+            }
+          }
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from("conversations")
+              .update(updates)
+              .eq("id", conversation.id);
+          }
         }
 
         if (msg.messageType === "reaction" || msg.reaction) {

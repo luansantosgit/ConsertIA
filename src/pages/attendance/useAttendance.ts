@@ -100,7 +100,6 @@ export function useAttendance() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNewConvModal, setShowNewConvModal] = useState(false);
-  const [newConvName, setNewConvName] = useState('');
   const [agentName, setAgentName] = useState('IA');
 
   useEffect(() => {
@@ -826,7 +825,6 @@ export function useAttendance() {
   }, [selectedId]);
 
   const handleNewConversation = useCallback(() => {
-    setNewConvName('');
     setNewConvPhone('');
     setShowNewConvModal(true);
   }, []);
@@ -913,36 +911,31 @@ export function useAttendance() {
     }
   }, []);
 
-  const handleConfirmNewConversation = useCallback(async () => {
-    const name = newConvName.trim();
-    const phone = newConvPhone.replace(/\D/g, '');
-    if (!name || phone.length < 10) return;
+  /**
+   * Inicia uma conversa a partir do modal "Nova Conversa":
+   * - `customerId` + `name`: veio de um contato salvo clicado na busca
+   * - apenas `phone`: conversa só com o número como referência, sem nome —
+   *   o webhook atualiza com o nome do perfil do lead na primeira resposta
+   */
+  const handleStartNewConversation = useCallback(async (opts: { phone: string; customerId?: string; name?: string }) => {
+    const phone = opts.phone.replace(/\D/g, '');
+    if (phone.length < 10) return;
 
     setCreatingConversation(true);
     try {
       const existing = await conversationRepo.getByContactPhone(phone);
       if (existing) {
         setShowNewConvModal(false);
+        setNewConvPhone('');
         setSelectedId(existing.id);
         setCreatingConversation(false);
         return;
       }
 
-      let customerId: string | undefined;
-      try {
-        const customer = await customerRepo.create({
-          name,
-          phone,
-        });
-        customerId = customer.id;
-      } catch {
-        // customer creation optional
-      }
-
       const created = await conversationRepo.create({
         contact_phone: phone,
-        contact_name: name,
-        customer_id: customerId,
+        contact_name: opts.name ?? '',
+        customer_id: opts.customerId,
         status: 'open',
         unread_count: 0,
         last_message_at: new Date().toISOString(),
@@ -950,7 +943,7 @@ export function useAttendance() {
 
       const row: ConvRow = {
         ...created,
-        contactName: name,
+        contactName: opts.name || phone,
         lastMessage: '',
         deviceInfo: '',
       };
@@ -958,13 +951,14 @@ export function useAttendance() {
       setConversations(prev => [row, ...prev]);
       setSelectedId(created.id);
       setShowNewConvModal(false);
+      setNewConvPhone('');
     } catch (err) {
       console.error('Failed to create conversation:', err);
       setError('Erro ao criar conversa');
     } finally {
       setCreatingConversation(false);
     }
-  }, [newConvName, newConvPhone]);
+  }, []);
 
   // ── Acoes de mensagem: reagir, editar, apagar, encaminhar ──
   const getConnectionId = useCallback(async (): Promise<string | undefined> => {
@@ -1477,7 +1471,7 @@ export function useAttendance() {
     quickReplies,
     handleSaveNewOS,
     handleNewConversation,
-    handleConfirmNewConversation,
+    handleStartNewConversation,
     handleDeleteConversation,
     handleMarkUnread,
     handleTogglePin,
@@ -1500,8 +1494,6 @@ export function useAttendance() {
     setForwardingMessage,
     showNewConvModal,
     setShowNewConvModal,
-    newConvName,
-    setNewConvName,
     newConvPhone,
     setNewConvPhone,
     creatingConversation,

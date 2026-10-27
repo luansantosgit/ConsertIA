@@ -5,6 +5,7 @@ import { useModeStore } from '@/stores/mode.store';
 import { useTranslation } from '@/hooks/useTranslation';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { ConversationSidebar } from '../ConversationSidebar';
+import { PwaInstallBanner } from './PwaInstallBanner';
 import type { MobileListConfig } from './types';
 
 /** Tela 1 do modo mobile: lista de conversas em tela cheia + FAB, como no WhatsApp. */
@@ -12,7 +13,7 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
   const { user, logout } = useAuthStore();
   const { mode, toggleMode } = useModeStore();
   const { t } = useTranslation();
-  const { canInstall, promptInstall } = usePwaInstall();
+  const { canInstall, isStandalone, platform, promptInstall } = usePwaInstall();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -51,10 +52,18 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
           </button>
           {menuOpen && (
             <div className="m-menu-dropdown">
-              {canInstall && (
+              {!isStandalone && (
                 <button
                   style={menuItemStyle}
-                  onClick={() => { setMenuOpen(false); void promptInstall(); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    // iOS não tem prompt nativo: guia pela instalação manual
+                    if (!canInstall && platform === 'ios') {
+                      window.dispatchEvent(new CustomEvent('deeperia:open-install-help'));
+                      return;
+                    }
+                    void promptInstall();
+                  }}
                 >
                   <Download size={16} />{t('Instalar app')}
                 </button>
@@ -76,6 +85,8 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
           )}
         </div>
       </header>
+
+      <PwaInstallBanner />
 
       <div style={{ flex: 1, minHeight: 0, position: 'relative', display: 'flex' }}>
         <ConversationSidebar

@@ -414,6 +414,26 @@ export const resources = {
       'Buscar na conversa': 'Buscar na conversa',
       'Ativar modo claro': 'Ativar modo claro',
       'Ativar modo escuro': 'Ativar modo escuro',
+
+      // Nova conversa — busca ao vivo (Issue #85)
+      'Número ou nome do cliente': 'Número ou nome do cliente',
+      'Digite um contato salvo ou um número novo para começar a conversar': 'Digite um contato salvo ou um número novo para começar a conversar',
+      'Digite um número válido com DDD': 'Digite um número válido com DDD',
+
+      // PWA — balão de instalação (Issue #85)
+      'Instale o DeeperIA': 'Instale o DeeperIA',
+      'Acesse o chat direto da tela inicial do celular': 'Acesse o chat direto da tela inicial do celular',
+      'Dispensar': 'Dispensar',
+      'Como instalar': 'Como instalar',
+      'Toque no botão': 'Toque no botão',
+      'Toque no menu': 'Toque no menu',
+      'do navegador': 'do navegador',
+      'Escolha': 'Escolha',
+      'Adicionar à Tela de Início': 'Adicionar à Tela de Início',
+      'Toque em': 'Toque em',
+      'Instalar aplicativo': 'Instalar aplicativo',
+      'Confirme a instalação': 'Confirme a instalação',
+      'Entendi': 'Entendi',
     }
   },
   'en': {
@@ -828,6 +848,26 @@ export const resources = {
       'Buscar na conversa': 'Search in conversation',
       'Ativar modo claro': 'Enable light mode',
       'Ativar modo escuro': 'Enable dark mode',
+
+      // New conversation — live search (Issue #85)
+      'Número ou nome do cliente': 'Customer number or name',
+      'Digite um contato salvo ou um número novo para começar a conversar': 'Type a saved contact or a new number to start chatting',
+      'Digite um número válido com DDD': 'Enter a valid number with area code',
+
+      // PWA — install banner (Issue #85)
+      'Instale o DeeperIA': 'Install DeeperIA',
+      'Acesse o chat direto da tela inicial do celular': 'Open the chat straight from your phone home screen',
+      'Dispensar': 'Dismiss',
+      'Como instalar': 'How to install',
+      'Toque no botão': 'Tap the',
+      'Toque no menu': 'Tap the',
+      'do navegador': 'browser menu',
+      'Escolha': 'Choose',
+      'Adicionar à Tela de Início': 'Add to Home Screen',
+      'Toque em': 'Tap',
+      'Instalar aplicativo': 'Install app',
+      'Confirme a instalação': 'Confirm the installation',
+      'Entendi': 'Got it',
     }
   },
   'es': {
@@ -1242,6 +1282,26 @@ export const resources = {
       'Buscar na conversa': 'Buscar en la conversación',
       'Ativar modo claro': 'Activar modo claro',
       'Ativar modo escuro': 'Activar modo oscuro',
+
+      // Nueva conversación — búsqueda en vivo (Issue #85)
+      'Número ou nome do cliente': 'Número o nombre del cliente',
+      'Digite um contato salvo ou um número novo para começar a conversar': 'Escribe un contacto guardado o un número nuevo para empezar a conversar',
+      'Digite um número válido com DDD': 'Ingresa un número válido con código de área',
+
+      // PWA — globo de instalación (Issue #85)
+      'Instale o DeeperIA': 'Instala DeeperIA',
+      'Acesse o chat direto da tela inicial do celular': 'Abre el chat directo desde la pantalla de inicio',
+      'Dispensar': 'Descartar',
+      'Como instalar': 'Cómo instalar',
+      'Toque no botão': 'Toca el botón',
+      'Toque no menu': 'Toca el menú',
+      'do navegador': 'del navegador',
+      'Escolha': 'Elige',
+      'Adicionar à Tela de Início': 'Añadir a la pantalla de inicio',
+      'Toque em': 'Toca',
+      'Instalar aplicativo': 'Instalar aplicación',
+      'Confirme a instalação': 'Confirma la instalación',
+      'Entendi': 'Entendido',
     }
   }
 } as const;

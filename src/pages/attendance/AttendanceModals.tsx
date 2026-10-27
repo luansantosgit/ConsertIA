@@ -4,6 +4,7 @@ import { OSDocumentModal } from '@/components/OSDocumentModal';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { ForwardModal } from './ForwardModal';
 import { MediaSendModal } from './MediaSendModal';
+import { NewConversationModal } from './NewConversationModal';
 import type { AttendanceModalsState } from './useAttendanceModals';
 
 /** Todos os modais do módulo Atendimento — compartilhados entre desktop e mobile. */
@@ -11,14 +12,6 @@ export const AttendanceModals: React.FC<{ m: AttendanceModalsState }> = ({ m }) 
   const {
     selected,
     conversations,
-    showNewConvModal,
-    setShowNewConvModal,
-    newConvName,
-    setNewConvName,
-    newConvPhone,
-    setNewConvPhone,
-    creatingConversation,
-    handleConfirmNewConversation,
     isOSModalOpen,
     setIsOSModalOpen,
     viewingPdfOS,
@@ -45,48 +38,7 @@ export const AttendanceModals: React.FC<{ m: AttendanceModalsState }> = ({ m }) 
 
   return (
     <>
-      {showNewConvModal && (
-        <div className="modal-overlay" onClick={() => setShowNewConvModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Nova Conversa</h3>
-              <button className="btn btn-ghost btn-icon" onClick={() => setShowNewConvModal(false)}><span style={{ fontSize: 16 }}>&times;</span></button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Nome do cliente *</label>
-                <input
-                  className="input"
-                  placeholder="Ex: Joao Silva"
-                  value={newConvName}
-                  onChange={e => setNewConvName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">WhatsApp *</label>
-                <input
-                  className="input"
-                  placeholder="5511999999999"
-                  value={newConvPhone}
-                  onChange={e => setNewConvPhone(e.target.value)}
-                />
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Formato: codigo do pais + DDD + numero</p>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowNewConvModal(false)}>Cancelar</button>
-              <button
-                className="btn btn-primary"
-                onClick={handleConfirmNewConversation}
-                disabled={!newConvName.trim() || newConvPhone.replace(/\D/g, '').length < 10 || creatingConversation}
-              >
-                {creatingConversation ? 'Criando...' : 'Iniciar Conversa'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {m.showNewConvModal && <NewConversationModal m={m} />}
 
       {isOSModalOpen && selected && (
         <OSModal

@@ -246,7 +246,15 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        // Mobile: folga para o FAB não cobrir o último item + safe-area do gesto do sistema
+        ...(isMobile && {
+          paddingBottom: 'calc(84px + env(safe-area-inset-bottom))',
+          overscrollBehavior: 'contain',
+        } as React.CSSProperties),
+      }}>
         {loadingConversations && conversations.length === 0 && (
           <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[0, 1, 2, 3].map(i => (
