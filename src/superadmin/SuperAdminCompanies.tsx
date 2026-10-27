@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
 import {
   Plus, Search, Edit2, Trash2,
-  Users, CreditCard, Eye, Loader2
+  Users, CreditCard, Eye, Loader2,
+  X, CheckCircle2, Copy
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -64,6 +65,10 @@ export const SuperAdminCompanies: React.FC = () => {
   const [form, setForm] = useState<Partial<Company>>({});
   const [plansList, setPlansList] = useState<{ id: string; name: string }[]>([]);
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<{ email: string; password: string; company: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -125,7 +130,8 @@ export const SuperAdminCompanies: React.FC = () => {
 
   const openNew = () => {
     setEditingCompany(null);
-    setForm({ status: 'Ativo', plan_id: plansList[0]?.id || '', primaryColor: '#2563eb', logoText: '' });
+    setForm({ status: 'Ativo', plan_id: plansList[0]?.id || '', primaryColor: '#2563eb', logoText: '', adminEmail: '', subscription_due_date: null, subscription_extra_days: 0 });
+    setSaveError(null);
     setShowModal(true);
   };
 
@@ -136,6 +142,9 @@ export const SuperAdminCompanies: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
     try {
       const isActive = form.status ? form.status === 'Ativo' || form.status === 'Trial' : true;
       if (editingCompany) {
@@ -163,33 +172,38 @@ export const SuperAdminCompanies: React.FC = () => {
           });
         }
       } else {
-        const slug = (form.name || '').toLowerCase().replace(/\s+/g, '-');
-        const { error } = await supabase.from('tenants').insert({
-          name: form.name,
-          slug,
-          plan_id: form.plan_id || null,
-          theme_color: form.primaryColor || '#2563eb',
-          admin_email: form.adminEmail || '',
-          active: isActive,
-          subscription_due_date: form.subscription_due_date || null,
-          subscription_extra_days: Number(form.subscription_extra_days) || 0,
+        // Criação: a edge gera senha aleatória, cria tenant + usuário admin
+        const { data, error } = await supabase.functions.invoke('superadmin-create-company', {
+          body: {
+            name: form.name,
+            admin_email: form.adminEmail,
+            plan_id: form.plan_id || null,
+            theme_color: form.primaryColor || '#2563eb',
+            subscription_due_date: form.subscription_due_date || null,
+            subscription_extra_days: Number(form.subscription_extra_days) || 0,
+          },
         });
-        if (error) throw error;
-        const tenantId = slug;
-        setTenantTheme(tenantId, {
-          tenantId,
-          primaryColor: form.primaryColor || '#2563eb',
-          primaryDark: form.primaryColor || '#2563eb',
-          logoText: form.logoText || form.name || '',
-          logoUrl: null,
-          faviconUrl: null,
-          sidebarDark: true,
-        });
+        if (error || !data?.success) {
+          const code = String(data?.error ?? 'request_failed');
+          throw new Error(
+            code === 'email_exists'
+              ? 'Este e-mail já possui uma conta. Use outro e-mail.'
+              : code === 'invalid_email'
+                ? 'Informe um e-mail válido.'
+                : code === 'invalid_name'
+                  ? 'Informe o nome da empresa.'
+                  : `Erro ao criar empresa: ${code}`
+          );
+        }
+        setCredentials({ email: data.email, password: data.password, company: form.name || '' });
       }
       setShowModal(false);
       await fetchData();
     } catch (error) {
       console.error('Error saving company:', error);
+      setSaveError((error as Error).message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -446,14 +460,79 @@ export const SuperAdminCompanies: React.FC = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+              {saveError && (
+                <p style={{ color: 'var(--danger)', fontSize: '0.75rem', fontWeight: 600, margin: 0, flex: 1 }}>
+                  {saveError}
+                </p>
+              )}
+              <button className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
               <button
                 className="btn"
                 onClick={handleSave}
+                disabled={saving}
                 style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff', border: 'none' }}
               >
-                {editingCompany ? 'Salvar alterações' : 'Criar empresa'}
+                {saving ? 'Criando...' : editingCompany ? 'Salvar alterações' : 'Criar empresa'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de credenciais: empresa criada + infos de acesso */}
+      {credentials && (
+        <div className="modal-overlay" onClick={() => { setCredentials(null); setCopied(false); }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Empresa criada! 🎉</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => { setCredentials(null); setCopied(false); }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--success-bg)', border: '1px solid var(--success)', padding: '12px 14px', borderRadius: 'var(--radius-md)' }}>
+                <CheckCircle2 size={18} color="var(--success)" />
+                <p style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--success-text)', margin: 0 }}>
+                  {credentials.company} foi criada e salva com sucesso.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Compartilhe as informações abaixo com o administrador da empresa para o primeiro acesso:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, padding: '10px 12px', background: 'var(--hover-bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                      <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>E-mail</p>
+                      <p style={{ fontSize: '0.875rem', fontFamily: 'monospace', fontWeight: 600, margin: 0 }}>{credentials.email}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, padding: '10px 12px', background: 'var(--hover-bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                      <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>Senha (gerada automaticamente)</p>
+                      <p style={{ fontSize: '0.875rem', fontFamily: 'monospace', fontWeight: 600, margin: 0, color: 'var(--primary-text)' }}>{credentials.password}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(`Acesso ao sistema:\nE-mail: ${credentials.email}\nSenha: ${credentials.password}`);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2500);
+                  } catch { /* noop */ }
+                }}
+              >
+                {copied ? <><CheckCircle2 size={15} /> Copiado!</> : <><Copy size={15} /> Copiar informações de acesso</>}
+              </button>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0, textAlign: 'center' }}>
+                Recomendamos que o administrador altere a senha no primeiro acesso.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => { setCredentials(null); setCopied(false); }}>Fechar</button>
             </div>
           </div>
         </div>
