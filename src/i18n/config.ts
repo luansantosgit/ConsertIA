@@ -403,6 +403,17 @@ export const resources = {
       'Telefone é obrigatório para iniciar o chat': 'Telefone é obrigatório para iniciar o chat',
       'Erro ao iniciar chat': 'Erro ao iniciar chat',
       'Olá! Como podemos te ajudar?': 'Olá! Como podemos te ajudar?',
+
+      // Modo mobile — chat-only estilo WhatsApp (Issue #85)
+      'Instalar app': 'Instalar app',
+      'Voltar': 'Voltar',
+      'Mais opções': 'Mais opções',
+      'Detalhes do cliente': 'Detalhes do cliente',
+      'Abrir OS': 'Abrir OS',
+      'Fechar busca': 'Fechar busca',
+      'Buscar na conversa': 'Buscar na conversa',
+      'Ativar modo claro': 'Ativar modo claro',
+      'Ativar modo escuro': 'Ativar modo escuro',
     }
   },
   'en': {
@@ -806,6 +817,17 @@ export const resources = {
       'Telefone é obrigatório para iniciar o chat': 'Phone is required to start chat',
       'Erro ao iniciar chat': 'Error starting chat',
       'Olá! Como podemos te ajudar?': 'Hello! How can we help you?',
+
+      // Mobile mode — chat-only WhatsApp-style (Issue #85)
+      'Instalar app': 'Install app',
+      'Voltar': 'Back',
+      'Mais opções': 'More options',
+      'Detalhes do cliente': 'Customer details',
+      'Abrir OS': 'Open work order',
+      'Fechar busca': 'Close search',
+      'Buscar na conversa': 'Search in conversation',
+      'Ativar modo claro': 'Enable light mode',
+      'Ativar modo escuro': 'Enable dark mode',
     }
   },
   'es': {
@@ -1209,6 +1231,17 @@ export const resources = {
       'Telefone é obrigatório para iniciar o chat': 'El teléfono es obligatorio para iniciar el chat',
       'Erro ao iniciar chat': 'Error al iniciar chat',
       'Olá! Como podemos te ajudar?': '¡Hola! ¿En qué podemos ayudarte?',
+
+      // Modo móvil — chat estilo WhatsApp (Issue #85)
+      'Instalar app': 'Instalar app',
+      'Voltar': 'Volver',
+      'Mais opções': 'Más opciones',
+      'Detalhes do cliente': 'Detalles del cliente',
+      'Abrir OS': 'Abrir orden',
+      'Fechar busca': 'Cerrar búsqueda',
+      'Buscar na conversa': 'Buscar en la conversación',
+      'Ativar modo claro': 'Activar modo claro',
+      'Ativar modo escuro': 'Activar modo oscuro',
     }
   }
 } as const;

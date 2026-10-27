@@ -1438,6 +1438,7 @@ export function useAttendance() {
     conversations,
     selected,
     selectedId,
+    setSelectedId,
     currentMessages,
     currentClientOSList,
     filtered,

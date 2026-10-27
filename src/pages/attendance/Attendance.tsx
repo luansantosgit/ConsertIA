@@ -1,124 +1,30 @@
 import React from 'react';
-import { OSModal } from '@/components/OSModal';
-import { OSDocumentModal } from '@/components/OSDocumentModal';
-import { ConfirmModal } from '@/components/ConfirmModal';
+import { useAttendanceModals } from './useAttendanceModals';
 import ErrorMessage from '@/components/ErrorMessage';
-import { useAttendance } from './useAttendance';
-import type { ConvRow } from './types';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ChatArea } from './ChatArea';
 import { ClientDetailsPanel } from './ClientDetailsPanel';
-import { ForwardModal } from './ForwardModal';
-import { MediaSendModal } from './MediaSendModal';
+import { AttendanceModals } from './AttendanceModals';
+import { MobileLayout } from './mobile/MobileLayout';
 
 export const Attendance: React.FC = () => {
-  const {
-    conversations,
-    selected,
-    selectedId,
-    currentMessages,
-    currentClientOSList,
-    filtered,
-    hasMoreConversations,
-    loadingMoreConversations,
-    loadMoreConversations,
-    inputText,
-    search,
-    chatFilter,
-    sortBy,
-    suggestionDismissed,
-    isRightPanelOpen,
-    isEditingClient,
-    editForm,
-    isOSModalOpen,
-    viewingPdfOS,
-    loadingConversations,
-    loadingMessages,
-    error,
-    showNewConvModal,
-    newConvName,
-    newConvPhone,
-    creatingConversation,
-    setSearch,
-    setChatFilter,
-    setSortBy,
-    setInputText,
-    setSuggestionDismissed,
-    setIsRightPanelOpen,
-    setEditForm,
-    setIsOSModalOpen,
-    setViewingPdfOS,
-    setShowNewConvModal,
-    setNewConvName,
-    setNewConvPhone,
-    handleSelectConv,
-    handleStartEditClient,
-    handleSaveClient,
-    handleSendMessage,
-    handleSendOSCardToChat,
-    handleSaveNewOS,
-    handleConfirmNewConversation,
-    handleDeleteConversation,
-    handleMarkUnread,
-    handleTogglePin,
-    handleClaimAi,
-    handleReleaseAi,
-    agentName,
-    handleReactToMessage,
-    handleEditMessage,
-    handleDeleteMessage,
-    handleForwardMessage,
-    handleMentionMessage,
-    handleCancelQuote,
-    handleForwardToTarget,
-    handleSendMedia,
-    handleSendMediaFiles,
-    handleSendAudio,
-    handleFetchMedia,
-quickReplies,
-handleSendQuickReply,
-    quotedMessage,
-    forwardingMessage,
-    setForwardingMessage,
-    setError,
-    loadConversations,
-  } = useAttendance();
+  const m = useAttendanceModals();
+  const isMobile = useIsMobile();
 
-  const [confirmDeleteConv, setConfirmDeleteConv] = React.useState<{ isOpen: boolean; convId: string; convName: string }>({
-    isOpen: false, convId: '', convName: '',
-  });
-  const [pendingFiles, setPendingFiles] = React.useState<File[] | null>(null);
-  const [pendingCaption, setPendingCaption] = React.useState<string | undefined>(undefined);
-  const [confirmClaimAi, setConfirmClaimAi] = React.useState<{ isOpen: boolean; convId: string; convName: string; aiState?: string }>({
-    isOpen: false, convId: '', convName: '', aiState: undefined,
-  });
-  const [dontShowAgain, setDontShowAgain] = React.useState(false);
-
-  const executeAiToggle = (convId: string, aiState?: string) => {
-    // IA pausada por humano OU já transferida pela IA (check verde): devolver ao agente.
-    // Só "assumir" quando a IA está atendendo e o humano decide intervir.
-    if (aiState === 'paused' || aiState === 'handed_off') {
-      void handleReleaseAi(convId);
-    } else {
-      const conv = conversations.find(c => c.id === convId);
-      if (conv) handleSelectConv(conv);
-      void handleClaimAi(convId).catch(() => {});
-    }
-  };
-
-  const handleAiIconClick = (conv: ConvRow) => {
-    if (window.localStorage.getItem('deeperia:skip-ai-takeover-modal') === '1') {
-      executeAiToggle(conv.id, conv.ai_state);
-      return;
-    }
-    setDontShowAgain(false);
-    setConfirmClaimAi({ isOpen: true, convId: conv.id, convName: conv.contactName, aiState: conv.ai_state });
-  };
-
-  if (error) {
+  if (m.error) {
     return (
       <div className="page" style={{ padding: '24px 28px' }}>
-        <ErrorMessage message={error} onRetry={() => { setError(null); loadConversations(); }} />
+        <ErrorMessage message={m.error} onRetry={() => { m.setError(null); m.loadConversations(); }} />
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="m-attendance">
+        <MobileLayout m={m} />
+        <AttendanceModals m={m} />
       </div>
     );
   }
@@ -127,191 +33,77 @@ handleSendQuickReply,
     <div className="page" style={{ padding: 0, gap: 0, height: 'calc(100vh - var(--header-height))', overflow: 'hidden' }}>
       <div style={{ display: 'flex', height: '100%', width: '100%', position: 'relative' }}>
         <ConversationSidebar
-          conversations={conversations}
-          filtered={filtered}
-          selectedId={selectedId}
-          search={search}
-          chatFilter={chatFilter}
-          sortBy={sortBy}
-          loadingConversations={loadingConversations}
-          hasMore={hasMoreConversations}
-          loadingMore={loadingMoreConversations}
-          onSearchChange={setSearch}
-          onChatFilterChange={setChatFilter}
-          onSortChange={setSortBy}
-          onLoadMore={loadMoreConversations}
-          onSelectConversation={handleSelectConv}
-          onMarkUnread={handleMarkUnread}
-          onTogglePin={handleTogglePin}
-          onAiClick={handleAiIconClick}
+          conversations={m.conversations}
+          filtered={m.filtered}
+          selectedId={m.selectedId}
+          search={m.search}
+          chatFilter={m.chatFilter}
+          sortBy={m.sortBy}
+          loadingConversations={m.loadingConversations}
+          hasMore={m.hasMoreConversations}
+          loadingMore={m.loadingMoreConversations}
+          onSearchChange={m.setSearch}
+          onChatFilterChange={m.setChatFilter}
+          onSortChange={m.setSortBy}
+          onLoadMore={m.loadMoreConversations}
+          onSelectConversation={m.handleSelectConv}
+          onMarkUnread={m.handleMarkUnread}
+          onTogglePin={m.handleTogglePin}
+          onAiClick={m.handleAiIconClick}
         />
         <ChatArea
-          selected={selected}
-          currentMessages={currentMessages}
-          currentClientOSList={currentClientOSList}
-          agentName={agentName}
-          inputText={inputText}
-          quotedMessage={quotedMessage}
-          suggestionDismissed={suggestionDismissed}
-          isRightPanelOpen={isRightPanelOpen}
-          loadingMessages={loadingMessages}
-          onInputChange={setInputText}
-          onSendMessage={handleSendMessage}
-          onSendFile={handleSendMedia}
-          onSendAudio={handleSendAudio}
-          onFilesAdded={setPendingFiles}
-          onCancelQuote={handleCancelQuote}
-          onDismissSuggestion={() => setSuggestionDismissed(true)}
-          onToggleRightPanel={() => setIsRightPanelOpen(v => !v)}
-          onOpenOSModal={() => setIsOSModalOpen(true)}
-          onViewPdfOS={setViewingPdfOS}
-          onReact={handleReactToMessage}
-          onMention={handleMentionMessage}
-          onEdit={handleEditMessage}
-          onDelete={handleDeleteMessage}
-          onForward={handleForwardMessage}
-          onFetchMedia={handleFetchMedia}
-          quickReplies={quickReplies}
-          onSendQuickReply={handleSendQuickReply}
-          onSendOSCard={handleSendOSCardToChat}
+          selected={m.selected}
+          currentMessages={m.currentMessages}
+          currentClientOSList={m.currentClientOSList}
+          agentName={m.agentName}
+          inputText={m.inputText}
+          quotedMessage={m.quotedMessage}
+          suggestionDismissed={m.suggestionDismissed}
+          isRightPanelOpen={m.isRightPanelOpen}
+          loadingMessages={m.loadingMessages}
+          onInputChange={m.setInputText}
+          onSendMessage={m.handleSendMessage}
+          onSendFile={m.handleSendMedia}
+          onSendAudio={m.handleSendAudio}
+          onFilesAdded={m.setPendingFiles}
+          onCancelQuote={m.handleCancelQuote}
+          onDismissSuggestion={() => m.setSuggestionDismissed(true)}
+          onToggleRightPanel={() => m.setIsRightPanelOpen(v => !v)}
+          onOpenOSModal={() => m.setIsOSModalOpen(true)}
+          onViewPdfOS={m.setViewingPdfOS}
+          onReact={m.handleReactToMessage}
+          onMention={m.handleMentionMessage}
+          onEdit={m.handleEditMessage}
+          onDelete={m.handleDeleteMessage}
+          onForward={m.handleForwardMessage}
+          onFetchMedia={m.handleFetchMedia}
+          quickReplies={m.quickReplies}
+          onSendQuickReply={m.handleSendQuickReply}
+          onSendOSCard={m.handleSendOSCardToChat}
           onAttachMedia={(files, caption) => {
-            setPendingCaption(caption);
-            setPendingFiles(files);
+            m.setPendingCaption(caption);
+            m.setPendingFiles(files);
           }}
         />
-        {isRightPanelOpen && selected && (
+        {m.isRightPanelOpen && m.selected && (
           <ClientDetailsPanel
-            selected={selected}
-            currentClientOSList={currentClientOSList}
-            isEditingClient={isEditingClient}
-            editForm={editForm}
-            onStartEdit={handleStartEditClient}
-            onSaveClient={handleSaveClient}
-            onEditFormChange={setEditForm}
-            onOpenOSModal={() => setIsOSModalOpen(true)}
-            onViewPdfOS={setViewingPdfOS}
-            onSendOSCardToChat={handleSendOSCardToChat}
-            onSetInputText={setInputText}
-            onClose={() => setIsRightPanelOpen(false)}
-            onDelete={() => setConfirmDeleteConv({ isOpen: true, convId: selected.id, convName: selected.contactName })}
+            selected={m.selected}
+            currentClientOSList={m.currentClientOSList}
+            isEditingClient={m.isEditingClient}
+            editForm={m.editForm}
+            onStartEdit={m.handleStartEditClient}
+            onSaveClient={m.handleSaveClient}
+            onEditFormChange={m.setEditForm}
+            onOpenOSModal={() => m.setIsOSModalOpen(true)}
+            onViewPdfOS={m.setViewingPdfOS}
+            onSendOSCardToChat={m.handleSendOSCardToChat}
+            onSetInputText={m.setInputText}
+            onClose={() => m.setIsRightPanelOpen(false)}
+            onDelete={() => m.setConfirmDeleteConv({ isOpen: true, convId: m.selected!.id, convName: m.selected!.contactName })}
           />
         )}
       </div>
-
-      {showNewConvModal && (
-        <div className="modal-overlay" onClick={() => setShowNewConvModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Nova Conversa</h3>
-              <button className="btn btn-ghost btn-icon" onClick={() => setShowNewConvModal(false)}><span style={{ fontSize: 16 }}>&times;</span></button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Nome do cliente *</label>
-                <input
-                  className="input"
-                  placeholder="Ex: Joao Silva"
-                  value={newConvName}
-                  onChange={e => setNewConvName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">WhatsApp *</label>
-                <input
-                  className="input"
-                  placeholder="5511999999999"
-                  value={newConvPhone}
-                  onChange={e => setNewConvPhone(e.target.value)}
-                />
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Formato: codigo do pais + DDD + numero</p>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowNewConvModal(false)}>Cancelar</button>
-              <button
-                className="btn btn-primary"
-                onClick={handleConfirmNewConversation}
-                disabled={!newConvName.trim() || newConvPhone.replace(/\D/g, '').length < 10 || creatingConversation}
-              >
-                {creatingConversation ? 'Criando...' : 'Iniciar Conversa'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isOSModalOpen && selected && (
-        <OSModal
-          initialCustomerName={selected.contactName}
-          initialEquipment={selected.deviceInfo}
-          initialCustomerId={selected.customer_id}
-          onClose={() => setIsOSModalOpen(false)}
-          onSave={handleSaveNewOS}
-        />
-      )}
-      {viewingPdfOS && selected && (
-        <OSDocumentModal
-          os={viewingPdfOS}
-          customerPhone={selected.contact_phone}
-          onClose={() => setViewingPdfOS(null)}
-          onSendToChat={handleSendOSCardToChat}
-        />
-      )}
-
-      <MediaSendModal
-        isOpen={pendingFiles !== null}
-        files={pendingFiles || []}
-        initialCaption={pendingCaption}
-        onSend={(files, caption) => {
-          handleSendMediaFiles(files, caption);
-          setPendingFiles(null);
-          setPendingCaption(undefined);
-        }}
-        onClose={() => { setPendingFiles(null); setPendingCaption(undefined); }}
-      />
-
-      <ForwardModal
-        isOpen={forwardingMessage !== null}
-        message={forwardingMessage}
-        conversations={conversations}
-        onForward={handleForwardToTarget}
-        onClose={() => setForwardingMessage(null)}
-      />
-
-      <ConfirmModal
-        isOpen={confirmDeleteConv.isOpen}
-        onClose={() => setConfirmDeleteConv({ isOpen: false, convId: '', convName: '' })}
-        onConfirm={() => {
-          handleDeleteConversation(confirmDeleteConv.convId);
-          setConfirmDeleteConv({ isOpen: false, convId: '', convName: '' });
-        }}
-        title="Excluir Conversa"
-        message={`Tem certeza que deseja excluir a conversa com "${confirmDeleteConv.convName}"? Todo o historico de mensagens sera removido permanentemente.`}
-        variant="danger"
-      />
-
-      <ConfirmModal
-        isOpen={confirmClaimAi.isOpen}
-        onClose={() => setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined })}
-        onConfirm={() => {
-          const { convId, aiState } = confirmClaimAi;
-          if (dontShowAgain) {
-            window.localStorage.setItem('deeperia:skip-ai-takeover-modal', '1');
-          }
-          setConfirmClaimAi({ isOpen: false, convId: '', convName: '', aiState: undefined });
-          executeAiToggle(convId, aiState);
-        }}
-        checkboxLabel="Não mostrar novamente"
-        checkboxChecked={dontShowAgain}
-        onCheckboxChange={setDontShowAgain}
-        title={confirmClaimAi.aiState === 'attending' ? 'Assumir atendimento' : 'Devolver ao agente de IA'}
-        message={confirmClaimAi.aiState === 'attending'
-          ? `Você vai assumir a conversa com "${confirmClaimAi.convName}". O agente de IA vai avisar o cliente que um atendente humano entrará em contato e ficará pausado até a conversa ser encerrada.`
-          : `Você vai devolver a conversa com "${confirmClaimAi.convName}" para o agente de IA, que volta a atender automaticamente a partir da próxima mensagem do cliente.`}
-        confirmLabel={confirmClaimAi.aiState === 'attending' ? 'Assumir atendimento' : 'Devolver ao agente de IA'}
-        variant="info"
-      />
+      <AttendanceModals m={m} />
     </div>
   );
 };

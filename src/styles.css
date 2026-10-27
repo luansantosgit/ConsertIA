@@ -1849,3 +1849,216 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 }
 
 @keyframes slideDown { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ============================================================
+   MODO MOBILE — chat-only estilo WhatsApp (Issue #85)
+   Telas empilhadas em tela cheia: lista -> chat -> bottom sheet
+   ============================================================ */
+
+/* Container raiz do Atendimento mobile (sem header do app) */
+.m-attendance {
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+/* Main do TenantLayout no modo mobile (chat-only) */
+.app-layout .m-main {
+  flex: 1;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.m-credits {
+  position: fixed;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  z-index: 40;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Telas empilhadas ── */
+.m-pane {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.m-list-pane {
+  background: var(--card-bg);
+  transition: opacity 0.18s ease;
+}
+
+/* Chat aberto: lista some da interação mas permanece montada (preserva scroll) */
+.m-list-pane.m-pane-hidden {
+  visibility: hidden;
+}
+
+.m-chat-pane {
+  z-index: 10;
+  background: var(--card-bg);
+  animation: slideInRight 0.22s ease;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.m-chat-pane.m-chat-pane-closing {
+  animation: slideOutRight 0.17s ease forwards;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+/* ── Tela 1: lista de conversas ── */
+.m-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.m-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.m-list-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  min-width: 210px;
+  overflow: hidden;
+  z-index: 200;
+  animation: slideUp 0.15s ease;
+}
+
+/* ── FAB nova conversa (como no WhatsApp) ── */
+.m-fab {
+  position: absolute;
+  right: 16px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  z-index: 30;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.m-fab:hover { transform: scale(1.06); }
+.m-fab:active { transform: scale(0.94); }
+
+/* ── Tela 3: bottom sheet de detalhes do cliente ── */
+.m-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 150;
+  animation: fadeIn 0.15s ease;
+}
+
+.m-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: sheetUp 0.24s ease;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.m-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  margin: 10px auto 2px;
+  flex-shrink: 0;
+}
+
+/* ── Input do chat: teclado não cobre o campo ── */
+@media (max-width: 768px) {
+  .m-chat-pane .page,
+  .m-attendance .input {
+    font-size: 16px; /* evita zoom automático do iOS ao focar */
+  }
+}
+
+/* Acessibilidade: reduz animações do modo mobile */
+@media (prefers-reduced-motion: reduce) {
+  .m-chat-pane,
+  .m-chat-pane.m-chat-pane-closing,
+  .m-sheet,
+  .m-sheet-overlay,
+  .m-menu-dropdown,
+  .m-fab {
+    animation: none !important;
+    transition: none !important;
+  }
+}

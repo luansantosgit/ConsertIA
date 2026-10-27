@@ -11,6 +11,7 @@ interface ClientDetailsPanelProps {
   currentClientOSList: OSRow[];
   isEditingClient: boolean;
   editForm: { contactName: string; contact_phone: string; deviceInfo: string; notes: string };
+  variant?: 'desktop' | 'mobile';
   onStartEdit: () => void;
   onSaveClient: () => void;
   onEditFormChange: (form: { contactName: string; contact_phone: string; deviceInfo: string; notes: string }) => void;
@@ -27,6 +28,7 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
   currentClientOSList,
   isEditingClient,
   editForm,
+  variant = 'desktop',
   onStartEdit,
   onSaveClient,
   onEditFormChange,
@@ -37,10 +39,11 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
   onClose,
   onDelete,
 }) => {
+  const isMobile = variant === 'mobile';
   return (
     <div style={{
-      width: 330,
-      borderLeft: '1px solid var(--border)',
+      width: isMobile ? '100%' : 330,
+      borderLeft: isMobile ? 'none' : '1px solid var(--border)',
       padding: '16px',
       display: 'flex',
       flexDirection: 'column',
@@ -48,7 +51,7 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
       overflowY: 'auto',
       background: 'var(--card-bg)',
       flexShrink: 0,
-      animation: 'fadeIn 0.15s ease'
+      animation: isMobile ? 'none' : 'fadeIn 0.15s ease'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h4 style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Detalhes</h4>
