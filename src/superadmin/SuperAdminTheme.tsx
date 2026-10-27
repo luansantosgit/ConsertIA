@@ -90,12 +90,11 @@ export const SuperAdminTheme: React.FC = () => {
           logo_dark_mode: currentTheme.logoDarkMode || false,
           updated_at: new Date().toISOString(),
         };
-        for (const t of tenants) {
-          const { error: tenantErr } = await supabase
-            .from('tenant_themes')
-            .upsert({ ...payload, tenant_id: t.id }, { onConflict: 'tenant_id' });
-          if (tenantErr) throw new Error(`Falha ao aplicar em uma empresa: ${tenantErr.message}`);
-        }
+        // UMA única RPC aplica a todas as empresas (antes: N upserts
+        // sequenciais carregando o payload com a logo — 10s+)
+        const { error: rpcErr } = await supabase
+          .rpc('apply_theme_to_all_tenants', { p_theme: payload });
+        if (rpcErr) throw new Error(`Falha ao aplicar nas empresas: ${rpcErr.message}`);
         const { error: globalErr } = await supabase
           .from('global_settings')
           .update({ theme: payload, updated_at: new Date().toISOString() })
