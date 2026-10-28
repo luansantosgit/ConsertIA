@@ -2225,7 +2225,7 @@ body.m-shell #root {
   transition: color 0.15s, background 0.15s;
 }
 
-.chat-icon-btn:hover { color: var(--primary); }
+.chat-icon-btn:hover { color: var(--primary-text); }
 .chat-icon-btn.is-active { color: var(--primary-text); }
 .chat-icon-btn:disabled { opacity: 0.5; cursor: default; }
 .chat-icon-btn:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: 2px; }
@@ -2270,8 +2270,11 @@ body.m-shell #root {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: var(--hover-bg);
-  color: var(--primary);
+  /* Texto primário acompanha o modo (escuro no claro, claro no escuro).
+     O fundo mantém o tom da marca sem depender do --primary cru, que
+     pode ser escuro demais no dark mode. */
+  background: var(--primary-light);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
