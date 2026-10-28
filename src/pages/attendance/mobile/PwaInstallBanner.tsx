@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, X, Share, PlusCircle, MoreVertical, Smartphone } from 'lucide-react';
+import { Download, X, Share, PlusCircle, MoreVertical } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 
@@ -57,7 +57,9 @@ export const PwaInstallBanner: React.FC = () => {
     <>
       {showBanner && (
         <div className="m-install-banner" role="banner">
-          <div className="m-install-icon"><Smartphone size={18} /></div>
+          <div className="m-install-icon">
+            <img src="/icons/icon-192.png" alt="" />
+          </div>
           <div className="m-install-text">
             <strong>{t('Instale o DeeperIA')}</strong>
             <span>{t('Acesse o chat direto da tela inicial do celular')}</span>
@@ -81,7 +83,10 @@ export const PwaInstallBanner: React.FC = () => {
         <div className="modal-overlay" onClick={() => setShowInstructions(false)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
             <div className="modal-header">
-              <h3 className="modal-title">{t('Como instalar')}</h3>
+              <div className="m-install-modal-title">
+                <img src="/icons/icon-192.png" alt="" />
+                <h3 className="modal-title">{t('Como instalar')}</h3>
+              </div>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowInstructions(false)}>
                 <span style={{ fontSize: 16 }}>&times;</span>
               </button>

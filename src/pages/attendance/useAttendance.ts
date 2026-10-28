@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import type { Message, Conversation } from '@/types';
 import type { ChatMessage, ConvRow, ForwardTarget } from './types';
 import { toChatMessage } from './types';
+import { resolveMediaType, sendMediaFile, type OutboundMediaType } from './media-sender';
 
 const conversationRepo = new ConversationRepository();
 const messageRepo = new MessageRepository();
@@ -40,35 +41,6 @@ function applyStaleReadGuard(row: ConvRow, guardMap: Map<string, number>): ConvR
   const readAt = guardMap.get(row.id);
   const guarded = readAt !== undefined && Date.now() - readAt < STALE_READ_GUARD_MS;
   return guarded && row.unread_count > 0 ? { ...row, unread_count: 0 } : row;
-}
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
-async function uploadChatMedia(file: File, convId: string): Promise<string | null> {
-  try {
-    const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : '';
-    const safeExt = ext.replace(/[^\w.]/g, '');
-    const path = `${convId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${safeExt}`;
-    const { error } = await supabase.storage
-      .from('chat-media')
-      .upload(path, file, { contentType: file.type || undefined });
-    if (error) {
-      console.error('Storage upload error:', error.message);
-      return null;
-    }
-    const { data } = supabase.storage.from('chat-media').getPublicUrl(path);
-    return data.publicUrl;
-  } catch (err) {
-    console.error('Failed to upload media:', err);
-    return null;
-  }
 }
 
 /** Ordena mensagens: as confirmadas (com createdAt real) vão por timestamp; otimistas ficam no final */
@@ -1186,29 +1158,29 @@ export function useAttendance() {
     const replyWaId = quotedMessage?.waMessageId;
     setQuotedMessage(null);
 
-    const queue = files.map((file, i) => ({ file, optimisticId: `msg-media-${Date.now()}-${i}` }));
-
-    const toSendType = (mime: string): 'image' | 'video' | 'document' | 'audio' | 'ptt' =>
-      mime.startsWith('image/') ? 'image'
-      : mime.startsWith('video/') ? 'video'
-      : mime.startsWith('audio/') ? 'ptt'
-      : 'document';
-
-    const optimisticMsgs: ChatMessage[] = queue.map(({ file, optimisticId }) => {
-      const sendType = toSendType(file.type || '');
-      const label = sendType === 'image' ? '📷 Imagem' : sendType === 'video' ? '🎥 Vídeo' : sendType === 'ptt' ? '🎤 Mensagem de voz' : '📄 Documento';
-      return {
-        id: optimisticId,
-        from: 'attendant' as const,
-        text: caption || label,
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        status: 'pending' as const,
-        mediaType: sendType,
-        mediaUrl: URL.createObjectURL(file),
-        replyTo: replyToId,
-        createdAt: new Date().toISOString(),
-      };
+    // Já resolve o tipo final: mídia acima do limite do WhatsApp vira documento
+    const queue = files.map((file, i) => {
+      const { type } = resolveMediaType(file.type || '', file.size);
+      return { file, sendType: type, optimisticId: `msg-media-${Date.now()}-${i}` };
     });
+
+    const mediaLabel = (file: File, sendType: OutboundMediaType) =>
+      sendType === 'image' ? '📷 Imagem'
+      : sendType === 'video' ? '🎥 Vídeo'
+      : sendType === 'ptt' ? '🎤 Mensagem de voz'
+      : `📄 ${file.name || 'Documento'}`;
+
+    const optimisticMsgs: ChatMessage[] = queue.map(({ file, sendType, optimisticId }) => ({
+      id: optimisticId,
+      from: 'attendant' as const,
+      text: caption || mediaLabel(file, sendType),
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      status: 'pending' as const,
+      mediaType: sendType,
+      mediaUrl: URL.createObjectURL(file),
+      replyTo: replyToId,
+      createdAt: new Date().toISOString(),
+    }));
 
     setChatMessages(prev => ({
       ...prev,
@@ -1234,68 +1206,62 @@ export function useAttendance() {
     // Cada arquivo é processado individualmente para manter a ordem garantida.
     enqueueOutboundTask(convId, async () => {
       const connId = await getConnectionId();
-      const { sendMediaMessage } = connId
-        ? await import('@/lib/api-alternativa.service')
-        : { sendMediaMessage: null };
 
-      for (let i = 0; i < queue.length; i++) {
-        const { file: rawFile, optimisticId } = queue[i];
+      for (const { file, sendType, optimisticId } of queue) {
         const optimistic = optimisticMsgs.find(m => m.id === optimisticId)!;
 
         try {
-          const file = rawFile;
-
-          const mime = file.type || '';
-          const sendType = toSendType(mime);
-
+          let msgStatus: 'sent' | 'error' = 'sent';
           let waMessageId: string | undefined;
-          let msgStatus = 'sent';
+          let mediaUrl: string | undefined;
+          let finalType = sendType;
+          let errorReason: string | undefined;
 
-          // ── Upload para Supabase Storage ───────────────────────────────────
-          const publicUrl: string | null = sendMediaMessage
-            ? await uploadChatMedia(file, convId)
-            : null;
-
-          if (connId && sendMediaMessage) {
-            const fileRef = publicUrl || (await fileToBase64(file)).split(',')[1];
-            // asyncSend: true apenas para imagens (rápidas); vídeos/docs bloqueiam a fila
-            // até a UazAPI confirmar entrega no WhatsApp, garantindo ordem cronológica.
-            const asyncSend = sendType === 'image';
-            const result = await sendMediaMessage(connId, contactPhone, sendType, fileRef, {
+          if (connId) {
+            const result = await sendMediaFile({
+              connectionId: connId,
+              contactPhone,
+              convId,
+              file,
               caption: caption || undefined,
-              docName: sendType === 'document' ? file.name : undefined,
-              mimetype: mime || undefined,
-              replyId: replyWaId,
-              asyncSend,
+              replyWaId,
             });
-            if (result.success) {
-              waMessageId = result.messageId;
-              msgStatus = result.status || 'sent';
-            } else {
-              msgStatus = 'error';
-              console.error('Failed to send media via API:', result.error);
-            }
+            msgStatus = result.success ? 'sent' : 'error';
+            waMessageId = result.waMessageId;
+            mediaUrl = result.mediaUrl;
+            finalType = result.sendType;
+            errorReason = result.error;
+            if (!result.success) console.error('Failed to send media via API:', result.error);
+          } else {
+            msgStatus = 'error';
+            errorReason = 'WhatsApp não conectado.';
           }
+
+          const finalText = errorReason
+            ? `${optimistic.text} — ${errorReason}`
+            : optimistic.text;
 
           const saved = await messageRepo.create({
             conversation_id: convId,
             contact_phone: contactPhone,
-            content: optimistic.text,
+            content: finalText,
             direction: 'outbound',
             read: true,
-            status: msgStatus as 'pending' | 'sent' | 'delivered' | 'read' | 'error',
+            status: msgStatus,
             wa_message_id: waMessageId,
-            media_type: sendType,
-            media_url: publicUrl || undefined,
+            media_type: finalType,
+            media_url: mediaUrl,
             reply_to: replyToId,
           });
 
           replaceOptimistic(optimisticId, {
             id: saved.id,
             createdAt: saved.created_at,
-            status: msgStatus as ChatMessage['status'],
+            status: msgStatus,
             waMessageId,
-            mediaUrl: publicUrl || optimistic.mediaUrl,
+            mediaType: finalType,
+            mediaUrl: mediaUrl || optimistic.mediaUrl,
+            text: finalText,
           });
         } catch (err) {
           console.error('Failed to send media:', err);

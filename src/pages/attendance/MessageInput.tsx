@@ -158,7 +158,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               ref={textInputRef}
               className="input chat-textarea"
               rows={1}
-              placeholder="Digite uma mensagem ou resposta..."
+              placeholder="Digite uma mensagem."
               value={inputText}
               onChange={e => onInputChange(e.target.value)}
               onKeyDown={e => {

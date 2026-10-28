@@ -15,14 +15,7 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
   const { t } = useTranslation();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [favicon, setFavicon] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  // Ícone do DeeperIA no header = mesmo favicon dinâmico aplicado na aba
-  useEffect(() => {
-    const href = (document.getElementById('dynamic-favicon') as HTMLLinkElement | null)?.href;
-    if (href) setFavicon(href);
-  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -47,11 +40,7 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
     <div className="m-list">
       <header className="m-list-header">
         <div className="m-list-brand">
-          {favicon ? (
-            <img src={favicon} alt="" className="m-list-logo" />
-          ) : (
-            <span className="m-list-logo" aria-hidden />
-          )}
+          <img src="/icons/icon-192.png" alt={t('DeeperIA')} className="m-list-logo" />
           <h1 className="m-list-title">{user?.tenantName || t('Atendimento')}</h1>
         </div>
         <div ref={menuRef} style={{ position: 'relative' }}>
