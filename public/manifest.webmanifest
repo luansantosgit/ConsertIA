@@ -3,7 +3,7 @@
   "short_name": "DeeperIA",
   "description": "CRM + IA para assistências técnicas: atenda seus clientes pelo WhatsApp com agente de IA.",
   "lang": "pt-BR",
-  "start_url": "/",
+  "start_url": "/atendimento",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

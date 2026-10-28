@@ -1875,8 +1875,8 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .m-credits {
@@ -1905,6 +1905,8 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .m-list-pane {
@@ -2118,9 +2120,12 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
     overscroll-behavior: none;
   }
 
-  .m-chat-pane .page,
-  .m-attendance .input {
-    font-size: 16px; /* evita zoom automático do iOS ao focar */
+  /* 16px em TODOS os campos evita o zoom automático do iOS ao focar
+     (chat, busca da lista e modais) */
+  .m-attendance input,
+  .m-attendance textarea,
+  .m-attendance select {
+    font-size: 16px;
   }
 }
 

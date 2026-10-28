@@ -94,7 +94,6 @@ export const NewConversationModal: React.FC<{ m: AttendanceModalsState }> = ({ m
                   if (results.length > 0) startWithCustomer(results[0]);
                   else startWithPhone();
                 }}
-                style={{ fontSize: '0.875rem' }}
               />
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, marginBottom: 0 }}>
