@@ -1,9 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import pkg from './package.json';
 export default defineConfig({
     plugins: [react()],
     base: '/',
+    // Versao do package.json disponivel no app via `__APP_VERSION__`.
+    define: {
+        __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     server: {
         port: 5174,
     },

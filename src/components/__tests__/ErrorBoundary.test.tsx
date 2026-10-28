@@ -7,6 +7,13 @@ function ThrowingChild() {
   return null;
 }
 
+function ThrowingChunkChild() {
+  throw new TypeError(
+    'Failed to fetch dynamically imported module: https://deeperia.com.br/assets/Attendance-abc.js'
+  );
+  return null;
+}
+
 function GoodChild() {
   return <div>child content</div>;
 }
@@ -31,6 +38,16 @@ describe('ErrorBoundary', () => {
     );
     expect(screen.getByText('Algo deu errado')).toBeTruthy();
     expect(screen.getByText('Test error')).toBeTruthy();
+  });
+
+  it('shows update UI for chunk load errors', () => {
+    render(
+      <ErrorBoundary>
+        <ThrowingChunkChild />
+      </ErrorBoundary>
+    );
+    expect(screen.getByText('Nova versão disponível')).toBeTruthy();
+    expect(screen.getByText('Atualizar agora')).toBeTruthy();
   });
 
   it('renders custom fallback when provided', () => {

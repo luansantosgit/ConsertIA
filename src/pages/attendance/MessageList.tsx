@@ -52,7 +52,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   };
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView();
+    // block:'nearest' — evita rolar containers ancestrais (ex.: pane mobile) junto
+    bottomRef.current?.scrollIntoView({ block: 'nearest' });
   }, [selectedId, loadingMessages]);
 
   // Busca: rola a lista até a ocorrência ativa (centralizada)
@@ -64,7 +65,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [activeMessageId]);
 
   useEffect(() => {
-    if (isNearBottom()) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isNearBottom()) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   const quoteMap = new Map(messages.map(m => [m.id, m]));
@@ -73,6 +74,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div ref={listRef} style={{
       flex: 1,
       overflowY: 'auto',
+      // Trava o efeito elástico/scroll-chaining no chat mobile — nada
+      // "sobe" ou mostra fundo branco ao arrastar além do início/fim
+      overscrollBehavior: 'contain',
       padding: '16px 20px',
       display: 'flex',
       flexDirection: 'column',

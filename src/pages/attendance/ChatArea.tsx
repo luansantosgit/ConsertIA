@@ -44,6 +44,7 @@ interface ChatAreaProps {
   onSendQuickReply: (reply: QuickReply) => void;
   onSendOSCard: (os: OSRow) => void;
   onAttachMedia: (files: File[], caption?: string) => void;
+  onBack?: () => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -76,6 +77,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onSendQuickReply,
   onSendOSCard,
   onAttachMedia,
+  onBack,
 }) => {
   const [dragOver, setDragOver] = useState(false);
   const dragDepthRef = React.useRef(0);
@@ -125,7 +127,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   return (
     <div
-      style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--card-bg)', position: 'relative' }}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, background: 'var(--card-bg)', position: 'relative' }}
       onDragEnter={e => {
         e.preventDefault();
         dragDepthRef.current += 1;
@@ -159,6 +161,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           onOpenReminderModal={() => setReminderOpen(true)}
           onOpenReminderList={() => setReminderListOpen(true)}
           onToggleRightPanel={onToggleRightPanel}
+          onBack={onBack}
       />
 
       {search.searchOpen && (

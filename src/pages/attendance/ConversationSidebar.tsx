@@ -16,6 +16,7 @@ interface ConversationSidebarProps {
   loadingConversations: boolean;
   hasMore: boolean;
   loadingMore: boolean;
+  variant?: 'desktop' | 'mobile';
   onSearchChange: (value: string) => void;
   onChatFilterChange: (value: ChatFilter) => void;
   onSortChange: (value: 'recent' | 'unread' | 'oldest') => void;
@@ -48,6 +49,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   loadingConversations,
   hasMore,
   loadingMore,
+  variant = 'desktop',
   onSearchChange,
   onChatFilterChange,
   onSortChange,
@@ -111,15 +113,28 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   // Filtro ativo de transferidos
   const transferredActive = chatFilter === 'transferred_chats' || chatFilter === 'transferred_groups';
 
+  const isMobile = variant === 'mobile';
+
   return (
-    <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRight: '1px solid var(--border)', minHeight: 0 }}>
-      <div style={{ padding: '12px 16px 0' }}>
-        <span style={{
-          fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: 0.8, color: 'var(--text-muted)',
-        }}>
-          Atendimento
-        </span>
+    <div style={{
+      width: isMobile ? '100%' : 340,
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--card-bg)',
+      borderRight: isMobile ? 'none' : '1px solid var(--border)',
+      minHeight: 0,
+      flex: isMobile ? 1 : undefined,
+    }}>
+      <div style={{ padding: isMobile ? '8px 14px 0' : '12px 16px 0' }}>
+        {!isMobile && (
+          <span style={{
+            fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: 0.8, color: 'var(--text-muted)',
+          }}>
+            Atendimento
+          </span>
+        )}
         <div style={{ display: 'flex', gap: 4, marginBottom: 10, alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 0 }}>
             <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
@@ -129,8 +144,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               onChange={e => onSearchChange(e.target.value)}
               style={{ fontSize: '0.8125rem' }}
             />
-          </div>
-          <div ref={filterBtnRef} style={{ position: 'relative', flexShrink: 0 }}>
+          </div>          <div ref={filterBtnRef} style={{ position: 'relative', flexShrink: 0 }}>
             <button
               onClick={() => setDropdownFor(dropdownFor === 'filter' ? null : 'filter')}
               style={{
@@ -232,7 +246,15 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        // Mobile: folga para o FAB não cobrir o último item + safe-area do gesto do sistema
+        ...(isMobile && {
+          paddingBottom: 'calc(84px + env(safe-area-inset-bottom))',
+          overscrollBehavior: 'contain',
+        } as React.CSSProperties),
+      }}>
         {loadingConversations && conversations.length === 0 && (
           <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[0, 1, 2, 3].map(i => (

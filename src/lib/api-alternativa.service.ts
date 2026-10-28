@@ -711,7 +711,7 @@ export async function sendMediaMessage(
   type: SendMediaType,
   file: string,
   options?: SendMediaOptions
-): Promise<{ success: boolean; messageId?: string; status?: string; error?: string }> {
+): Promise<{ success: boolean; messageId?: string; status?: string; fileUrl?: string; error?: string }> {
   try {
     const { data: connection } = await supabase
       .from('connections')
@@ -746,6 +746,7 @@ export async function sendMediaMessage(
       success: true,
       messageId: data?.messageid || data?.key?.id || data?.id || undefined,
       status: data?.status || 'Sent',
+      fileUrl: data?.fileUrl || undefined,
     };
   } catch (error) {
     return { success: false, error: (error as Error).message };

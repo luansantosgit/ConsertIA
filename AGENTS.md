@@ -228,6 +228,25 @@ VITE_SUPABASE_URL=https://sknimzjwpdbcuutxbycq.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 ```
 
+### 7. Versionamento — OBRIGATÓRIO
+
+A versão do app fica em `package.json` e é injetada no bundle pelo Vite
+(`define.__APP_VERSION__`), exposta em `src/lib/version.ts`
+(`APP_VERSION` e `APP_VERSION_LABEL`).
+
+**Todo commit que altere o sistema DEVE subir a versão de patch antes do commit:**
+
+```bash
+npm run version:bump   # 1.0.100 -> 1.0.101
+```
+
+Regras:
+- Nunca commitar mudança de código sem o bump de versão
+- A mensagem do commit termina com a versão: `fix: ... (v1.0.101)`
+- A versão atual aparece na sidebar (desktop, ao lado do usuário) e em **⋮ → Sobre** (mobile)
+- Mudanças incompatíveis sobem minor/major manualmente: `npm version minor --no-git-tag-version`
+- A versão inicial do sistema é **1.0.100**
+
 ---
 
 ## Quick Reference
@@ -251,6 +270,11 @@ npx tsc --noEmit
 ### Build
 ```bash
 npm run build
+```
+
+### Bump de versão (obrigatório antes de cada commit)
+```bash
+npm run version:bump
 ```
 
 ### Deploy Uazapi Webhook (Edge Function)
