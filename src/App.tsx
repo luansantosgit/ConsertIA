@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
 import { canAccess, firstAllowedPath } from '@/lib/permissions';
+import { isChunkLoadError, recoverChunkError } from '@/lib/chunk-recovery';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AiImportSession } from '@/components/AiImportSession';
 
@@ -32,23 +33,12 @@ import './styles.css';
  * Após deploy na Vercel, o index.html cacheado no browser referencia
  * chunks antigos (hash diferente) que retornam 404 → "Failed to fetch
  * dynamically imported module". Recarrega a página para pegar o novo
- * build, com guarda de 1 reload/min para evitar loop.
+ * build (ver `src/lib/chunk-recovery.ts`).
  */
-const CHUNK_ERR = 'Failed to fetch dynamically imported module';
-const CHUNK_RELOAD_KEY = 'chunk-reload-ts';
-
 function lazyLoad<T extends React.ComponentType>(factory: () => Promise<{ default: T }>) {
   return lazy(() =>
     factory().catch(err => {
-      const msg = (err as Error)?.message ?? String(err);
-      if (msg.includes(CHUNK_ERR) || msg.includes('Importing a module script failed')) {
-        const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0);
-        const now = Date.now();
-        if (!last || now - last > 60_000) {
-          sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
-          window.location.reload();
-        }
-      }
+      if (isChunkLoadError(err)) recoverChunkError();
       throw err;
     }),
   );
