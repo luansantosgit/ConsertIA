@@ -2207,3 +2207,378 @@ body.m-shell #root {
     transition: none !important;
   }
 }
+
+/* ============================================================
+   CHAT — ANEXOS (balão do clipe + câmera)
+   ============================================================ */
+
+.chat-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.chat-icon-btn:hover { color: var(--primary); }
+.chat-icon-btn.is-active { color: var(--primary-text); }
+.chat-icon-btn:disabled { opacity: 0.5; cursor: default; }
+.chat-icon-btn:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: 2px; }
+
+/* Balão flutuante ancorado no clipe */
+.attach-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  width: 232px;
+  padding: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18);
+  z-index: 80;
+  animation: attachPop 0.16s ease-out;
+}
+
+.attach-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.attach-menu-item:hover,
+.attach-menu-item:focus-visible { background: var(--hover-bg); }
+.attach-menu-item:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: -2px; }
+
+.attach-menu-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--hover-bg);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.attach-menu-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.attach-menu-label small {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+@keyframes attachPop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Câmera */
+.camera-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  display: flex;
+  animation: fadeIn 0.15s ease;
+}
+
+.camera-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.camera-shell:focus { outline: none; }
+
+.camera-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.camera-top,
+.camera-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  color: #fff;
+}
+
+.camera-top {
+  top: 0;
+  justify-content: space-between;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 28px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent);
+}
+
+.camera-bottom {
+  bottom: 0;
+  flex-direction: column;
+  gap: 14px;
+  padding: 40px 16px calc(22px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+}
+
+.camera-round-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.camera-round-btn:hover { background: rgba(0, 0, 0, 0.65); }
+.camera-round-btn:disabled { opacity: 0.4; cursor: default; }
+
+.camera-timer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.camera-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: cameraPulse 1s ease-in-out infinite;
+}
+
+.camera-mode {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.camera-mode button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.camera-mode button.active { background: #fff; color: #111; }
+.camera-mode button:disabled { opacity: 0.5; cursor: default; }
+
+.camera-shutter {
+  width: 74px;
+  height: 74px;
+  padding: 0;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.camera-shutter::after {
+  content: '';
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  transition: width 0.15s ease, height 0.15s ease, border-radius 0.15s ease, background 0.15s ease;
+}
+
+.camera-shutter.is-video::after { background: #ef4444; }
+.camera-shutter.is-recording::after {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #ef4444;
+}
+.camera-shutter:active { transform: scale(0.94); }
+.camera-shutter:disabled { opacity: 0.45; cursor: default; }
+
+.camera-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+.camera-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.camera-spin { animation: spin 1s linear infinite; }
+
+@keyframes cameraPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.camera-inline-error {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(170px + env(safe-area-inset-bottom));
+  z-index: 5;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.92);
+  color: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.camera-error-card {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px;
+  background: #0b0d12;
+  color: #fff;
+  text-align: center;
+}
+
+.camera-error-card svg { color: #fbbf24; }
+.camera-error-card h3 { margin: 0; font-size: 1rem; }
+.camera-error-card p {
+  margin: 0;
+  max-width: 300px;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+}
+.camera-error-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+.camera-preview {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.camera-preview-media {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.camera-preview-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 16px calc(18px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.camera-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: #fff;
+  pointer-events: none;
+  animation: cameraFlash 0.18s ease-out forwards;
+}
+
+@keyframes cameraFlash {
+  from { opacity: 0.9; }
+  to { opacity: 0; }
+}
+
+/* Desktop: câmera vira um modal centralizado, não tela cheia */
+@media (min-width: 769px) {
+  .camera-overlay {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(2, 6, 23, 0.8);
+    backdrop-filter: blur(4px);
+  }
+
+  .camera-shell {
+    width: min(440px, 100%);
+    height: min(720px, 100%);
+    border-radius: 18px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attach-menu,
+  .camera-overlay,
+  .camera-dot,
+  .camera-flash,
+  .camera-spin {
+    animation: none !important;
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Send, Paperclip, Smile } from 'lucide-react';
+import { Send, Smile } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { AttachmentButton } from './AttachmentButton';
 import { EmojiPicker } from './EmojiPicker';
 import { VoiceRecorderBar } from './VoiceRecorderBar';
 import { MessageQuickReplies } from './MessageQuickReplies';
@@ -27,7 +28,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onSendAudio,
   onFilesAdded,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -92,19 +92,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     });
   };
 
-  const iconBtn: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: 6,
-    borderRadius: '50%',
-    color: showEmoji ? 'var(--primary-text)' : 'var(--text-muted)',
-    display: 'flex',
-    alignItems: 'center',
-    flexShrink: 0,
-    transition: 'color 0.15s, background 0.15s',
-  };
-
   return (
     <div style={{
       padding: '12px 20px',
@@ -118,38 +105,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       {/* flex-end: botões acompanham a última linha quando o textarea expande */}
       <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', position: 'relative' }}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-          hidden
-          onChange={e => {
-            const file = e.target.files?.[0];
-            if (file) onSendFile(file);
-            e.target.value = '';
-          }}
-        />
-
         {isRecording ? null : (
           <>
-            <button
-              onClick={() => fileInputRef.current?.click()}
+            <AttachmentButton
               disabled={disabled}
-              title="Enviar imagem, vídeo ou documento"
-              aria-label="Enviar mídia"
-              style={iconBtn}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-            >
-              <Paperclip size={18} />
-            </button>
+              onSendFile={onSendFile}
+              onFilesAdded={onFilesAdded}
+              onMenuOpen={() => setShowEmoji(false)}
+            />
 
             <button
               onClick={() => setShowEmoji(v => !v)}
               disabled={disabled}
               title="Emojis"
               aria-label="Inserir emoji"
-              style={iconBtn}
+              className={`chat-icon-btn ${showEmoji ? 'is-active' : ''}`}
             >
               <Smile size={18} />
             </button>
