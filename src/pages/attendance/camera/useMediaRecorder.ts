@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AUDIO_BITS_PER_SECOND,
-  RECORDING_MAX_BYTES,
   RECORDING_MAX_MS,
   VIDEO_BITS_PER_SECOND,
   pickRecorderMimeType,
@@ -22,9 +21,9 @@ export interface MediaRecorderState {
 }
 
 /**
- * Grava o stream da câmera com bitrate controlado. Para sozinho ao atingir
- * 60 s ou 15 MB — assim o arquivo sempre cabe no limite de vídeo do WhatsApp
- * (16 MB) e não vira documento sem o usuário perceber.
+ * Grava o stream da câmera com bitrate controlado e para sozinho aos 60 s.
+ * Não corta por peso: acima de 16 MB o media-sender envia o vídeo como
+ * documento (limite de 100 MB), em vez de interromper a gravação.
  */
 export function useMediaRecorder({ onFinish }: UseMediaRecorderOptions): MediaRecorderState {
   const [recording, setRecording] = useState(false);
@@ -72,6 +71,9 @@ export function useMediaRecorder({ onFinish }: UseMediaRecorderOptions): MediaRe
     try {
       recorder = new MediaRecorder(stream, {
         ...(mime ? { mimeType: mime } : {}),
+        // `bitsPerSecond` cobre implementações que ignoram os campos
+        // específicos de vídeo/áudio (comum no encoder MP4 de celulares).
+        bitsPerSecond: VIDEO_BITS_PER_SECOND + AUDIO_BITS_PER_SECOND,
         videoBitsPerSecond: VIDEO_BITS_PER_SECOND,
         audioBitsPerSecond: AUDIO_BITS_PER_SECOND,
       });
@@ -94,9 +96,6 @@ export function useMediaRecorder({ onFinish }: UseMediaRecorderOptions): MediaRe
       chunksRef.current.push(event.data);
       bytesRef.current += event.data.size;
       setBytes(bytesRef.current);
-      if (bytesRef.current >= RECORDING_MAX_BYTES && recorder.state === 'recording') {
-        recorder.stop();
-      }
     };
 
     recorder.onstop = () => {

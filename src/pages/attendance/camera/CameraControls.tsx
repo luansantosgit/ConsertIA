@@ -32,7 +32,7 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
   const hint = recording
     ? 'Toque no quadrado para parar'
     : mode === 'video'
-      ? 'Toque para gravar · máx. 60s / 15 MB'
+      ? 'Toque para gravar · máx. 60s'
       : 'Toque para tirar foto';
 
   return (

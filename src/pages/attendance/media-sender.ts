@@ -41,11 +41,14 @@ export function resolveMediaType(
   mime: string,
   size: number,
 ): { type: OutboundMediaType; converted: boolean } {
-  const base = baseMediaType(mime);
+  // MediaRecorder devolve o MIME com codecs (ex.: video/mp4;codecs=avc1...),
+  // então normaliza antes de comparar com video/mp4.
+  const baseMime = mime.split(';')[0].trim().toLowerCase();
+  const base = baseMediaType(baseMime);
   if (base === 'document') return { type: 'document', converted: false };
   // A Uazapi só aceita MP4 como vídeo; .mov (iPhone), WebM etc. vão
   // como documento para não falhar no envio.
-  if (base === 'video' && mime !== 'video/mp4') {
+  if (base === 'video' && baseMime !== 'video/mp4') {
     return { type: 'document', converted: true };
   }
   const limit = WHATSAPP_LIMITS[base === 'ptt' ? 'audio' : base];

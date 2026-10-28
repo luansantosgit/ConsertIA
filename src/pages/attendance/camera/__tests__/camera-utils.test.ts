@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cameraFileName,
   extensionForMime,
+  fileFromRecording,
   fitWithin,
   formatDuration,
   mapCameraError,
@@ -50,5 +51,14 @@ describe('camera-utils', () => {
     const date = new Date(2026, 9, 28, 13, 45, 9);
     expect(cameraFileName('photo', 'image/jpeg', date)).toBe('foto-20261028-134509.jpg');
     expect(cameraFileName('video', 'video/mp4', date)).toBe('video-20261028-134509.mp4');
+  });
+
+  it('remove os codecs do MIME ao criar o arquivo de vídeo', () => {
+    const file = fileFromRecording(
+      new Blob(['video'], { type: 'video/mp4;codecs=avc1' }),
+      'video/mp4;codecs=avc1,mp4a.40.2',
+    );
+    expect(file.type).toBe('video/mp4');
+    expect(file.name.endsWith('.mp4')).toBe(true);
   });
 });

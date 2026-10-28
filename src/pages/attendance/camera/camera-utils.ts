@@ -1,10 +1,13 @@
 /**
  * Utilitários da câmera do chat.
  *
- * O vídeo é gravado em 720p/1080p com bitrate controlado (~2,5 Mbps),
+ * O vídeo é gravado em 720p com bitrate controlado (~1,5 Mbps),
  * muito menor que a câmera nativa (que costuma gravar em 4K a ~17 Mbps).
  * O MediaRecorder usa MP4 quando o navegador suporta (Chrome/Safari atuais);
  * WebM fica apenas como fallback.
+ *
+ * Não há corte por peso: se o arquivo passar de 16 MB (limite de vídeo do
+ * WhatsApp), o media-sender o envia automaticamente como documento (até 100 MB).
  */
 
 export type CameraFacing = 'environment' | 'user';
@@ -12,10 +15,8 @@ export type CameraMode = 'photo' | 'video';
 
 /** Limite de duração da gravação: 60 s. */
 export const RECORDING_MAX_MS = 60_000;
-/** Para antes de 16 MB (limite de vídeo do WhatsApp), com margem de segurança. */
-export const RECORDING_MAX_BYTES = 15 * 1024 * 1024;
-export const VIDEO_BITS_PER_SECOND = 2_500_000;
-export const AUDIO_BITS_PER_SECOND = 96_000;
+export const VIDEO_BITS_PER_SECOND = 1_500_000;
+export const AUDIO_BITS_PER_SECOND = 64_000;
 export const PHOTO_MAX_DIMENSION = 1920;
 export const PHOTO_QUALITY = 0.86;
 
@@ -101,6 +102,9 @@ export async function capturePhoto(video: HTMLVideoElement): Promise<File> {
 }
 
 export function fileFromRecording(blob: Blob, mime: string): File {
-  const type = mime || blob.type || 'video/mp4';
+  // Remove os codecs do MIME: o media-sender compara com video/mp4 exato
+  // para decidir entre vídeo e documento.
+  const raw = mime || blob.type || 'video/mp4';
+  const type = raw.split(';')[0].trim() || 'video/mp4';
   return new File([blob], cameraFileName('video', type), { type });
 }

@@ -30,6 +30,13 @@ describe('media-sender', () => {
     });
   });
 
+  it('mantém vídeo MP4 com codecs como vídeo dentro do limite', () => {
+    expect(resolveMediaType('video/mp4;codecs=avc1,mp4a.40.2', 10 * MB)).toEqual({
+      type: 'video',
+      converted: false,
+    });
+  });
+
   it('envia vídeo não-MP4 como documento (ex.: .mov do iPhone)', () => {
     expect(resolveMediaType('video/quicktime', 5 * MB)).toEqual({
       type: 'document',

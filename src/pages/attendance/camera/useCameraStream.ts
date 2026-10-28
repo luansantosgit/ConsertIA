@@ -18,10 +18,12 @@ export interface CameraStreamState {
   stop: () => void;
 }
 
+// 720p (1280x720 ou 720x1280 no retrato): metade dos pixels de 1080p,
+// mantendo nitidez suficiente para vídeos de assistência técnica.
 const VIDEO_CONSTRAINTS = {
-  width: { ideal: 1920 },
-  height: { ideal: 1080 },
-  frameRate: { ideal: 30 },
+  width: { ideal: 1280, max: 1280 },
+  height: { ideal: 720, max: 1280 },
+  frameRate: { ideal: 30, max: 30 },
 };
 
 /**
