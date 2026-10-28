@@ -1,7 +1,7 @@
 {
   "name": "tech-assistant-crm",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.101",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,8 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "knip": "knip",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "version:bump": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, MoreVertical, Sun, Moon, LogOut, Download } from 'lucide-react';
+import { Plus, MoreVertical, Sun, Moon, LogOut, Download, Info } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useModeStore } from '@/stores/mode.store';
 import { useTranslation } from '@/hooks/useTranslation';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
+import { AboutModal } from '@/components/AboutModal';
 import { ConversationSidebar } from '../ConversationSidebar';
 import { PwaInstallBanner } from './PwaInstallBanner';
 import type { MobileListConfig } from './types';
@@ -15,6 +16,7 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
   const { t } = useTranslation();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,6 +79,12 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
                 {mode === 'dark' ? t('Ativar modo claro') : t('Ativar modo escuro')}
               </button>
               <button
+                style={menuItemStyle}
+                onClick={() => { setMenuOpen(false); setAboutOpen(true); }}
+              >
+                <Info size={16} />{t('Sobre')}
+              </button>
+              <button
                 style={{ ...menuItemStyle, color: 'var(--danger)' }}
                 onClick={() => { setMenuOpen(false); logout(); }}
               >
@@ -120,6 +128,8 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
           <Plus size={24} />
         </button>
       </div>
+
+      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </div>
   );
 };
