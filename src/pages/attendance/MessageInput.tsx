@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Send, Paperclip, Smile } from 'lucide-react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { EmojiPicker } from './EmojiPicker';
 import { VoiceRecorderBar } from './VoiceRecorderBar';
+import { MessageQuickReplies } from './MessageQuickReplies';
 
 interface MessageInputProps {
   inputText: string;
@@ -13,12 +15,8 @@ interface MessageInputProps {
   onFilesAdded: (files: File[]) => void;
 }
 
-const QUICK_REPLIES = [
-  'Orçamento pronto ✓',
-  'Aparelho em bancada',
-  'Aguardando aprovação',
-  'Pronto para retirada! 🎉'
-];
+/** Altura máxima do textarea: ~3 linhas — depois rola internamente (padrão WhatsApp) */
+const TA_MAX_HEIGHT = 92;
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   inputText,
@@ -30,10 +28,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onFilesAdded,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const isMobile = useIsMobile();
 
   // Fecha o picker ao clicar fora (padrao WhatsApp Web)
   useEffect(() => {
@@ -46,6 +45,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showEmoji]);
+
+  /** Auto-expande até a 3ª linha; a partir daí o textarea rola sozinho */
+  const autoSize = React.useCallback(() => {
+    const el = textInputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, TA_MAX_HEIGHT)}px`;
+  }, []);
+
+  // Texto injetado externamente (quick replies, ações de IA) também expande
+  useEffect(() => {
+    autoSize();
+  }, [inputText, autoSize]);
 
   /** Insere o emoji na posicao atual do cursor, mantendo o foco no input */
   const insertEmoji = (emoji: string) => {
@@ -83,30 +95,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       flexDirection: 'column',
       gap: 8,
     }}>
-      {!isRecording && (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {QUICK_REPLIES.map(q => (
-            <button
-              key={q}
-              onClick={() => onInputChange(q)}
-              style={{
-                fontSize: '0.75rem',
-                padding: '4px 10px',
-                borderRadius: 99,
-                border: '1px solid var(--border)',
-                background: 'var(--hover-bg)',
-                cursor: 'pointer',
-                color: 'var(--text-secondary)',
-                transition: 'all 0.15s',
-              }}
-            >
-              {q}
-            </button>
-          ))}
-        </div>
-      )}
+      {!isRecording && <MessageQuickReplies onPick={onInputChange} />}
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
+      {/* flex-end: botões acompanham a última linha quando o textarea expande */}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', position: 'relative' }}>
         <input
           ref={fileInputRef}
           type="file"
@@ -143,14 +135,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               <Smile size={18} />
             </button>
 
-            <input
+            <textarea
               ref={textInputRef}
               className="input"
-              style={{ flex: 1, borderRadius: 'var(--radius-full)' }}
+              rows={1}
               placeholder="Digite uma mensagem ou resposta..."
               value={inputText}
               onChange={e => onInputChange(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') onSendMessage(); }}
+              onKeyDown={e => {
+                // Desktop: Enter envia, Shift+Enter quebra linha (padrão WhatsApp Web).
+                // Mobile: Enter quebra linha — o envio é pelo botão.
+                if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
+                  e.preventDefault();
+                  onSendMessage();
+                }
+              }}
               onPaste={e => {
                 const pastedFiles = Array.from(e.clipboardData.files || []);
                 if (pastedFiles.length > 0) {
@@ -158,12 +157,22 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                   onFilesAdded(pastedFiles);
                 }
               }}
+              style={{
+                flex: 1,
+                resize: 'none',
+                minHeight: 40,
+                maxHeight: TA_MAX_HEIGHT,
+                overflowY: 'auto',
+                lineHeight: 1.35,
+                padding: '9px 14px',
+                borderRadius: 'var(--radius-full)',
+              }}
             />
 
             {inputText.trim() && (
               <button
                 className="btn btn-primary"
-                style={{ borderRadius: '50%', width: 40, height: 40, padding: 0 }}
+                style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, flexShrink: 0 }}
                 onClick={() => onSendMessage()}
                 title="Enviar mensagem"
               >

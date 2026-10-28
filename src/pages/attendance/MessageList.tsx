@@ -74,6 +74,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div ref={listRef} style={{
       flex: 1,
       overflowY: 'auto',
+      // Trava o efeito elástico/scroll-chaining no chat mobile — nada
+      // "sobe" ou mostra fundo branco ao arrastar além do início/fim
+      overscrollBehavior: 'contain',
       padding: '16px 20px',
       display: 'flex',
       flexDirection: 'column',

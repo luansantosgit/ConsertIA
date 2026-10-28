@@ -29,18 +29,18 @@ export const PwaInstallBanner: React.FC = () => {
     return () => window.removeEventListener('deeperia:open-install-help', openHelp);
   }, []);
 
-  if (isStandalone || dismissed) return null;
-
   const handleInstall = async () => {
     if (canInstall) {
+      // Android/Chrome: instala direto pelo prompt nativo do browser.
+      // Se o usuário dispensar o prompt, só fecha — não abre instruções.
       const outcome = await promptInstall();
       if (outcome === 'accepted') {
         localStorage.setItem(DISMISS_KEY, '1');
         setDismissed(true);
-        return;
       }
-      // dismissed/unavailable: mostra o caminho manual
+      return;
     }
+    // iOS (e navegadores sem prompt nativo): instruções manuais
     setShowInstructions(true);
   };
 
@@ -49,27 +49,33 @@ export const PwaInstallBanner: React.FC = () => {
     setDismissed(true);
   };
 
+  // Banner some quando instalado/dispensado — o modal de instruções
+  // continua disponível pelo menu ⋮ mesmo com o banner dispensado
+  const showBanner = !isStandalone && !dismissed;
+
   return (
     <>
-      <div className="m-install-banner" role="banner">
-        <div className="m-install-icon"><Smartphone size={18} /></div>
-        <div className="m-install-text">
-          <strong>{t('Instale o DeeperIA')}</strong>
-          <span>{t('Acesse o chat direto da tela inicial do celular')}</span>
+      {showBanner && (
+        <div className="m-install-banner" role="banner">
+          <div className="m-install-icon"><Smartphone size={18} /></div>
+          <div className="m-install-text">
+            <strong>{t('Instale o DeeperIA')}</strong>
+            <span>{t('Acesse o chat direto da tela inicial do celular')}</span>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={handleInstall}>
+            <Download size={13} />{t('Instalar app')}
+          </button>
+          <button
+            className="btn btn-ghost btn-icon"
+            onClick={handleDismiss}
+            aria-label={t('Dispensar')}
+            title={t('Dispensar')}
+            style={{ width: 28, height: 28, flexShrink: 0 }}
+          >
+            <X size={14} />
+          </button>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={handleInstall}>
-          <Download size={13} />{t('Instalar app')}
-        </button>
-        <button
-          className="btn btn-ghost btn-icon"
-          onClick={handleDismiss}
-          aria-label={t('Dispensar')}
-          title={t('Dispensar')}
-          style={{ width: 28, height: 28, flexShrink: 0 }}
-        >
-          <X size={14} />
-        </button>
-      </div>
+      )}
 
       {showInstructions && (
         <div className="modal-overlay" onClick={() => setShowInstructions(false)}>

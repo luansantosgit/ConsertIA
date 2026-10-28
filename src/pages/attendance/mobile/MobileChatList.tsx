@@ -13,9 +13,16 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
   const { user, logout } = useAuthStore();
   const { mode, toggleMode } = useModeStore();
   const { t } = useTranslation();
-  const { canInstall, isStandalone, platform, promptInstall } = usePwaInstall();
+  const { canInstall, isStandalone, promptInstall } = usePwaInstall();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [favicon, setFavicon] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Ícone do DeeperIA no header = mesmo favicon dinâmico aplicado na aba
+  useEffect(() => {
+    const href = (document.getElementById('dynamic-favicon') as HTMLLinkElement | null)?.href;
+    if (href) setFavicon(href);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -39,7 +46,14 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
   return (
     <div className="m-list">
       <header className="m-list-header">
-        <h1 className="m-list-title">{user?.tenantName || t('Atendimento')}</h1>
+        <div className="m-list-brand">
+          {favicon ? (
+            <img src={favicon} alt="" className="m-list-logo" />
+          ) : (
+            <span className="m-list-logo" aria-hidden />
+          )}
+          <h1 className="m-list-title">{user?.tenantName || t('Atendimento')}</h1>
+        </div>
         <div ref={menuRef} style={{ position: 'relative' }}>
           <button
             className="btn btn-ghost btn-icon"
@@ -57,12 +71,10 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
                   style={menuItemStyle}
                   onClick={() => {
                     setMenuOpen(false);
-                    // iOS não tem prompt nativo: guia pela instalação manual
-                    if (!canInstall && platform === 'ios') {
-                      window.dispatchEvent(new CustomEvent('deeperia:open-install-help'));
-                      return;
-                    }
-                    void promptInstall();
+                    // Android com prompt capturado: instala direto.
+                    // Sem prompt (iOS): abre as instruções do banner.
+                    if (canInstall) void promptInstall();
+                    else window.dispatchEvent(new CustomEvent('deeperia:open-install-help'));
                   }}
                 >
                   <Download size={16} />{t('Instalar app')}

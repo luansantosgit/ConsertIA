@@ -1863,6 +1863,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   width: 100%;
   position: relative;
   overflow: hidden;
+  overscroll-behavior: contain;
   background: var(--card-bg);
 }
 
@@ -1874,7 +1875,8 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  overflow: hidden;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .m-credits {
@@ -1955,7 +1957,27 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
   border-bottom: 1px solid var(--border);
 }
 
+/* Marca no header: ícone do DeeperIA + nome da empresa */
+.m-list-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+}
+
+.m-list-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--primary-light);
+}
+
 .m-list-title {
+  flex: 1;
+  min-width: 0;
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -2090,6 +2112,12 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 
 /* ── Input do chat: teclado não cobre o campo ── */
 @media (max-width: 768px) {
+  /* Mata o rubber-band/pull-to-refresh do documento: header e input
+     ficam travados no lugar ao arrastar o chat no mobile */
+  html, body {
+    overscroll-behavior: none;
+  }
+
   .m-chat-pane .page,
   .m-attendance .input {
     font-size: 16px; /* evita zoom automático do iOS ao focar */

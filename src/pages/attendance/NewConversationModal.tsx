@@ -85,11 +85,15 @@ export const NewConversationModal: React.FC<{ m: AttendanceModalsState }> = ({ m
               <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
               <input
                 autoFocus
-                inputMode="tel"
-                placeholder="5511999999999"
+                placeholder="Ex: João ou 5511999999999"
                 value={term}
                 onChange={e => setTerm(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !results.length) startWithPhone(); }}
+                onKeyDown={e => {
+                  if (e.key !== 'Enter') return;
+                  // Enter: prioriza o contato listado; sem resultados, inicia pelo número
+                  if (results.length > 0) startWithCustomer(results[0]);
+                  else startWithPhone();
+                }}
                 style={{ fontSize: '0.875rem' }}
               />
             </div>
