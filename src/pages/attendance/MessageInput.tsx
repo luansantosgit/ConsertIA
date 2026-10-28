@@ -15,8 +15,8 @@ interface MessageInputProps {
   onFilesAdded: (files: File[]) => void;
 }
 
-/** Altura máxima do textarea: ~3 linhas — depois rola internamente (padrão WhatsApp) */
-const TA_MAX_HEIGHT = 92;
+/** Nº de linhas visíveis antes de o textarea rolar internamente (padrão WhatsApp) */
+const MAX_LINES = 3;
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   inputText,
@@ -46,18 +46,37 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [showEmoji]);
 
-  /** Auto-expande até a 3ª linha; a partir daí o textarea rola sozinho */
+  /**
+   * Auto-expande até a 3ª linha; a partir daí o textarea rola sozinho.
+   * A barra de rolagem só aparece quando o conteúdo passa de 3 linhas —
+   * vazio (ou com 1–3 linhas) o campo fica limpo, sem scrollbar.
+   */
   const autoSize = React.useCallback(() => {
     const el = textInputRef.current;
     if (!el) return;
+
+    const cs = window.getComputedStyle(el);
+    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const padding = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const maxHeight = Math.ceil(lineHeight * MAX_LINES + padding);
+
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, TA_MAX_HEIGHT)}px`;
+    const needed = el.scrollHeight;
+    el.style.height = `${Math.min(needed, maxHeight)}px`;
+    // Só habilita o scroll interno quando realmente passa de 3 linhas
+    el.style.overflowY = needed > maxHeight + 1 ? 'auto' : 'hidden';
   }, []);
 
   // Texto injetado externamente (quick replies, ações de IA) também expande
   useEffect(() => {
     autoSize();
   }, [inputText, autoSize]);
+
+  // Rotação / teclado / troca de breakpoint mudam a fonte e as linhas
+  useEffect(() => {
+    window.addEventListener('resize', autoSize);
+    return () => window.removeEventListener('resize', autoSize);
+  }, [autoSize]);
 
   /** Insere o emoji na posicao atual do cursor, mantendo o foco no input */
   const insertEmoji = (emoji: string) => {
@@ -137,7 +156,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
             <textarea
               ref={textInputRef}
-              className="input"
+              className="input chat-textarea"
               rows={1}
               placeholder="Digite uma mensagem ou resposta..."
               value={inputText}
@@ -161,8 +180,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 flex: 1,
                 resize: 'none',
                 minHeight: 40,
-                maxHeight: TA_MAX_HEIGHT,
-                overflowY: 'auto',
+                overflowY: 'hidden',
                 lineHeight: 1.35,
                 padding: '9px 14px',
                 borderRadius: 'var(--radius-full)',

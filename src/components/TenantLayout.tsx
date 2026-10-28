@@ -7,6 +7,7 @@ import { AiQuotaAlert } from './AiQuotaAlert';
 import { useSubscriptionAlert } from '@/stores/subscription.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useMobileChatViewport } from '@/hooks/useMobileChatViewport';
 import { canAccess } from '@/lib/permissions';
 
 // Rotas permitidas no modo mobile (chat-only): o chat em si e a página
@@ -22,6 +23,9 @@ export const TenantLayout: React.FC = () => {
   // Mobile = só chat, MAS apenas para quem tem permissão de atendimento;
   // sem permissão, mantém a navegação padrão (desktop responsivo).
   const mobileChatOnly = isMobile && canAccess(user, 'atendimento');
+  // Teclado virtual: mantém o shell colado na área visível (header fixo,
+  // input subindo acima do teclado e voltando ao fechar)
+  useMobileChatViewport(mobileChatOnly);
   const showFloatingFooter = !location.pathname.startsWith('/atendimento');
 
   // Carência expirada: o sistema só abre na página de Assinatura.
@@ -41,7 +45,7 @@ export const TenantLayout: React.FC = () => {
       return <Navigate to="/atendimento" replace />;
     }
     return (
-      <div className="app-layout">
+      <div className="app-layout m-app-shell">
         <main className="m-main">
           {subscriptionBlocked ? <Navigate to="/assinatura" replace /> : <Outlet />}
         </main>
