@@ -101,6 +101,14 @@ export async function capturePhoto(video: HTMLVideoElement): Promise<File> {
   return new File([blob], cameraFileName('photo', 'image/jpeg'), { type: 'image/jpeg' });
 }
 
+/**
+ * Fallback quando o remux do vídeo falha: envia como arquivo, já que o
+ * MP4 fragmentado do MediaRecorder é recusado pelo WhatsApp.
+ */
+export function asDocumentFile(file: File): File {
+  return new File([file], file.name, { type: 'application/mp4', lastModified: file.lastModified });
+}
+
 export function fileFromRecording(blob: Blob, mime: string): File {
   // Remove os codecs do MIME: o media-sender compara com video/mp4 exato
   // para decidir entre vídeo e documento.

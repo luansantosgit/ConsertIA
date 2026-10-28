@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  asDocumentFile,
   cameraFileName,
   extensionForMime,
   fileFromRecording,
@@ -60,5 +61,12 @@ describe('camera-utils', () => {
     );
     expect(file.type).toBe('video/mp4');
     expect(file.name.endsWith('.mp4')).toBe(true);
+  });
+
+  it('converte o vídeo em documento quando o remux falha', () => {
+    const file = new File(['video'], 'video.mp4', { type: 'video/mp4' });
+    const doc = asDocumentFile(file);
+    expect(doc.type).toBe('application/mp4');
+    expect(doc.name).toBe('video.mp4');
   });
 });

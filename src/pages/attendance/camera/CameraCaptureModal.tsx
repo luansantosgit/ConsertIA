@@ -2,22 +2,18 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCameraStream } from './useCameraStream';
 import { useMediaRecorder } from './useMediaRecorder';
-import { capturePhoto, fileFromRecording, type CameraMode } from './camera-utils';
+import { useCapturedMedia } from './useCapturedMedia';
+import { type CameraMode } from './camera-utils';
 import { CameraCapturedPreview } from './CameraCapturedPreview';
 import { CameraErrorState } from './CameraErrorState';
 import { CameraLiveOverlay } from './CameraLiveOverlay';
+import { CameraProcessing } from './CameraProcessing';
 import { CameraVideo } from './CameraVideo';
 
 interface CameraCaptureModalProps {
   open: boolean;
   onClose: () => void;
   onCapture: (file: File) => void;
-}
-
-interface CapturedMedia {
-  file: File;
-  url: string;
-  kind: CameraMode;
 }
 
 /** Câmera em tela cheia com alternância foto/vídeo e prévia antes de enviar. */
@@ -28,24 +24,15 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
-  const capturedUrlRef = useRef<string | null>(null);
   const capturingRef = useRef(false);
   const closeRef = useRef<() => void>(() => {});
   const [mode, setMode] = useState<CameraMode>('photo');
-  const [captured, setCaptured] = useState<CapturedMedia | null>(null);
   const [flash, setFlash] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
   const [videoReady, setVideoReady] = useState(false);
   const camera = useCameraStream({ active: open });
+  const media = useCapturedMedia();
   const { stop: stopCamera, retry: retryCamera } = camera;
-
-  const handleVideoFinish = useCallback((blob: Blob, mime: string) => {
-    const file = fileFromRecording(blob, mime);
-    if (capturedUrlRef.current) URL.revokeObjectURL(capturedUrlRef.current);
-    const url = URL.createObjectURL(file);
-    capturedUrlRef.current = url;
-    setCaptured({ file, url, kind: 'video' });
-  }, []);
+  const { clear: clearMedia, takePhoto, takeVideo } = media;
 
   const {
     recording,
@@ -55,22 +42,14 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     start: startRecording,
     stop: stopRecording,
     cancel: cancelRecording,
-  } = useMediaRecorder({ onFinish: handleVideoFinish });
-
-  const clearCaptured = useCallback(() => {
-    if (capturedUrlRef.current) {
-      URL.revokeObjectURL(capturedUrlRef.current);
-      capturedUrlRef.current = null;
-    }
-    setCaptured(null);
-  }, []);
+  } = useMediaRecorder({ onFinish: takeVideo });
 
   const handleClose = useCallback(() => {
     cancelRecording();
     stopCamera();
-    clearCaptured();
+    clearMedia();
     onClose();
-  }, [cancelRecording, stopCamera, clearCaptured, onClose]);
+  }, [cancelRecording, stopCamera, clearMedia, onClose]);
 
   useEffect(() => {
     closeRef.current = handleClose;
@@ -91,18 +70,13 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     if (open) shellRef.current?.focus();
   }, [open]);
 
-  // Reset ao fechar + libera a URL da prévia ao desmontar.
+  // Reset ao fechar.
   useEffect(() => {
     if (open) return;
-    clearCaptured();
+    clearMedia();
     setMode('photo');
-    setPhotoError(null);
     setFlash(false);
-  }, [open, clearCaptured]);
-
-  useEffect(() => () => {
-    if (capturedUrlRef.current) URL.revokeObjectURL(capturedUrlRef.current);
-  }, []);
+  }, [open, clearMedia]);
 
   // Trava o scroll do fundo e fecha com Esc.
   useEffect(() => {
@@ -119,29 +93,23 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     };
   }, [open]);
 
-  const takePhoto = useCallback(async () => {
+  const handlePhoto = useCallback(async () => {
     const video = videoRef.current;
     if (!video || capturingRef.current) return;
     capturingRef.current = true;
     try {
-      const file = await capturePhoto(video);
-      if (capturedUrlRef.current) URL.revokeObjectURL(capturedUrlRef.current);
-      const url = URL.createObjectURL(file);
-      capturedUrlRef.current = url;
-      setCaptured({ file, url, kind: 'photo' });
-      setPhotoError(null);
-      setFlash(true);
-      window.setTimeout(() => setFlash(false), 180);
-    } catch (err) {
-      setPhotoError(err instanceof Error ? err.message : 'Não foi possível capturar a foto.');
+      if (await takePhoto(video)) {
+        setFlash(true);
+        window.setTimeout(() => setFlash(false), 180);
+      }
     } finally {
       capturingRef.current = false;
     }
-  }, []);
+  }, [takePhoto]);
 
   const handleShutter = useCallback(() => {
     if (mode === 'photo') {
-      void takePhoto();
+      void handlePhoto();
       return;
     }
     if (recording) {
@@ -149,25 +117,24 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       return;
     }
     if (camera.stream) startRecording(camera.stream);
-  }, [mode, recording, stopRecording, camera.stream, startRecording, takePhoto]);
+  }, [mode, recording, stopRecording, camera.stream, startRecording, handlePhoto]);
 
   const handleModeChange = useCallback((next: CameraMode) => {
     if (recording) return;
     setMode(next);
-    setPhotoError(null);
-  }, [recording]);
+    media.setError(null);
+  }, [recording, media]);
 
   const handleRetake = useCallback(() => {
-    clearCaptured();
-    setPhotoError(null);
+    clearMedia();
     if (camera.error) retryCamera();
-  }, [clearCaptured, camera.error, retryCamera]);
+  }, [clearMedia, camera.error, retryCamera]);
 
   const handleSend = useCallback(() => {
-    if (!captured) return;
-    onCapture(captured.file);
+    if (!media.captured) return;
+    onCapture(media.captured.file);
     handleClose();
-  }, [captured, onCapture, handleClose]);
+  }, [media.captured, onCapture, handleClose]);
 
   if (!open) return null;
 
@@ -180,10 +147,12 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
           onLoadedMetadata={() => setVideoReady(true)}
         />
 
-        {captured ? (
+        {media.processing ? (
+          <CameraProcessing message="Processando vídeo..." />
+        ) : media.captured ? (
           <CameraCapturedPreview
-            url={captured.url}
-            kind={captured.kind}
+            url={media.captured.url}
+            kind={media.captured.kind}
             onRetake={handleRetake}
             onSend={handleSend}
           />
@@ -208,7 +177,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               onClose: handleClose,
             }}
             loading={camera.loading}
-            photoError={photoError}
+            photoError={media.error}
             recorderError={recorderError}
           />
         )}
