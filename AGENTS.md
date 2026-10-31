@@ -63,6 +63,7 @@ supabase functions deploy uazapi-webhook --no-verify-jwt
 - `ligacoes-auth`: `supabase functions deploy ligacoes-auth`
 - `process-scheduled-messages`: `supabase functions deploy process-scheduled-messages --no-verify-jwt`
 - `superadmin-reset-password`: `supabase functions deploy superadmin-reset-password` — superadmin regera senha do admin de um tenant (service_role; usada no modal "Empresas")
+- `wizard-finalize`: `supabase functions deploy wizard-finalize` — superadmin finaliza wizard manual para empresa não completada (creates usuário, marca como paid, ativa tenant)
 - `public-signup`: wizard /comece-agora — inclui action `support` (pública) que devolve `platform_settings.support_whatsapp` para o balão de suporte
 
 ### How to Add a New Repository
