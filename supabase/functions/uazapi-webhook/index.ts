@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendPush } from "../_shared/notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -384,6 +385,34 @@ serve(async (req) => {
         });
 
         if (bumpError) console.error(`[webhook] Erro ao atualizar conversa:`, bumpError.message);
+
+        // Push notification para os dispositivos da tenant (app fechado):
+        // só mensagens reais de lead (não histórico, não fromMe).
+        // O canal só conhece o contrato de notificação (_shared/notify.ts) —
+        // VAPID, criptografia e subscriptions vivem no serviço de push.
+        if (!isHistoryEvent && !isFromMe) {
+          const preview = content
+            ? content.substring(0, 100)
+            : mediaType === "image" ? "📷 Foto"
+            : mediaType === "video" ? "🎥 Vídeo"
+            : mediaType === "audio" ? "🎙️ Áudio"
+            : mediaType === "document" ? "📄 Documento"
+            : "Nova mensagem";
+          const contactTitle = conversation.contact_name || senderName || phone;
+          const pushTrigger = sendPush({
+            tenantId: conversation.tenant_id,
+            title: contactTitle,
+            body: preview,
+            kind: "message",
+            conversationId: conversation.id,
+            url: "/atendimento",
+          });
+          if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+            EdgeRuntime.waitUntil(pushTrigger);
+          } else {
+            void pushTrigger;
+          }
+        }
 
         // Dispara o agente de IA com debounce por conversa: mensagens em rajada
         // (ex.: "segunda mesmo" + "Kkk" com 1s de diferença) geram UMA única

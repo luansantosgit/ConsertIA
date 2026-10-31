@@ -616,3 +616,12 @@ export interface WaCallsCanCallResult {
 // EXTENSOES PARA CONVERSATION E MESSAGE
 // (merged nas interfaces principais acima)
 // ============================================================
+
+export interface PushSubscription {
+  id: string;
+  tenant_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+}

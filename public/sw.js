@@ -39,3 +39,67 @@ self.addEventListener('fetch', event => {
     }),
   );
 });
+
+/* ── PUSH NOTIFICATIONS ──
+   Recebe um push do serviço de notificações (canal-agnóstico) e exibe
+   uma notificação com preview da mensagem e ícone da marca. Ao clicar,
+   abre a rota destino (data.url) e limpa o badge.
+
+   Contrato do payload (send-push-notification):
+   { title, body, kind?, conversationId?, url?, data? }
+*/
+self.addEventListener('push', event => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+
+  const title = data.title || 'DeeperIA';
+  const options = {
+    body: data.body || 'Nova mensagem',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    data: {
+      kind: data.kind || 'custom',
+      conversationId: data.conversationId,
+      url: data.url || '/atendimento',
+      extra: data.data || {},
+    },
+    actions: [
+      { action: 'abrir', title: 'Abrir' },
+    ],
+    requireInteraction: false,
+    silent: false,
+    tag: data.conversationId || data.kind || 'default',
+    renotify: false,
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+
+  const { url } = event.notification.data || {};
+  const target = url || '/atendimento';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      // Ja existe uma aba aberta? Foca nela.
+      for (const client of clients) {
+        if (client.url.includes(new URL(target, self.location.origin).pathname)) {
+          return client.focus();
+        }
+      }
+      // Senao, abre uma nova aba.
+      return self.clients.openWindow(target);
+    }).then(() => {
+      // Limpa o badge do SO ao abrir o app (o app recalcula ao montar)
+      if ('clearAppBadge' in self.navigator) {
+        void self.navigator.clearAppBadge();
+      }
+    }),
+  );
+});

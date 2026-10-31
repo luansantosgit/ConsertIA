@@ -1,7 +1,7 @@
 {
   "name": "tech-assistant-crm",
   "private": true,
-  "version": "1.0.102",
+  "version": "1.0.103",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -37,6 +37,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^6.4.3",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.15"
   },

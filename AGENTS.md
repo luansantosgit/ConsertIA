@@ -167,6 +167,27 @@ Toda interface nova deve considerar os estados necessários quando aplicável:
 - Skeletons: animação de pulso contínuo
 - Transições de página: fade suave (150-200ms)
 
+### 3.2 Push Notifications (Web Push — canal-agnóstico)
+
+**Arquitetura.** O serviço de push é INDEPENDENTE de canal — WhatsApp, Agenda, OS, Ligações, Asaas etc. consomem o MESMO contrato sem conhecer VAPID, criptografia ou subscriptions:
+
+```
+[Qualquer canal] --sendPush(PushPayload)--> supabase/functions/_shared/notify.ts
+     --> edge function send-push-notification (service_role only)
+     --> _shared/push.ts (RFC 8291 aes128gcm + JWT VAPID ES256, Web Crypto nativo do Deno)
+     --> cada subscription em push_subscriptions
+     --> public/sw.js (handlers push/notificationclick)
+```
+
+- **Contrato** (`supabase/functions/_shared/notify.ts`): `sendPush({ tenantId, title, body, kind?, conversationId?, url?, data? })` fire-and-forget. `kind` ∈ `message | appointment | os | billing | custom`.
+- **Novo canal só precisa importar `sendPush` e chamar com o payload** — nada de fetch manual, secrets ou crypto.
+- **Chaves VAPID**: públicas via `.env` (`VITE_VAPID_PUBLIC_KEY`, injetada no bundle pelo `vite.config.ts/js` via `loadEnv`) privadas server-side nos secrets do Supabase (`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Para gerar: `npx web-push generate-vapid-keys` (rotação = regenerar + gravar no `.env` + `supabase secrets set`).
+- **Deploy**: `send-push-notification` e `save-push-subscription` com deploy normal; `uazapi-webhook` SEMPRE com `--no-verify-jwt` (regra acima).
+- **Tabela**: `push_subscriptions` (tabela `endpoint` unique, RLS por tenant) — migration `20261030120000_create_push_subscriptions.sql`.
+- **Badge do ícone do app**: `navigator.setAppBadge(n)`/`clearAppBadge()` via `src/lib/push.ts` + `usePushBadge` (montado no `TenantLayout`).
+- **Pedir permissão**: `PushPermissionGate` — modal único por instalação (localStorage), 2,5s após load, só quando `permission === 'default'`.
+- **Teste ponta a ponta**: PWA instalado → login → permitir notificações → enviar mensagem de lead → deve aparecer preview na barra + contador no ícone. Sem device, smoke interno: POST em `send-push-notification` com Bearer service_role = `{"ok":true,"sent":N}`.
+
 ### 3. Code Quality and Observability
 
 #### Observability

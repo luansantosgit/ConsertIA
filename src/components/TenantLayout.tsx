@@ -9,6 +9,8 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMobileChatViewport } from '@/hooks/useMobileChatViewport';
 import { canAccess } from '@/lib/permissions';
+import { usePushBadge } from '@/hooks/usePushBadge';
+import { PushPermissionGate } from './PushPermissionGate';
 
 // Rotas permitidas no modo mobile (chat-only): o chat em si e a página
 // de pagamento da assinatura (bloqueio de carência continua funcionando).
@@ -39,6 +41,11 @@ export const TenantLayout: React.FC = () => {
   }, [check]);
   const subscriptionBlocked = checked && blocked && location.pathname !== '/assinatura';
 
+  // Badge do ícone do app (contador de conversas nao lidas, estilo WhatsApp)
+  const { refresh: refreshBadge } = usePushBadge();
+  // Atualiza o badge ao navegar (marcar conversa como lida zerou o count)
+  React.useEffect(() => { void refreshBadge(); }, [location.pathname, refreshBadge]);
+
   /* ── Modo mobile (Issue #85): WhatsApp-like, chat apenas ── */
   if (mobileChatOnly) {
     if (!MOBILE_ALLOWED.includes(location.pathname)) {
@@ -54,6 +61,7 @@ export const TenantLayout: React.FC = () => {
         )}
         <SubscriptionAlert />
         <AiQuotaAlert />
+        <PushPermissionGate />
       </div>
     );
   }
@@ -102,6 +110,7 @@ export const TenantLayout: React.FC = () => {
         )}
         <SubscriptionAlert />
         <AiQuotaAlert />
+        <PushPermissionGate />
       </div>
     </div>
   );
