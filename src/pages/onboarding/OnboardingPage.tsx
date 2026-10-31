@@ -213,13 +213,8 @@ export const OnboardingPage: React.FC = () => {
 };
 
 const OnboardingShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="theme-light" style={{
-    minHeight: '100vh',
-    background: 'linear-gradient(160deg, #eef2ff 0%, #f8fafc 45%, #eef2ff 100%)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 24,
-  }}>
-    <div className="card" style={{ maxWidth: 480, width: '100%', padding: 32, borderRadius: 20, boxShadow: '0 24px 64px rgba(79, 70, 229, 0.10)' }}>
+  <div className="theme-light onb-shell">
+    <div className="card onb-card">
       {children}
     </div>
   </div>
