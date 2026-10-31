@@ -15,7 +15,27 @@ import { isMobilePhone, isStandalonePwa } from '@/lib/pwa';
 
 const SW_PATH = '/sw.js';
 const PUSH_SUBSCRIPTION_FN = '/functions/v1/save-push-subscription';
+const PUSH_CONFIG_FN = '/functions/v1/push-config';
 export type PushPermissionState = 'default' | 'granted' | 'denied';
+
+/** Cache da chave publica VAPID buscada em runtime (evita round-trips repetidos). */
+let cachedVapidKey: string | null = null;
+
+/**
+ * Resolve a chave publica VAPID: prior de build (VAPID_PUBLIC_KEY injetada
+ * pelo vite define) e cai para runtime via edge function push-config —
+ * o bundle de producao pode rodar sem env de build (ex.: Vercel).
+ */
+async function resolveVapidKey(): Promise<string> {
+  if (VAPID_PUBLIC_KEY) return VAPID_PUBLIC_KEY;
+  if (cachedVapidKey) return cachedVapidKey;
+  const { data, error } = await supabase.functions.invoke(PUSH_CONFIG_FN);
+  if (error || !data?.vapidPublicKey) {
+    throw new Error('VAPID public key nao configurada');
+  }
+  cachedVapidKey = String(data.vapidPublicKey);
+  return cachedVapidKey;
+}
 
 /** localStorage que registra que o usuario ATIVOU notificacoes (toggle Sobre). */
 export const PUSH_ENABLED_KEY = 'deeperia:push-enabled';
@@ -116,9 +136,10 @@ export async function subscribePush(): Promise<PushSubscribeResult> {
 
   try {
     const registration = await navigator.serviceWorker.register(SW_PATH);
+    const vapidKey = await resolveVapidKey();
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
 
     // Salva a subscription via edge function (o tenant vem do JWT no servidor)

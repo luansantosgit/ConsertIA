@@ -95,7 +95,7 @@ export const StepCompanyData: React.FC<{
             <label className="form-label">
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <Bot size={13} color="var(--primary-text)" />
-                Endereço <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(a IA informa aos clientes)</span>
+                Endereço
               </span>
             </label>
             <input className="input" style={inputStyle} value={form.address} onChange={e => set('address')(e.target.value)} placeholder="Rua, número, bairro, cidade" />
