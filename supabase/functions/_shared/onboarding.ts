@@ -92,6 +92,7 @@ export async function finalizeOnboarding(
     .from("tenants")
     .update({
       active: true,
+      admin_email: session.email,
       subscription_due_date: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
       subscription_extra_days: 0,
     })

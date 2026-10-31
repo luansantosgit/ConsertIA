@@ -3,7 +3,7 @@ import { useThemeStore } from '@/stores/theme.store';
 import {
   Plus, Search, Edit2, Trash2,
   Users, CreditCard, Eye, Loader2,
-  X, CheckCircle2, Copy
+  X, CheckCircle2, Copy, KeyRound
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -67,8 +67,10 @@ export const SuperAdminCompanies: React.FC = () => {
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<{ email: string; password: string; company: string } | null>(null);
+  const [credentials, setCredentials] = useState<{ email: string; password: string; company: string; kind: 'created' | 'reset' } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -195,7 +197,7 @@ export const SuperAdminCompanies: React.FC = () => {
                   : `Erro ao criar empresa: ${code}`
           );
         }
-        setCredentials({ email: data.email, password: data.password, company: form.name || '' });
+        setCredentials({ email: data.email, password: data.password, company: form.name || '', kind: 'created' });
       }
       setShowModal(false);
       await fetchData();
@@ -209,6 +211,30 @@ export const SuperAdminCompanies: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     setConfirmDelete({ isOpen: true, id });
+  };
+
+  /** Regera a senha randomica do admin da empresa via edge (superadmin). */
+  const handleResetPassword = async () => {
+    if (resetting || !editingCompany) return;
+    setResetting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('superadmin-reset-password', {
+        body: { tenant_id: editingCompany.id },
+      });
+      if (error || !data?.password) {
+        const code = String(data?.error ?? 'request_failed');
+        throw new Error(code === 'user_not_found' ? 'Empresa sem usuário admin cadastrado.' : `Falha ao regerar senha: ${code}`);
+      }
+      setCredentials({ email: data.email, password: data.password, company: editingCompany.name || '', kind: 'reset' });
+      setShowModal(false);
+      setConfirmReset(false);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      setSaveError((error as Error).message);
+      setConfirmReset(false);
+    } finally {
+      setResetting(false);
+    }
   };
 
   const confirmDeleteAction = async () => {
@@ -465,6 +491,15 @@ export const SuperAdminCompanies: React.FC = () => {
                   {saveError}
                 </p>
               )}
+              {editingCompany && (
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => { setSaveError(null); setConfirmReset(true); }}
+                  title="Gera uma nova senha aleatória para o administrador desta empresa"
+                >
+                  <KeyRound size={15} /> Regerar senha
+                </button>
+              )}
               <button className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
               <button
                 className="btn"
@@ -484,7 +519,9 @@ export const SuperAdminCompanies: React.FC = () => {
         <div className="modal-overlay" onClick={() => { setCredentials(null); setCopied(false); }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
             <div className="modal-header">
-              <h3 className="modal-title">Empresa criada! 🎉</h3>
+              <h3 className="modal-title">
+                {credentials.kind === 'reset' ? 'Senha regerada! 🔑' : 'Empresa criada! 🎉'}
+              </h3>
               <button className="btn btn-ghost btn-icon" onClick={() => { setCredentials(null); setCopied(false); }}>
                 <X size={16} />
               </button>
@@ -493,12 +530,16 @@ export const SuperAdminCompanies: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--success-bg)', border: '1px solid var(--success)', padding: '12px 14px', borderRadius: 'var(--radius-md)' }}>
                 <CheckCircle2 size={18} color="var(--success)" />
                 <p style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--success-text)', margin: 0 }}>
-                  {credentials.company} foi criada e salva com sucesso.
+                  {credentials.kind === 'reset'
+                    ? `Nova senha gerada para o administrador de ${credentials.company}.`
+                    : `${credentials.company} foi criada e salva com sucesso.`}
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Compartilhe as informações abaixo com o administrador da empresa para o primeiro acesso:
+                  {credentials.kind === 'reset'
+                    ? 'A senha anterior deixa de funcionar. Compartilhe os novos dados de acesso:'
+                    : 'Compartilhe as informações abaixo com o administrador da empresa para o primeiro acesso:'}
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -509,7 +550,9 @@ export const SuperAdminCompanies: React.FC = () => {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ flex: 1, padding: '10px 12px', background: 'var(--hover-bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                      <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>Senha (gerada automaticamente)</p>
+                      <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: 0 }}>
+                        {credentials.kind === 'reset' ? 'Nova senha' : 'Senha (gerada automaticamente)'}
+                      </p>
                       <p style={{ fontSize: '0.875rem', fontFamily: 'monospace', fontWeight: 600, margin: 0, color: 'var(--primary-text)' }}>{credentials.password}</p>
                     </div>
                   </div>
@@ -545,6 +588,17 @@ export const SuperAdminCompanies: React.FC = () => {
         title="Remover empresa"
         message="Tem certeza que deseja remover esta empresa? Todos os dados associados serão perdidos. Esta ação não pode ser desfeita."
         variant="danger"
+      />
+
+      <ConfirmModal
+        isOpen={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        onConfirm={handleResetPassword}
+        loading={resetting}
+        title="Regerar senha"
+        message={`Gera uma nova senha aleatória para o administrador de ${editingCompany?.name || 'esta empresa'}. A senha atual deixa de funcionar imediatamente.`}
+        confirmLabel="Regerar senha"
+        variant="warning"
       />
     </div>
   );

@@ -166,6 +166,17 @@ serve(async (req) => {
       return json({ plans: data ?? [], enabled_methods: wizardMethods });
     }
 
+    // ── WhatsApp de suporte (público) ── alimenta o balão do wizard;
+    // configurado pelo superadmin em platform_settings.support_whatsapp
+    if (action === "support") {
+      const { data } = await admin
+        .from("platform_settings")
+        .select("support_whatsapp")
+        .limit(1)
+        .maybeSingle();
+      return json({ support_whatsapp: data?.support_whatsapp ?? "" });
+    }
+
     // ── Retomada do wizard ──
     if (action === "status") {
       const session = await getSession(String(body.token ?? ""));
@@ -244,6 +255,7 @@ serve(async (req) => {
           name: companyName,
           slug: `${slugify(companyName) || "empresa"}-${crypto.randomUUID().slice(0, 4)}`,
           plan_id: planId || null,
+          admin_email: email,
           active: false,
           subscription_due_date: new Date().toISOString().slice(0, 10),
         })

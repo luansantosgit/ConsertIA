@@ -8,6 +8,7 @@ import { StepPlanChoice } from './StepPlanChoice';
 import { StepWhatsapp } from './StepWhatsapp';
 import { StepPayment } from './StepPayment';
 import { StepSuccess } from './StepSuccess';
+import { SupportBubble } from './SupportBubble';
 
 const TOKEN_KEY = 'deeperia-onboarding-token';
 type Step = 'welcome' | 'data' | 'plan' | 'whatsapp' | 'payment' | 'success';
@@ -130,7 +131,8 @@ export const OnboardingPage: React.FC = () => {
   }
 
   return (
-    <OnboardingShell>
+    <>
+      <OnboardingShell>
       {showProgress && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
           {['Dados', 'Plano', 'WhatsApp', 'Pagamento'].map((label, i) => {
@@ -208,7 +210,10 @@ export const OnboardingPage: React.FC = () => {
       />
 
       <HistorySyncOverlay state={syncState} progress={syncProgress} message={syncMessage} />
-    </OnboardingShell>
+      </OnboardingShell>
+      {/* Suporte WhatsApp: fixo em tela, cobre todos os estágios (step atual) */}
+      <SupportBubble step={step} />
+    </>
   );
 };
 
