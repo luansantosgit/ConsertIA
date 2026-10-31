@@ -1398,10 +1398,149 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 
 .about-version { margin-top: 4px; }
 
+/* Linha de configuracao (toggle de notificacoes) do modal Sobre */
+.about-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.about-row-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.about-row-label {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+}
+
+.about-row-hint {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.about-row-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.about-switch {
+  flex: none;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+}
+
+.about-switch.on { background: var(--primary); }
+
+.about-switch:disabled { opacity: 0.55; cursor: wait; }
+
+.about-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.about-switch.on .about-switch-knob { transform: translateX(18px); }
+
+.about-switch:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── OpenAppGate: PWA instalado e usuario abriu pelo browser ── *
+   Reutiliza .modal-overlay/.modal (fade/slideUp + tema dark via --card-bg) */
+.openapp-sheet {
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 28px 22px;
+}
+
+.openapp-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px var(--primary-ring);
+}
+
+.openapp-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.openapp-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.openapp-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+}
+
+.openapp-continue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  padding: 4px;
+}
+
+.openapp-continue:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .about-footer {
   justify-content: center;
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+/* Duas colunas fixas no wizard de cadastro (inputs lado a lado) */
+.wizard-row { grid-template-columns: 1fr 1fr; }
+
+@media (max-width: 340px) {
+  .wizard-row { grid-template-columns: 1fr; }
 }
 
 /* ============================================================

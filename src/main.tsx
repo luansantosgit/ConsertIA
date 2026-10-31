@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './styles.css';
 import './i18n/config';
 import { initSentry } from './lib/sentry';
-import { initPwaCapture } from './lib/pwa';
+import { initPwaCapture, markPwaInstalled } from './lib/pwa';
 import App from './App';
 
 initSentry();
@@ -11,6 +11,9 @@ initSentry();
 // PWA (Issue #85): captura o beforeinstallprompt ANTES de qualquer componente
 // montar (o evento dispara nos primeiros segundos de vida da página).
 initPwaCapture();
+// Marca "app instalado" quando rodando standalone (o browser usa para
+// redirecionar o usuário de volta ao app em vez de abrir no navegador).
+markPwaInstalled();
 
 // Registra o service worker em produção — habilita "Instalar app" no mobile
 // e cache de assets com hash.

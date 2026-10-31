@@ -66,7 +66,7 @@ export const StepCompanyData: React.FC<{
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="form-row">
+        <div className="form-row wizard-row">
           <div className="form-group">
             <label className="form-label">Seu nome</label>
             <input className="input" style={inputStyle} value={form.lead_name} onChange={e => set('lead_name')(e.target.value)} placeholder="Ex: João Silva" />
@@ -76,7 +76,7 @@ export const StepCompanyData: React.FC<{
             <input className="input" style={inputStyle} value={form.company_name} onChange={e => set('company_name')(e.target.value)} placeholder="Ex: TechAssist Reparos" />
           </div>
         </div>
-        <div className="form-row">
+        <div className="form-row wizard-row">
           <div className="form-group">
             <label className="form-label">E-mail (será seu login)</label>
             <input className="input" style={inputStyle} type="email" value={form.email} onChange={e => set('email')(e.target.value)} placeholder="voce@empresa.com" />
@@ -86,7 +86,7 @@ export const StepCompanyData: React.FC<{
             <input className="input" style={inputStyle} value={form.whatsapp} onChange={e => set('whatsapp')(maskPhone(e.target.value))} placeholder="(11) 99999-0000" />
           </div>
         </div>
-        <div className="form-row">
+        <div className="form-row wizard-row">
           <div className="form-group">
             <label className="form-label">CPF ou CNPJ <span style={{ color: 'var(--text-muted)' }}>(para a fatura)</span></label>
             <input className="input" style={inputStyle} value={form.cpf_cnpj} onChange={e => set('cpf_cnpj')(maskCpfCnpj(e.target.value))} placeholder="000.000.000-00" />

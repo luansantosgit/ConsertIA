@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { APP_VERSION_LABEL } from '@/lib/version';
 import { useTranslation } from '@/hooks/useTranslation';
+import { PushSetupRow } from './PushSetupRow';
 
 interface AboutModalProps {
   open: boolean;
@@ -49,6 +50,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ open, onClose }) => {
           <strong className="about-name">DeeperIA</strong>
           <p className="about-description">{t('CRM + IA para assistência técnica')}</p>
           <span className="badge badge-primary about-version">{APP_VERSION_LABEL}</span>
+          <PushSetupRow />
         </div>
 
         <div className="modal-footer about-footer">

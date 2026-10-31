@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from 'react';
-import { canInstallPwa, promptInstallPwa, subscribePwa } from '@/lib/pwa';
+import { canInstallPwa, promptInstallPwa, subscribePwa, isStandalonePwa } from '@/lib/pwa';
 
 export type PwaPlatform = 'ios' | 'android' | 'other';
 
@@ -8,12 +8,6 @@ function detectPlatform(): PwaPlatform {
   if (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document)) return 'ios';
   if (/Android/.test(ua)) return 'android';
   return 'other';
-}
-
-function detectStandalone(): boolean {
-  const standaloneQuery = window.matchMedia('(display-mode: standalone)');
-  const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
-  return standaloneQuery.matches || iosStandalone;
 }
 
 /**
@@ -25,14 +19,14 @@ function detectStandalone(): boolean {
  */
 export function usePwaInstall() {
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
-  const [isStandalone, setIsStandalone] = useState<boolean>(detectStandalone);
+  const [isStandalone, setIsStandalone] = useState<boolean>(isStandalonePwa);
   const [platform] = useState<PwaPlatform>(detectPlatform);
 
   useEffect(() => {
     const unsubscribe = subscribePwa(forceUpdate);
     const mql = window.matchMedia('(display-mode: standalone)');
     const onDisplayChange = (e: MediaQueryListEvent) => {
-      setIsStandalone(e.matches || detectStandalone());
+      setIsStandalone(e.matches || isStandalonePwa());
     };
     mql.addEventListener('change', onDisplayChange);
     return () => {

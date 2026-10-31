@@ -181,11 +181,14 @@ Toda interface nova deve considerar os estados necessários quando aplicável:
 
 - **Contrato** (`supabase/functions/_shared/notify.ts`): `sendPush({ tenantId, title, body, kind?, conversationId?, url?, data? })` fire-and-forget. `kind` ∈ `message | appointment | os | billing | custom`.
 - **Novo canal só precisa importar `sendPush` e chamar com o payload** — nada de fetch manual, secrets ou crypto.
+- **REGRAS DE PRODUTO**: push APENAS em celular com PWA INSTALADO (`isPushAvailable()` = mobile UA + standalone). Desktop e browser mobile não pedem permissão nem recebem badge. `lib/push.ts` centraliza isso — SEMPRE usar `isPushAvailable()`, nunca `isPushSupported()` direto na UI.
+- **Ativação/desativação pelo usuário**: toggle "Notificações" no modal Sobre (⋮ no mobile) — `PushSetupRow`; ativa = `subscribePush` (grava flag `deeperia:push-enabled`), desativa = `disablePush` (unsubscribe local + delete no banco via `save-push-subscription` com `{ remove: true, endpoint }`). Permissão negada: instrução para liberar nas configurações.
 - **Chaves VAPID**: públicas via `.env` (`VITE_VAPID_PUBLIC_KEY`, injetada no bundle pelo `vite.config.ts/js` via `loadEnv`) privadas server-side nos secrets do Supabase (`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Para gerar: `npx web-push generate-vapid-keys` (rotação = regenerar + gravar no `.env` + `supabase secrets set`).
 - **Deploy**: `send-push-notification` e `save-push-subscription` com deploy normal; `uazapi-webhook` SEMPRE com `--no-verify-jwt` (regra acima).
 - **Tabela**: `push_subscriptions` (tabela `endpoint` unique, RLS por tenant) — migration `20261030120000_create_push_subscriptions.sql`.
 - **Badge do ícone do app**: `navigator.setAppBadge(n)`/`clearAppBadge()` via `src/lib/push.ts` + `usePushBadge` (montado no `TenantLayout`).
-- **Pedir permissão**: `PushPermissionGate` — modal único por instalação (localStorage), 2,5s após load, só quando `permission === 'default'`.
+- **Pedir permissão**: `PushPermissionGate` — modal único por instalação (localStorage), 2,5s após load, só quando `permission === 'default'` e apenas em PWA mobile.
+- **Browser → PWA**: `OpenAppGate` (montado no App root) — o app standalone grava `deeperia:installed` (WebAPK compartilha storage com o Chrome no Android); aberto pelo browser em celular, faz UMA tentativa de navegar in-scope (Android abre o WebAPK via intent filters) e, se permanecer, mostra tela "Abrir pelo app instalado" com proposta de continuar no navegador. iOS não permite detectar o PWA instalado — sem redirect lá.
 - **Teste ponta a ponta**: PWA instalado → login → permitir notificações → enviar mensagem de lead → deve aparecer preview na barra + contador no ícone. Sem device, smoke interno: POST em `send-push-notification` com Bearer service_role = `{"ok":true,"sent":N}`.
 
 ### 3. Code Quality and Observability

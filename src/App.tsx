@@ -6,6 +6,7 @@ import { canAccess, firstAllowedPath } from '@/lib/permissions';
 import { isChunkLoadError, recoverChunkError } from '@/lib/chunk-recovery';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AiImportSession } from '@/components/AiImportSession';
+import { OpenAppGate } from '@/components/OpenAppGate';
 
 // Tenant (eager — layout crítico)
 import { TenantLogin } from '@/pages/TenantLogin';
@@ -148,6 +149,8 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <ErrorBoundary>
+      {/* PWA instalado no celular: redireciona o browser de volta ao app */}
+      <OpenAppGate />
       <Routes>
         {/* ── Superadmin ── */}
         <Route

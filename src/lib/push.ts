@@ -11,10 +11,14 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { isMobilePhone, isStandalonePwa } from '@/lib/pwa';
 
 const SW_PATH = '/sw.js';
 const PUSH_SUBSCRIPTION_FN = '/functions/v1/save-push-subscription';
 export type PushPermissionState = 'default' | 'granted' | 'denied';
+
+/** localStorage que registra que o usuario ATIVOU notificacoes (toggle Sobre). */
+export const PUSH_ENABLED_KEY = 'deeperia:push-enabled';
 
 /** Resultado da tentativa de subsricao. */
 export interface PushSubscribeResult {
@@ -55,6 +59,50 @@ export function isPushSupported(): boolean {
   );
 }
 
+/**
+ * Push disponivel = celular real + PWA INSTALADO (standalone).
+ * Desktop e browser mobile ficam de fora por decisao de produto —
+ * as notificacoes sao para o app na tela inicial, estilo WhatsApp.
+ */
+export function isPushAvailable(): boolean {
+  return isPushSupported() && isStandalonePwa() && isMobilePhone();
+}
+
+/** O usuario ativou notificacoes neste dispositivo (flag do toggle)? */
+export function isPushEnabledByUser(): boolean {
+  try {
+    return localStorage.getItem(PUSH_ENABLED_KEY) === 'on';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Desativa o push neste dispositivo: cancela a subscription no navegador,
+ * remove o registro do banco (edge function) e limpa flag + badge.
+ */
+export async function disablePush(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    localStorage.removeItem(PUSH_ENABLED_KEY);
+  } catch {
+    // sem storage: segue
+  }
+  setAppBadge(0);
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!subscription) return { ok: true };
+    // Remove do banco primeiro (request independente do unsubscribe)
+    await supabase.functions.invoke(PUSH_SUBSCRIPTION_FN, {
+      body: { remove: true, endpoint: subscription.endpoint },
+    });
+    await subscription.unsubscribe();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Erro ao desativar push' };
+  }
+}
+
 /** Registra o service worker e subscreve ao push, salvando no Supabase. */
 export async function subscribePush(): Promise<PushSubscribeResult> {
   if (!isPushSupported()) {
@@ -86,6 +134,13 @@ export async function subscribePush(): Promise<PushSubscribeResult> {
 
     if (error) {
       return { ok: false, subscribed: false, error: error.message };
+    }
+
+    // Flag para o toggle do modal "Sobre" (voltar a ativar depois)
+    try {
+      localStorage.setItem(PUSH_ENABLED_KEY, 'on');
+    } catch {
+      // sem storage: subscription salva mesmo assim
     }
 
     return { ok: true, subscribed: true };

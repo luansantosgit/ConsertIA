@@ -32,27 +32,24 @@ export const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   return (
     <div style={{ textAlign: 'center', padding: '12px 0' }}>
       {/* Ícone do sistema (nunca o logo completo): imagem quando o tema tem
-          ícone próprio; senão o mesmo ícone do favicon — quadrado com a inicial */}
+          ícone próprio; senão o ícone oficial do app (mesmo do instalado) */}
       <div style={{
         width: 72, height: 72, borderRadius: 20, margin: '0 auto 20px',
-        background: hasIconImage ? 'transparent' : 'var(--primary)',
+        background: 'transparent',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: '0 12px 32px var(--primary-light)', overflow: 'hidden',
       }}>
-        {hasIconImage ? (
-          <img src={globalTheme.logoUrl!} alt={globalTheme.logoText || 'Ícone'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-        ) : (
-          <span style={{ fontSize: '2.25rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
-            {(globalTheme.logoText || 'D').charAt(0).toUpperCase()}
-          </span>
-        )}
+        <img
+          src={hasIconImage ? globalTheme.logoUrl! : '/icons/icon-192.png'}
+          alt={hasIconImage ? (globalTheme.logoText || 'Ícone') : 'DeeperIA'}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
       </div>
       <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 8px', letterSpacing: -0.5 }}>
         Coloque sua assistência técnica para vender enquanto você repara
       </h1>
       <p style={{ fontSize: '1rem', color: 'var(--text-muted)', margin: '0 0 20px' }}>
-        Conecte seu WhatsApp, escolha o plano e em poucos minutos sua IA já estará
-        atendendo clientes, orçando e agendando por você.
+        Conecte seu WhatsApp e a IA atende clientes por você em minutos.
       </p>
 
       {videoUrl && (

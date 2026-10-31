@@ -50,6 +50,39 @@ serve(async (req) => {
     }
 
     const body = await req.json();
+
+    // Upsert pelo endpoint (mesmo dispositivo atualiza as chaves)
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    // Acao "remove": desativou o push no toggle do Sobre — apaga a subscription
+    // deste dispositivo (endpoint + tenant do perfil, nunca de outro tenant)
+    if (body?.remove === true) {
+      const { endpoint } = body;
+      if (!endpoint) {
+        return new Response(JSON.stringify({ ok: false, error: "endpoint obrigatorio" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error } = await admin
+        .from("push_subscriptions")
+        .delete()
+        .eq("endpoint", endpoint)
+        .eq("tenant_id", profile.tenant_id);
+      if (error) {
+        return new Response(JSON.stringify({ ok: false, error: error.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, removed: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { endpoint, p256dh, auth } = body;
     if (!endpoint || !p256dh || !auth) {
       return new Response(
@@ -58,11 +91,6 @@ serve(async (req) => {
       );
     }
 
-    // Upsert pelo endpoint (mesmo dispositivo atualiza as chaves)
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
     const { error } = await admin
       .from("push_subscriptions")
       .upsert({ endpoint, p256dh, auth, tenant_id: profile.tenant_id }, { onConflict: ["endpoint"] });

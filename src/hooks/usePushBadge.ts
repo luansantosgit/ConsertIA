@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConversationRepository } from '@/repositories/conversation.repository';
-import { setAppBadge, isPushSupported } from '@/lib/push';
+import { setAppBadge, isPushAvailable } from '@/lib/push';
 
 /**
  * Hook que mantem o badge do ícone do app atualizado com o total
@@ -16,7 +16,7 @@ export function usePushBadge() {
   const repo = useMemo(() => new ConversationRepository(), []);
 
   const refresh = useCallback(async () => {
-    if (!isPushSupported()) return;
+    if (!isPushAvailable()) return;
     setLoading(true);
     try {
       const n = await repo.getUnreadCount();
