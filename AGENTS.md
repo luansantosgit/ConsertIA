@@ -64,7 +64,7 @@ supabase functions deploy uazapi-webhook --no-verify-jwt
 - `process-scheduled-messages`: `supabase functions deploy process-scheduled-messages --no-verify-jwt`
 - `superadmin-reset-password`: `supabase functions deploy superadmin-reset-password` — superadmin regera senha do admin de um tenant (service_role; usada no modal "Empresas")
 - `renew-user-password`: `supabase functions deploy renew-user-password` — admin do tenant renova a senha de um usuario da equipe (senha gerada no servidor; admin nao digita a senha de terceiros)
-- `wizard-finalize`: `supabase functions deploy wizard-finalize` — superadmin finaliza wizard manual para empresa não completada (creates usuário, marca como paid, ativa tenant)
+- `wizard-finalize`: `supabase functions deploy wizard-finalize` — superadmin finaliza wizard manual para empresa não completada (creates usuário, marca como paid, ativa tenant). **ATENÇÃO (v1.0.114)**: ao reutilizar um auth user existente (lead que começou o wizard e desistiu), o realinhamento do `user_metadata.tenant_id`/role é OBRIGATÓRIO (`syncAdminMetadata` em `_shared/admin-users.ts`) — as policies RLS usam esse claim; sem ele o login falha com "Perfil de usuário não encontrado no sistema". A senha exibida no modal sempre vem de `session.temp_password` (persistida ANTES do `finalizeOnboarding`, que exibe esse valor).
 - `public-signup`: wizard /comece-agora — inclui action `support` (pública) que devolve `platform_settings.support_whatsapp` para o balão de suporte
 
 ### How to Add a New Repository
@@ -184,6 +184,7 @@ Toda interface nova deve considerar os estados necessários quando aplicável:
 ```
 
 - **Contrato** (`supabase/functions/_shared/notify.ts`): `sendPush({ tenantId, title, body, kind?, conversationId?, url?, data? })` fire-and-forget. `kind` ∈ `message | appointment | os | billing | custom`.
+- **Banner quando o painel recebe a mensagem (v1.0.115)**: push FCM só cobre o app 100% fechado. Com o painel vivo em background, o realtime (INSERT em `messages` → `useAttendance`) chama `notifyIncomingMessage()` (`src/lib/local-notify.ts`) = mesma notificação, sem servidor. Dedupe (push server × notificação local) via recibos em IndexedDB (`src/lib/push-receipts.ts` + implementação inline no `sw.js` — mesmos db/store/schema, manter em sincronia). O SW **suprime** o banner de `kind: message` quando existe janela visível (usuário já está vendo) e a página só notifica com `document.hidden`. Outbound (respostas da equipe) não notifica.
 - **Novo canal só precisa importar `sendPush` e chamar com o payload** — nada de fetch manual, secrets ou crypto.
 - **REGRAS DE PRODUTO**: push APENAS em celular com PWA INSTALADO (`isPushAvailable()` = mobile UA + standalone). Desktop e browser mobile não pedem permissão nem recebem badge. `lib/push.ts` centraliza isso — SEMPRE usar `isPushAvailable()`, nunca `isPushSupported()` direto na UI.
 - **Ativação/desativação pelo usuário**: toggle "Notificações" no modal Sobre (⋮ no mobile) — `PushSetupRow`; ativa = `subscribePush` (grava flag `deeperia:push-enabled`), desativa = `disablePush` (unsubscribe local + delete no banco via `save-push-subscription` com `{ remove: true, endpoint }`). Permissão negada: instrução para liberar nas configurações.
