@@ -2,6 +2,8 @@
 // Onboarding compartilhado entre public-signup e asaas-webhook
 // ============================================================
 
+import { ensureAiDefaults } from "./ai-defaults.ts";
+
 // Senha temporária simples e memorável: palavra-número
 const PASSWORD_WORDS = [
   "feliz", "rapido", "bravo", "pronto", "solido", "auge", "vitoria", "ponte",
@@ -36,35 +38,7 @@ export interface OnboardingSession {
 }
 
 // Planos padrão da IA para o agente responder de imediato
-async function ensureAiDefaults(admin: any, tenantId: string) {
-  const { data: agent } = await admin
-    .from("ai_agent_settings")
-    .select("tenant_id")
-    .eq("tenant_id", tenantId)
-    .maybeSingle();
-  if (!agent) await admin.from("ai_agent_settings").insert({ tenant_id: tenantId });
-
-  const { data: quote } = await admin
-    .from("ai_quote_settings")
-    .select("tenant_id")
-    .eq("tenant_id", tenantId)
-    .maybeSingle();
-  if (!quote) await admin.from("ai_quote_settings").insert({ tenant_id: tenantId });
-
-  const { data: diag } = await admin
-    .from("ai_diagnosis_settings")
-    .select("tenant_id")
-    .eq("tenant_id", tenantId)
-    .maybeSingle();
-  if (!diag) await admin.from("ai_diagnosis_settings").insert({ tenant_id: tenantId });
-
-  const { data: cfg } = await admin
-    .from("ai_configs")
-    .select("tenant_id")
-    .eq("tenant_id", tenantId)
-    .maybeSingle();
-  if (!cfg) await admin.from("ai_configs").insert({ tenant_id: tenantId });
-}
+// (implementacao em `_shared/ai-defaults.ts`)
 
 // Pagamento confirmado: ativa a empresa, cria o admin com senha
 // temporária, prepara a IA e lança no financeiro. Idempotente.

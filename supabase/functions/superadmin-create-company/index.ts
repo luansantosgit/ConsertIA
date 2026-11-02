@@ -11,6 +11,7 @@
 // ============================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { ensureAiDefaults } from "../_shared/ai-defaults.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -144,6 +145,11 @@ serve(async (req) => {
       sidebar_dark: false,
       updated_at: new Date().toISOString(),
     }, { onConflict: "tenant_id" });
+
+    // 5. Settings de IA: sem a linha em ai_agent_settings o agente nao
+    //    roda (runtime devolve null). Nasce ativo, perguntando o nome e
+    //    no modelo liberado pelo administrador.
+    await ensureAiDefaults(admin, tenant.id);
 
     return json({
       success: true,
