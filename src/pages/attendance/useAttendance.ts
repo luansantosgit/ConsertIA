@@ -10,6 +10,7 @@ import { fetchSystemQuickReplies } from '@/lib/system-quick-replies';
 import { useAuthStore } from '@/stores/auth.store';
 import { supabase } from '@/lib/supabase';
 import { notifyIncomingMessage } from '@/lib/local-notify';
+import { UNREAD_CHANGED_EVENT } from '@/lib/badge-counter';
 import type { Message, Conversation } from '@/types';
 import type { ChatMessage, ConvRow, ForwardTarget } from './types';
 import { toChatMessage } from './types';
@@ -338,7 +339,10 @@ export function useAttendance() {
           // Issue #92: app aberto em background/oculto tambem merece banner —
           // o realtime entrega a mensagem e a notificacao local cobre o estado
           // que o push FCM (server-side) nao ve. Fire-and-forget, nunca bloqueia.
+          // Issue #93: avisa o badge (usePushBadge reassenta o unread real e
+          // grava o contador que o SW incrementa com o app fechado).
           if (msg.direction === 'inbound') {
+            window.dispatchEvent(new CustomEvent(UNREAD_CHANGED_EVENT));
             void notifyIncomingMessage({
               conversationId: msg.conversation_id,
               title:

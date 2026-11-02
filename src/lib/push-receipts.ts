@@ -17,6 +17,11 @@ export const RECEIPT_WINDOW_MS = 15_000;
 
 export type ReceiptSource = 'push' | 'local';
 
+/** Store do contador de badge (mesmo db, consumida por SW e pagina). */
+export const BADGE_STORE = 'badge';
+/** Versao do db: v1 so tinha 'receipts'; v2 adiciona 'badge'. */
+export const DB_VERSION = 2;
+
 interface ReceiptRecord {
   conv: string;
   push?: number;
@@ -26,10 +31,13 @@ interface ReceiptRecord {
 function openReceiptDb(): Promise<IDBDatabase | null> {
   return new Promise((resolve) => {
     try {
-      const req = indexedDB.open(RECEIPT_DB, 1);
+      const req = indexedDB.open(RECEIPT_DB, DB_VERSION);
       req.onupgradeneeded = () => {
         if (!req.result.objectStoreNames.contains(RECEIPT_STORE)) {
           req.result.createObjectStore(RECEIPT_STORE, { keyPath: 'conv' });
+        }
+        if (!req.result.objectStoreNames.contains(BADGE_STORE)) {
+          req.result.createObjectStore(BADGE_STORE, { keyPath: 'key' });
         }
       };
       req.onsuccess = () => resolve(req.result);
