@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { CompanyFormModal } from './companies/CompanyFormModal';
-import { CompaniesStats, CompaniesTable } from './companies/CompaniesTable';
+import { CompaniesGrid } from './companies/CompaniesGrid';
 import { CredentialsModal } from './companies/CredentialsModal';
 import { useCompanies } from './companies/useCompanies';
 
@@ -10,26 +10,32 @@ export const SuperAdminCompanies: React.FC = () => {
   const c = useCompanies();
 
   return (
-    <div>
+    <div className="page">
       <div className="page-header">
         <div>
-          <h1>Empresas</h1>
-          <p className="page-subtitle">Gerencie as empresas cadastradas na plataforma</p>
+          <h1 className="page-title">Empresas</h1>
+          <p className="page-subtitle">
+            {c.companies.length} empresas cadastradas na plataforma
+          </p>
         </div>
-        <button className="btn btn-primary" onClick={c.openNew}>
-          <Plus size={16} /> Nova Empresa
+        <button
+          className="btn"
+          onClick={c.openNew}
+          style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff', border: 'none' }}
+        >
+          <Plus size={16} />
+          Nova Empresa
         </button>
       </div>
 
-      <CompaniesStats companies={c.companies} />
-
-      <CompaniesTable
+      <CompaniesGrid
         companies={c.filtered}
         loading={c.loading}
         search={c.search}
         onSearchChange={c.setSearch}
         onEdit={c.openEdit}
         onDelete={c.handleDelete}
+        onCreate={c.openNew}
       />
 
       {c.showModal && (

@@ -20,16 +20,22 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
 
   if (profileError || !profile) return null;
 
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('name')
-    .eq('id', profile.tenant_id)
-    .single();
+  // Superadmin nao pertence a um tenant: `.eq('id', null)` vira
+  // `id=eq.null` e o PostgREST responde 400.
+  let tenantName = '';
+  if (profile.tenant_id) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('name')
+      .eq('id', profile.tenant_id)
+      .single();
+    tenantName = tenant?.name ?? '';
+  }
 
   return {
     ...profile,
     avatar: profile.avatar_url,
-    tenant_name: tenant?.name ?? '',
+    tenant_name: tenantName,
   };
 }
 
