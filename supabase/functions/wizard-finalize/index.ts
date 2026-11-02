@@ -18,6 +18,11 @@ import {
   makeTempPassword,
   type OnboardingSession,
 } from "../_shared/onboarding.ts";
+import {
+  ensureUserProfile,
+  findAuthUserByEmail,
+  syncAdminMetadata,
+} from "../_shared/admin-users.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -50,41 +55,6 @@ async function getSuperadmin(
     .eq("id", authData.user.id)
     .single();
   return Boolean(caller && caller.role === "superadmin" && caller.active);
-}
-
-/** Localiza o usuario no Auth pelo e-mail (listUsers paginado). */
-async function findAuthUserByEmail(admin: any, email: string) {
-  const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  const match = (data?.users ?? []).find(
-    (u: { email?: string }) => (u.email ?? "").toLowerCase() === email.toLowerCase(),
-  );
-  return match ?? null;
-}
-
-/** Garante a linha do perfil em `users` (o finalizeOnboarding so cria se nao existir). */
-async function ensureUserProfile(
-  admin: any,
-  userId: string,
-  email: string,
-  tenantId: string,
-  name: string,
-) {
-  const { data: existing } = await admin
-    .from("users")
-    .select("id")
-    .eq("id", userId)
-    .maybeSingle();
-  if (existing) return;
-
-  await admin.from("users").insert({
-    id: userId,
-    tenant_id: tenantId,
-    email,
-    name,
-    role: "admin",
-    active: true,
-    permissions: [],
-  });
 }
 
 /** Recupera a sessao de onboarding do tenant (prioriza nao paga). */
@@ -159,18 +129,23 @@ serve(async (req) => {
     await admin.from("onboarding_sessions").update(patch).eq("id", session.id);
     session = { ...session, ...patch } as OnboardingSession;
 
-    // 3. Usuario no Auth: garante senha conhecida para exibir ao admin
+    // 3. Usuario no Auth: garante senha conhecida para exibir ao admin,
+    //    metadata alinhada ao tenant (RLS) e perfil consistente.
+    //    A senha e PERSISTIDA na sessao em ambos os casos: o
+    //    finalizeOnboarding exibe session.temp_password, entao a senha
+    //    exibida tem que valer como senha real.
     const authUser = await findAuthUserByEmail(admin, email);
-    let password = session.temp_password ?? makeTempPassword();
+    const password = session.temp_password ?? makeTempPassword();
+    session.temp_password = password;
+    await admin.from("onboarding_sessions").update({ temp_password: password }).eq("id", session.id);
+
     if (authUser) {
       const { error: updErr } = await admin.auth.admin.updateUserById(authUser.id, {
         password,
       });
       if (updErr) return json({ error: "update_failed", detail: updErr.message }, 500);
       await ensureUserProfile(admin, authUser.id, email, tenantId, session.lead_name || tenant.name);
-    } else {
-      session.temp_password = password;
-      await admin.from("onboarding_sessions").update({ temp_password: password }).eq("id", session.id);
+      await syncAdminMetadata(admin, authUser.id, tenantId, session.lead_name || tenant.name);
     }
 
     // 4. Executa as etapas finais do wizard (ativa tenant, cria admin,
