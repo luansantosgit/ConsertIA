@@ -33,6 +33,15 @@ export const resources = {
       'Filtrar': 'Filtrar',
       'Exportar': 'Exportar',
       'Importar': 'Importar',
+      'Fechar': 'Fechar',
+      'Alterar senha': 'Alterar senha',
+      'Nova senha': 'Nova senha',
+      'Confirmar nova senha': 'Confirmar nova senha',
+      'Minha senha': 'Minha senha',
+      'Senha do usuário': 'Senha do usuário',
+      'Renovar senha': 'Renovar senha',
+      'Trocar a senha do seu acesso': 'Trocar a senha do seu acesso',
+      'Defina uma nova senha para o seu acesso': 'Defina uma nova senha para o seu acesso',
       
       // Status
       'Ativo': 'Ativo',
@@ -467,6 +476,15 @@ export const resources = {
       'Filtrar': 'Filter',
       'Exportar': 'Export',
       'Importar': 'Import',
+      'Fechar': 'Close',
+      'Alterar senha': 'Change password',
+      'Nova senha': 'New password',
+      'Confirmar nova senha': 'Confirm new password',
+      'Minha senha': 'My password',
+      'Senha do usuário': 'User password',
+      'Renovar senha': 'Renew password',
+      'Trocar a senha do seu acesso': 'Change your access password',
+      'Defina uma nova senha para o seu acesso': 'Set a new password for your access',
       
       // Status
       'Ativo': 'Active',
@@ -901,6 +919,15 @@ export const resources = {
       'Filtrar': 'Filtrar',
       'Exportar': 'Exportar',
       'Importar': 'Importar',
+      'Fechar': 'Cerrar',
+      'Alterar senha': 'Cambiar contraseña',
+      'Nova senha': 'Nueva contraseña',
+      'Confirmar nova senha': 'Confirmar nueva contraseña',
+      'Minha senha': 'Mi contraseña',
+      'Senha do usuário': 'Contraseña del usuario',
+      'Renovar senha': 'Renovar contraseña',
+      'Trocar a senha do seu acesso': 'Cambiar la contraseña de tu acceso',
+      'Defina uma nova senha para o seu acesso': 'Define una nueva contraseña para tu acceso',
       
       // Estados
       'Ativo': 'Activo',

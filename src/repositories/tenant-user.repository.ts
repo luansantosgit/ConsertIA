@@ -90,6 +90,21 @@ export class TenantUserRepository {
     if (error) throw await this.toEdgeError(error, data);
   }
 
+  /**
+   * Renova a senha de um usuario da equipe: a senha nova e gerada no
+   * servidor e devolvida para o admin compartilhar. O admin nao digita
+   * a senha de terceiros.
+   */
+  async renewPassword(userId: string): Promise<{ email: string; password: string }> {
+    const { data, error } = await supabase.functions.invoke('renew-user-password', {
+      body: { user_id: userId },
+    });
+    if (error || !data?.password) {
+      throw await this.toEdgeError(error, data);
+    }
+    return { email: data.email, password: data.password };
+  }
+
   // Em erro HTTP o invoke não devolve o corpo no `data`; ele fica no
   // error.context (FunctionsHttpError). Lê ambos para obter o `code`.
   private async toEdgeError(

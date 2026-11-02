@@ -63,6 +63,7 @@ supabase functions deploy uazapi-webhook --no-verify-jwt
 - `ligacoes-auth`: `supabase functions deploy ligacoes-auth`
 - `process-scheduled-messages`: `supabase functions deploy process-scheduled-messages --no-verify-jwt`
 - `superadmin-reset-password`: `supabase functions deploy superadmin-reset-password` — superadmin regera senha do admin de um tenant (service_role; usada no modal "Empresas")
+- `renew-user-password`: `supabase functions deploy renew-user-password` — admin do tenant renova a senha de um usuario da equipe (senha gerada no servidor; admin nao digita a senha de terceiros)
 - `wizard-finalize`: `supabase functions deploy wizard-finalize` — superadmin finaliza wizard manual para empresa não completada (creates usuário, marca como paid, ativa tenant)
 - `public-signup`: wizard /comece-agora — inclui action `support` (pública) que devolve `platform_settings.support_whatsapp` para o balão de suporte
 
@@ -187,7 +188,8 @@ Toda interface nova deve considerar os estados necessários quando aplicável:
 - **REGRAS DE PRODUTO**: push APENAS em celular com PWA INSTALADO (`isPushAvailable()` = mobile UA + standalone). Desktop e browser mobile não pedem permissão nem recebem badge. `lib/push.ts` centraliza isso — SEMPRE usar `isPushAvailable()`, nunca `isPushSupported()` direto na UI.
 - **Ativação/desativação pelo usuário**: toggle "Notificações" no modal Sobre (⋮ no mobile) — `PushSetupRow`; ativa = `subscribePush` (grava flag `deeperia:push-enabled`), desativa = `disablePush` (unsubscribe local + delete no banco via `save-push-subscription` com `{ remove: true, endpoint }`). Permissão negada: instrução para liberar nas configurações.
 - **Chaves VAPID**: públicas via `.env` (`VITE_VAPID_PUBLIC_KEY`, injetada no bundle pelo `vite.config.ts/js` via `loadEnv` — fallback local) OU em runtime via edge function `push-config` (POST simples, o cliente chama quando a global de build está vazia — resolve produção hospedada sem env, ex.: Vercel sem `.env`). Privada server-side nos secrets do Supabase (`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Para gerar: `npx web-push generate-vapid-keys` (rotação = regenerar + gravar no `.env` + `supabase secrets set` — SEM deploy extra no front).
-- **Deploy**: `send-push-notification` e `save-push-subscription` com deploy normal; `uazapi-webhook` SEMPRE com `--no-verify-jwt` (regra acima).
+- **Deploy**: `send-push-notification`, `save-push-subscription` e `push-config` com deploy normal; `uazapi-webhook` SEMPRE com `--no-verify-jwt` (regra acima).
+- **ATENÇÃO — `supabase.functions.invoke()`**: recebe o **NOME** da função (`'push-config'`), nunca o path (`'/functions/v1/push-config'`). O path duplica o prefixo e a chamada volta **404 "Requested function was not found"**.
 - **Tabela**: `push_subscriptions` (tabela `endpoint` unique, RLS por tenant) — migration `20261030120000_create_push_subscriptions.sql`.
 - **Badge do ícone do app**: `navigator.setAppBadge(n)`/`clearAppBadge()` via `src/lib/push.ts` + `usePushBadge` (montado no `TenantLayout`).
 - **Pedir permissão**: `PushPermissionGate` — modal único por instalação (localStorage), 2,5s após load, só quando `permission === 'default'` e apenas em PWA mobile.

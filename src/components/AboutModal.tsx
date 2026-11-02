@@ -1,17 +1,19 @@
-import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { KeyRound, X } from 'lucide-react';
 import { APP_VERSION_LABEL } from '@/lib/version';
 import { useTranslation } from '@/hooks/useTranslation';
 import { PushSetupRow } from './PushSetupRow';
+import { ChangePasswordForm } from './ChangePasswordForm';
 
 interface AboutModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-/** Modal "Sobre": identidade do app e versão atual. */
+/** Modal "Sobre": identidade do app, versão atual e acesso rápido à senha. */
 export const AboutModal: React.FC<AboutModalProps> = ({ open, onClose }) => {
   const { t } = useTranslation();
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -21,6 +23,10 @@ export const AboutModal: React.FC<AboutModalProps> = ({ open, onClose }) => {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) setPasswordOpen(false);
+  }, [open]);
 
   if (!open) return null;
 
@@ -51,6 +57,29 @@ export const AboutModal: React.FC<AboutModalProps> = ({ open, onClose }) => {
           <p className="about-description">{t('CRM + IA para assistência técnica')}</p>
           <span className="badge badge-primary about-version">{APP_VERSION_LABEL}</span>
           <PushSetupRow />
+          <div className="about-row">
+            <div className="about-row-info">
+              <span className="about-row-label">{t('Alterar senha')}</span>
+              <span className="about-row-hint">
+                {passwordOpen
+                  ? t('Defina uma nova senha para o seu acesso')
+                  : t('Trocar a senha do seu acesso')}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setPasswordOpen(v => !v)}
+              aria-expanded={passwordOpen}
+            >
+              <KeyRound size={15} /> {passwordOpen ? t('Fechar') : t('Alterar senha')}
+            </button>
+          </div>
+          {passwordOpen && (
+            <div style={{ padding: '0 2px' }}>
+              <ChangePasswordForm submitLabel={t('Salvar')} />
+            </div>
+          )}
         </div>
 
         <div className="modal-footer about-footer">

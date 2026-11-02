@@ -14,8 +14,11 @@ import { supabase } from '@/lib/supabase';
 import { isMobilePhone, isStandalonePwa } from '@/lib/pwa';
 
 const SW_PATH = '/sw.js';
-const PUSH_SUBSCRIPTION_FN = '/functions/v1/save-push-subscription';
-const PUSH_CONFIG_FN = '/functions/v1/push-config';
+// supabase.functions.invoke() recebe o NOME da funcao e monta a URL
+// (/functions/v1/<nome>) sozinho. Passar o path inteiro duplica o prefixo
+// e a chamada volta 404 "Requested function was not found".
+const PUSH_SUBSCRIPTION_FN = 'save-push-subscription';
+const PUSH_CONFIG_FN = 'push-config';
 export type PushPermissionState = 'default' | 'granted' | 'denied';
 
 /** Cache da chave publica VAPID buscada em runtime (evita round-trips repetidos). */

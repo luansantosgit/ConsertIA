@@ -37,4 +37,17 @@ describe('AboutModal', () => {
     const { container } = render(<AboutModal open={false} onClose={() => {}} />);
     expect(container.firstChild).toBeNull();
   });
+
+  it('exposes the own-password action and expands the form on demand', () => {
+    render(<AboutModal open onClose={() => {}} />);
+
+    const toggle = screen.getByRole('button', { name: /Alterar senha/i });
+    expect(toggle).toBeInTheDocument();
+
+    // Formulario de troca de senha aparece ao clicar
+    expect(screen.queryByLabelText('Nova senha')).not.toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(screen.getByLabelText('Nova senha')).toBeInTheDocument();
+    expect(screen.getByLabelText('Confirmar nova senha')).toBeInTheDocument();
+  });
 });
