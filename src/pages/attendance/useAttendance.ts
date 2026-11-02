@@ -9,6 +9,7 @@ import { QuickReplyRepository, type QuickReply } from '@/repositories/quick-repl
 import { fetchSystemQuickReplies } from '@/lib/system-quick-replies';
 import { useAuthStore } from '@/stores/auth.store';
 import { supabase } from '@/lib/supabase';
+import { notifyIncomingMessage } from '@/lib/local-notify';
 import type { Message, Conversation } from '@/types';
 import type { ChatMessage, ConvRow, ForwardTarget } from './types';
 import { toChatMessage } from './types';
@@ -333,6 +334,19 @@ export function useAttendance() {
             if (msg.direction === 'outbound' && !isAiMessage) return;
           const chatMsg = toChatMessage(msg);
           const activeId = selectedIdRef.current;
+
+          // Issue #92: app aberto em background/oculto tambem merece banner —
+          // o realtime entrega a mensagem e a notificacao local cobre o estado
+          // que o push FCM (server-side) nao ve. Fire-and-forget, nunca bloqueia.
+          if (msg.direction === 'inbound') {
+            void notifyIncomingMessage({
+              conversationId: msg.conversation_id,
+              title:
+                conversationsRef.current.find(c => c.id === msg.conversation_id)?.contactName ||
+                'Nova mensagem',
+              body: chatMsg.text,
+            });
+          }
 
           if (msg.conversation_id === activeId || isAiMessage) {
             setChatMessages(prev => {
