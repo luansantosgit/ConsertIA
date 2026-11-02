@@ -4,6 +4,7 @@ import {
   subscribePush,
   disablePush,
   isPushAvailable,
+  isPushActive,
   isPushEnabledByUser,
   getPushPermissionState,
 } from '@/lib/push';
@@ -12,18 +13,37 @@ import {
  * Linha de configuracao de notificacoes push no modal "Sobre".
  * So existe em PWA mobile (aqui o push faz sentido). Permite o usuario
  * ativar depois ter recusado o modal de permissao, ou desativar quando quiser.
+ *
+ * O toggle reflete a REALIDADE (permissao do navegador + subscription
+ * ativa) — nunca apenas a flag do localStorage, senao vira uma mascara
+ * quando o navegador revoga a permissao.
  */
 export const PushSetupRow: React.FC = () => {
   const { t } = useTranslation();
-  const [enabled, setEnabled] = useState<boolean>(() => isPushEnabledByUser());
+  const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
-  // Sincroniza com a permissao real ao abrir o modal (ex.: revogada no SO)
+  // Sincroniza com o estado real ao abrir o modal (o componente e
+  // montado de novo a cada abertura — efeito so na montagem).
   useEffect(() => {
-    if (getPushPermissionState() !== 'granted' && isPushEnabledByUser()) {
-      setNote(t('Permissao revogada pelo sistema — ative nas configuracoes do navegador.'));
-    }
+    let cancelled = false;
+    (async () => {
+      const active = await isPushActive();
+      if (cancelled) return;
+      setEnabled(active);
+      // Flag ligada mas sem permissao/subscription = mascarando
+      if (!active && isPushEnabledByUser()) {
+        setNote(
+          getPushPermissionState() === 'denied'
+            ? t('Permissao negada — libere as notificacoes nas configuracoes do navegador.')
+            : t('Permissao revogada pelo sistema — ative nas configuracoes do navegador.'),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -32,8 +52,10 @@ export const PushSetupRow: React.FC = () => {
     setNote(null);
     try {
       const result = await subscribePush();
-      setEnabled(result.ok && result.subscribed);
-      if (!result.ok) {
+      // Estado real, nao o que o subscribe(): o navegador pode ter negado
+      const active = result.ok && (await isPushActive());
+      setEnabled(active);
+      if (!active) {
         setNote(
           result.error === 'Permissao negada pelo usuario'
             ? t('Permissao negada — libere as notificacoes nas configuracoes do navegador.')

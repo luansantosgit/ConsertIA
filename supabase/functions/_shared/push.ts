@@ -23,11 +23,11 @@ export interface PushSubscriptionKeys {
 const P256_PUB_LEN = 65;
 const RECORD_SIZE = 4096;
 
-function b64urlToBytes(input: string): Uint8Array {
+function b64urlToBytes(input: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (input.length % 4)) % 4);
   const base64 = (input + padding).replace(/-/g, '+').replace(/_/g, '/');
   const raw = atob(base64);
-  const bytes = new Uint8Array(raw.length);
+  const bytes = new Uint8Array(new ArrayBuffer(raw.length));
   for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
   return bytes;
 }
@@ -40,9 +40,9 @@ function bytesToB64url(bytes: Uint8Array): string {
 
 const encoder = new TextEncoder();
 
-function concat(...arrays: Uint8Array[]): Uint8Array {
+function concat(...arrays: Uint8Array<ArrayBuffer>[]): Uint8Array<ArrayBuffer> {
   const total = arrays.reduce((sum, a) => sum + a.length, 0);
-  const out = new Uint8Array(total);
+  const out = new Uint8Array(new ArrayBuffer(total));
   let offset = 0;
   for (const a of arrays) {
     out.set(a, offset);
@@ -52,11 +52,11 @@ function concat(...arrays: Uint8Array[]): Uint8Array {
 }
 
 async function hkdf(
-  ikm: Uint8Array,
-  salt: Uint8Array,
-  info: Uint8Array,
+  ikm: Uint8Array<ArrayBuffer>,
+  salt: Uint8Array<ArrayBuffer>,
+  info: Uint8Array<ArrayBuffer>,
   length: number,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
   const key = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
     { name: 'HKDF', hash: 'SHA-256', salt, info },
@@ -112,7 +112,7 @@ export async function createVapidHeader(
 export async function encryptWebPushPayload(
   payload: string,
   subscription: PushSubscriptionKeys,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
   const uaPublic = b64urlToBytes(subscription.p256dh);
   const uaAuth = b64urlToBytes(subscription.auth);
   if (uaPublic.length !== P256_PUB_LEN || uaPublic[0] !== 0x04) {
@@ -155,15 +155,18 @@ export async function encryptWebPushPayload(
   );
 
   const salt = crypto.getRandomValues(new Uint8Array(16));
+  // RFC 8291: CEK = HKDF(salt, IKM, cek_info, 16) e
+  //           NONCE = HKDF(salt, IKM, nonce_info, 12).
+  // A funcao hkdf() recebe (ikm, salt, ...) — a ordem importa.
   const contentEncodingKey = await hkdf(
-    salt,
     ikm,
+    salt,
     concat(encoder.encode('Content-Encoding: aes128gcm'), new Uint8Array([0])),
     16,
   );
   const nonce = await hkdf(
-    salt,
     ikm,
+    salt,
     concat(encoder.encode('Content-Encoding: nonce'), new Uint8Array([0])),
     12,
   );

@@ -101,6 +101,32 @@ export function isPushEnabledByUser(): boolean {
 }
 
 /**
+ * Subscription push ativa deste dispositivo (null se nao houver).
+ * A fonte da verdade do "esta subscribed?" — o flag do localStorage
+ * sozinho nao prova nada (a permissao pode ter sido revogada no SO).
+ */
+export async function getPushSubscription(): Promise<PushSubscription | null> {
+  if (!isPushSupported()) return null;
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    return subscription ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Push REALMENTE ativo neste dispositivo: o navegador concedeu a
+ * permissao E existe uma subscription valida no service worker.
+ * O toggle da UI usa isto para nao virar uma mascara.
+ */
+export async function isPushActive(): Promise<boolean> {
+  if (getPushPermissionState() !== 'granted') return false;
+  return (await getPushSubscription()) !== null;
+}
+
+/**
  * Desativa o push neste dispositivo: cancela a subscription no navegador,
  * remove o registro do banco (edge function) e limpa flag + badge.
  */
@@ -140,9 +166,19 @@ export async function subscribePush(): Promise<PushSubscribeResult> {
   try {
     const registration = await navigator.serviceWorker.register(SW_PATH);
     const vapidKey = await resolveVapidKey();
+    const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+
+    // Se ja existe subscription com OUTRA chave VAPID (rotacao de chave),
+    // ela nao recebe push — o pushManager.subscribe() devolveria a
+    // subscription antiga em vez de criar uma nova.
+    const existing = await registration.pushManager.getSubscription();
+    if (existing && !hasSameVapidKey(existing, applicationServerKey)) {
+      await existing.unsubscribe();
+    }
+
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      applicationServerKey,
     });
 
     // Salva a subscription via edge function (o tenant vem do JWT no servidor)
@@ -188,4 +224,20 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
     output[i] = raw.charCodeAt(i);
   }
   return output;
+}
+
+/**
+ * A subscription usa a mesma chave VAPID da atual?
+ * Quando o navegador nao expoe `options.applicationServerKey`, assumimos
+ * que sim — nunca destruimos uma subscription valida por falta de info.
+ */
+function hasSameVapidKey(
+  subscription: PushSubscription,
+  applicationServerKey: Uint8Array,
+): boolean {
+  const current = subscription.options?.applicationServerKey;
+  if (!current) return true;
+  const bytes = new Uint8Array(current);
+  if (bytes.length !== applicationServerKey.length) return false;
+  return bytes.every((byte, index) => byte === applicationServerKey[index]);
 }
