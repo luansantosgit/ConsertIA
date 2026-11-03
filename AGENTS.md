@@ -206,6 +206,16 @@ Toda interface nova deve considerar os estados necessários quando aplicável:
 - **Browser → PWA**: `OpenAppGate` (montado no App root) — o app standalone grava `deeperia:installed` (WebAPK compartilha storage com o Chrome no Android); aberto pelo browser em celular, faz UMA tentativa de navegar in-scope (Android abre o WebAPK via intent filters) e, se permanecer, mostra tela "Abrir pelo app instalado" com proposta de continuar no navegador. iOS não permite detectar o PWA instalado — sem redirect lá.
 - **Teste ponta a ponta**: PWA instalado → login → permitir notificações → enviar mensagem de lead → deve aparecer preview na barra + contador no ícone. Sem device, smoke interno: POST em `send-push-notification` com Bearer service_role = `{"ok":true,"sent":N}`.
 
+### 3.3 Portal de Treinamento (`/treinamento`)
+
+- **Página**: `/treinamento` — portal de vídeos estilo Netflix (hero em destaque + linhas/carrossel por tópico + busca por título/descrição/tópico + player em modal). Aberta a **TODOS os cargos**: a rota fica **fora** do `RequirePermission` e `canAccess()` faz `if (key === 'treinamento') return true;`. Item de menu "Treinamento" entre Relatórios e Agente de IA (`nav-items.ts` + `SolidTreinamentoIcon`).
+- **Tabelas**: `training_videos` é **GLOBAL** (sem `tenant_id`, à la `plans`) — title, description, topic, source (`storage|youtube`), url, thumbnail_url, sort_order, active. Migration `20261103130000_training_videos.sql`. RLS: SELECT para `authenticated`, escrita **só superadmin** (claim em `auth.jwt() -> 'user_metadata' ->> 'role'`).
+- **Storage**: bucket `training-videos` (público, 1 GB, vídeos em `videos/`, thumbs em `thumbs/`); escrita só superadmin, leitura pública.
+- **Fonte única de helpers**: `src/lib/training-video.ts` (`parseYouTubeId`, `detectVideoSource`, `youtubeEmbedUrl`, `youtubeThumbUrl`) — nunca duplicar regex de YouTube em outro arquivo.
+- **Upload com progresso**: `src/lib/training-upload.ts` faz POST manual via XHR (o `upload` do supabase-js não expõe progresso). Remoção de arquivo é melhor-esforço (`removeTrainingFile`).
+- **Painel do superadmin**: `/superadmin/treinamento` — CRUD completo (título, tópico com datalist, descrição, YouTube **ou** upload, thumbnail, sort_order, ativo). Exclusão sempre via `ConfirmModal`.
+- **Estados**: loading (skeleton), vazio (com CTA), erro com retry, hover/focus; chaves i18n pt/en/es em `src/i18n/config.ts`.
+
 ### 3. Code Quality and Observability
 
 #### Observability

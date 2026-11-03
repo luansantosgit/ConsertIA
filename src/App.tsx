@@ -25,6 +25,7 @@ import { SuperAdminAi } from '@/superadmin/SuperAdminAi';
 import { SuperAdminLeads } from '@/superadmin/SuperAdminLeads';
 import { SuperAdminSettings } from '@/superadmin/SuperAdminSettings';
 import { SuperAdminWizard } from '@/superadmin/SuperAdminWizard';
+import { SuperAdminTreinamento } from '@/superadmin/SuperAdminTreinamento';
 
 import './i18n/config';
 import './styles.css';
@@ -57,6 +58,7 @@ const AiSettings    = lazyLoad(() => import('@/pages/AiSettings').then(m => ({ d
 const SubscriptionPage = lazyLoad(() => import('@/pages/subscription/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
 const OnboardingPage = lazyLoad(() => import('@/pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const ChecklistPage = lazyLoad(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })));
+const Training = lazyLoad(() => import('@/pages/Training'));
 
 /* ── Fallback de loading (skeleton) ── */
 const PageLoader: React.FC = () => (
@@ -170,6 +172,7 @@ const App: React.FC = () => {
           <Route path="wizard" element={<SuperAdminWizard />} />
           <Route path="configuracoes" element={<SuperAdminSettings />} />
           <Route path="provedor-ia" element={<SuperAdminAi />} />
+          <Route path="treinamento" element={<SuperAdminTreinamento />} />
         </Route>
 
         {/* ── Tenant ── */}
@@ -193,6 +196,8 @@ const App: React.FC = () => {
           <Route path="relatorios" element={<RequirePermission perm="relatorios"><Suspense fallback={<PageLoader />}><Reports /></Suspense></RequirePermission>} />
           <Route path="configuracoes" element={<RequirePermission perm="configuracoes"><Suspense fallback={<PageLoader />}><Settings /></Suspense></RequirePermission>} />
           <Route path="agente-ia" element={<RequirePermission perm="agente-ia"><Suspense fallback={<PageLoader />}><AiSettings /></Suspense></RequirePermission>} />
+          {/* Treinamento: portal livre para todos os cargos (sem RequirePermission) */}
+          <Route path="treinamento" element={<Suspense fallback={<PageLoader />}><Training /></Suspense>} />
         </Route>
 
         {/* ── Checklist público ── */}

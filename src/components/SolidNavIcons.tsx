@@ -124,6 +124,17 @@ export const SolidRelatoriosIcon: React.FC<SolidIconProps> = ({ size = 20, activ
   );
 };
 
+export const SolidTreinamentoIcon: React.FC<SolidIconProps> = ({ size = 20, active = false, className = '', style = {} }) => {
+  const { base, accent, contrast } = getColors(active);
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ flexShrink: 0, ...style }}>
+      <path d="M3 9.5 12 5l9 4.5-9 4.5L3 9.5Z" fill={accent} />
+      <path d="M5.5 12.7v3.8A6.6 6.6 0 0 0 12 21a6.6 6.6 0 0 0 6.5-4.5v-3.8L12 16.3l-6.5-3.6Z" fill={base} />
+      <circle cx="12" cy="12.6" r="1.6" fill={contrast} />
+    </svg>
+  );
+};
+
 export const SolidAgenteIaIcon: React.FC<SolidIconProps> = ({ size = 20, active = false, className = '', style = {} }) => {
   const { base, accent, contrast } = getColors(active);
   return (

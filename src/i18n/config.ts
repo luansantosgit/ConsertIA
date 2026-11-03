@@ -13,9 +13,24 @@ export const resources = {
       'Financeiro': 'Financeiro',
       'Agenda': 'Agenda',
       'Relatórios': 'Relatórios',
+      'Treinamento': 'Treinamento',
       'Agente de IA': 'Agente de IA',
       'Configurações': 'Configurações',
       'Sair': 'Sair',
+      
+      // Treinamento (portal /treinamento)
+      'Aprenda a usar a plataforma com vídeos curtos': 'Aprenda a usar a plataforma com vídeos curtos',
+      'Buscar treinamentos...': 'Buscar treinamentos...',
+      'Limpar busca': 'Limpar busca',
+      'Em destaque': 'Em destaque',
+      'Assistir': 'Assistir',
+      'Ver anteriores': 'Ver anteriores',
+      'Ver próximos': 'Ver próximos',
+      'Nenhum treinamento disponível': 'Nenhum treinamento disponível',
+      'Os vídeos aparecem aqui quando o administrador publica treinamentos.': 'Os vídeos aparecem aqui quando o administrador publica treinamentos.',
+      'Nenhum resultado para a busca': 'Nenhum resultado para a busca',
+      'Tente outro termo ou veja por tópico.': 'Tente outro termo ou veja por tópico.',
+      'Erro ao carregar treinamentos': 'Erro ao carregar treinamentos',
       
       // Ações
       'Nova OS': 'Nova OS',
@@ -464,9 +479,24 @@ export const resources = {
       'Financeiro': 'Financial',
       'Agenda': 'Schedule',
       'Relatórios': 'Reports',
+      'Treinamento': 'Training',
       'Agente de IA': 'AI Agent',
       'Configurações': 'Settings',
       'Sair': 'Logout',
+      
+      // Training (/treinamento portal)
+      'Aprenda a usar a plataforma com vídeos curtos': 'Learn how to use the platform with short videos',
+      'Buscar treinamentos...': 'Search tutorials...',
+      'Limpar busca': 'Clear search',
+      'Em destaque': 'Featured',
+      'Assistir': 'Watch',
+      'Ver anteriores': 'See previous',
+      'Ver próximos': 'See more',
+      'Nenhum treinamento disponível': 'No training available',
+      'Os vídeos aparecem aqui quando o administrador publica treinamentos.': 'Videos appear here once the administrator publishes tutorials.',
+      'Nenhum resultado para a busca': 'No results found',
+      'Tente outro termo ou veja por tópico.': 'Try another term or browse by topic.',
+      'Erro ao carregar treinamentos': 'Failed to load training videos',
       
       // Actions
       'Nova OS': 'New Order',
@@ -915,9 +945,24 @@ export const resources = {
       'Financeiro': 'Financiero',
       'Agenda': 'Agenda',
       'Relatórios': 'Informes',
+      'Treinamento': 'Capacitación',
       'Agente de IA': 'Agente de IA',
       'Configurações': 'Configuraciones',
       'Sair': 'Cerrar Sesión',
+      
+      // Capacitación (portal /treinamento)
+      'Aprenda a usar a plataforma com vídeos curtos': 'Aprende a usar la plataforma con videos cortos',
+      'Buscar treinamentos...': 'Buscar capacitaciones...',
+      'Limpar busca': 'Limpiar búsqueda',
+      'Em destaque': 'Destacado',
+      'Assistir': 'Ver',
+      'Ver anteriores': 'Ver anteriores',
+      'Ver próximos': 'Ver más',
+      'Nenhum treinamento disponível': 'Ninguna capacitación disponible',
+      'Os vídeos aparecem aqui quando o administrador publica treinamentos.': 'Los videos aparecen aquí cuando el administrador publica capacitaciones.',
+      'Nenhum resultado para a busca': 'Ningún resultado de búsqueda',
+      'Tente outro termo ou veja por tópico.': 'Prueba otro término o mira por tema.',
+      'Erro ao carregar treinamentos': 'Error al cargar capacitaciones',
       
       // Acciones
       'Nova OS': 'Nueva OS',
