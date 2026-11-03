@@ -554,6 +554,27 @@ img { max-width: 100%; display: block; }
   user-select: none;
 }
 
+/* Versão + divisória + ícone de chapéu (indica que o chip é clicável) */
+.sidebar-version-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.sidebar-user-divider {
+  width: 1px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-user-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
 .sidebar-version-compact {
   font-size: 0.5625rem;
 }
@@ -1429,70 +1450,6 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 }
 
 .about-version { margin-top: 4px; }
-
-/* Chip do usuario no modal Sobre: atalho para o portal de treinamento */
-.about-user-chip {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  margin-top: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--hover-bg);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color var(--transition), transform var(--transition);
-}
-
-.about-user-chip:hover {
-  border-color: var(--primary);
-  transform: translateY(-1px);
-}
-
-.about-user-chip:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-.about-user-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.about-user-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-}
-
-.about-user-name {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.about-user-version {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.about-user-icon { color: var(--primary); flex-shrink: 0; }
 
 /* Linha de configuracao (toggle de notificacoes) do modal Sobre */
 .about-row {

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, MoreVertical, Sun, Moon, LogOut, Download, Info } from 'lucide-react';
+import { Plus, MoreVertical, Sun, Moon, LogOut, Download, Info, UserRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useModeStore } from '@/stores/mode.store';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -15,6 +16,7 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
   const { mode, toggleMode } = useModeStore();
   const { t } = useTranslation();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -77,6 +79,12 @@ export const MobileChatList: React.FC<MobileListConfig> = ({ m }) => {
               >
                 {mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                 {mode === 'dark' ? t('Ativar modo claro') : t('Ativar modo escuro')}
+              </button>
+              <button
+                style={menuItemStyle}
+                onClick={() => { setMenuOpen(false); navigate('/perfil'); }}
+              >
+                <UserRound size={16} />{t('Perfil')}
               </button>
               <button
                 style={menuItemStyle}

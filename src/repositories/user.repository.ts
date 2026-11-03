@@ -44,6 +44,17 @@ export interface TenantUserBrief {
   name: string;
 }
 
+/**
+ * Atualiza o nome do próprio usuário.
+ * Usa a RPC `update_my_profile` (SECURITY DEFINER) porque a escrita em
+ * `users` é restrita ao admin do tenant — o usuário comum não passa pela
+ * policy, mas a função altera apenas o próprio nome.
+ */
+export async function updateMyProfileName(name: string): Promise<void> {
+  const { error } = await supabase.rpc('update_my_profile', { p_name: name });
+  if (error) throw new Error(error.message);
+}
+
 export async function fetchTenantUsers(tenantId: string): Promise<TenantUserBrief[]> {
   if (!tenantId) return [];
   const { data, error } = await supabase

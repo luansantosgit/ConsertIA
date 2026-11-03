@@ -32,6 +32,19 @@ export const resources = {
       'Tente outro termo ou veja por tópico.': 'Tente outro termo ou veja por tópico.',
       'Erro ao carregar treinamentos': 'Erro ao carregar treinamentos',
       
+      // Perfil (dados do usuário + senha de acesso)
+      'Perfil': 'Perfil',
+      'Dados do perfil': 'Dados do perfil',
+      'Seus dados e sua senha de acesso': 'Seus dados e sua senha de acesso',
+      'E-mail': 'E-mail',
+      'Cargo': 'Cargo',
+      'Senha de acesso': 'Senha de acesso',
+      'Salvar perfil': 'Salvar perfil',
+      'Perfil atualizado ✓': 'Perfil atualizado ✓',
+      'O e-mail de acesso é gerenciado pelo administrador da empresa.': 'O e-mail de acesso é gerenciado pelo administrador da empresa.',
+      'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.': 'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.',
+      'Não foi possível salvar o perfil.': 'Não foi possível salvar o perfil.',
+      
       // Ações
       'Nova OS': 'Nova OS',
       'Nova Conversa': 'Nova Conversa',
@@ -498,6 +511,19 @@ export const resources = {
       'Tente outro termo ou veja por tópico.': 'Try another term or browse by topic.',
       'Erro ao carregar treinamentos': 'Failed to load training videos',
       
+      // Profile (user data + access password)
+      'Perfil': 'Profile',
+      'Dados do perfil': 'Profile details',
+      'Seus dados e sua senha de acesso': 'Your details and access password',
+      'E-mail': 'E-mail',
+      'Cargo': 'Role',
+      'Senha de acesso': 'Access password',
+      'Salvar perfil': 'Save profile',
+      'Perfil atualizado ✓': 'Profile updated ✓',
+      'O e-mail de acesso é gerenciado pelo administrador da empresa.': 'The access e-mail is managed by the company admin.',
+      'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.': 'Use at least 6 characters. After saving, log in with the new password.',
+      'Não foi possível salvar o perfil.': 'Could not save the profile.',
+      
       // Actions
       'Nova OS': 'New Order',
       'Nova Conversa': 'New Conversation',
@@ -963,6 +989,19 @@ export const resources = {
       'Nenhum resultado para a busca': 'Ningún resultado de búsqueda',
       'Tente outro termo ou veja por tópico.': 'Prueba otro término o mira por tema.',
       'Erro ao carregar treinamentos': 'Error al cargar capacitaciones',
+      
+      // Perfil (datos del usuario + contraseña de acceso)
+      'Perfil': 'Perfil',
+      'Dados do perfil': 'Datos del perfil',
+      'Seus dados e sua senha de acesso': 'Tus datos y tu contraseña de acceso',
+      'E-mail': 'Correo electrónico',
+      'Cargo': 'Cargo',
+      'Senha de acesso': 'Contraseña de acceso',
+      'Salvar perfil': 'Guardar perfil',
+      'Perfil atualizado ✓': 'Perfil actualizado ✓',
+      'O e-mail de acesso é gerenciado pelo administrador da empresa.': 'El correo de acceso lo gestiona el administrador de la empresa.',
+      'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.': 'Usa al menos 6 caracteres. Después de guardar, entra con la nueva contraseña.',
+      'Não foi possível salvar o perfil.': 'No se pudo guardar el perfil.',
       
       // Acciones
       'Nova OS': 'Nueva OS',

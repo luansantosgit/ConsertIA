@@ -59,6 +59,7 @@ const SubscriptionPage = lazyLoad(() => import('@/pages/subscription/Subscriptio
 const OnboardingPage = lazyLoad(() => import('@/pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const ChecklistPage = lazyLoad(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })));
 const Training = lazyLoad(() => import('@/pages/Training'));
+const Profile = lazyLoad(() => import('@/pages/Profile').then(m => ({ default: m.Profile })));
 
 /* ── Fallback de loading (skeleton) ── */
 const PageLoader: React.FC = () => (
@@ -198,6 +199,8 @@ const App: React.FC = () => {
           <Route path="agente-ia" element={<RequirePermission perm="agente-ia"><Suspense fallback={<PageLoader />}><AiSettings /></Suspense></RequirePermission>} />
           {/* Treinamento: portal livre para todos os cargos (sem RequirePermission) */}
           <Route path="treinamento" element={<Suspense fallback={<PageLoader />}><Training /></Suspense>} />
+          {/* Perfil: dados + senha de acesso (qualquer cargo) */}
+          <Route path="perfil" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
         </Route>
 
         {/* ── Checklist público ── */}

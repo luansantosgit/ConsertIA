@@ -41,9 +41,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed }) => {
         ) : (
           <div className="sidebar-user-info">
             <span className="sidebar-user-name">{user?.name}</span>
-            <span className="sidebar-version" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <GraduationCap size={12} />
-              {APP_VERSION_LABEL}
+            <span className="sidebar-version-row">
+              <span className="sidebar-version">{APP_VERSION_LABEL}</span>
+              <span className="sidebar-user-divider" aria-hidden="true" />
+              <GraduationCap size={14} className="sidebar-user-icon" />
             </span>
           </div>
         )}

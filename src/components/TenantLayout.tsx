@@ -14,7 +14,7 @@ import { PushPermissionGate } from './PushPermissionGate';
 
 // Rotas permitidas no modo mobile (chat-only): o chat em si e a página
 // de pagamento da assinatura (bloqueio de carência continua funcionando).
-const MOBILE_ALLOWED = ['/atendimento', '/assinatura', '/treinamento'];
+const MOBILE_ALLOWED = ['/atendimento', '/assinatura', '/treinamento', '/perfil'];
 
 export const TenantLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

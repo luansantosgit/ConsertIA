@@ -47,4 +47,21 @@ describe('Chip do usuário (acesso ao treinamento)', () => {
 
     expect(screen.queryByRole('link', { name: 'Treinamento' })).toBeNull();
   });
+
+  it('mostra versão, divisória e ícone de chapéu isolados à direita', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Sidebar isOpen={false} onClose={() => {}} collapsed={false} />
+      </MemoryRouter>
+    );
+
+    const row = screen.getByLabelText('Treinamento').querySelector('.sidebar-version-row')!;
+    const [version, divider, icon] = Array.from(row.children);
+    expect(version.getAttribute('class')).toContain('sidebar-version');
+    expect(divider.getAttribute('class')).toContain('sidebar-user-divider');
+    expect(icon.getAttribute('class')).toContain('sidebar-user-icon');
+    // a divisoria fica entre a versao e o icone
+    expect(row.children[1]).toBe(divider);
+    expect(row.children[2]).toBe(icon);
+  });
 });

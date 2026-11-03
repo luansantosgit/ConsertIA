@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { AboutModal } from '@/components/AboutModal';
 import { APP_VERSION, APP_VERSION_LABEL } from '@/lib/version';
 
@@ -8,21 +8,10 @@ vi.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock('@/stores/auth.store', () => ({
-  useAuthStore: () => ({ user: { name: 'Luan', tenantName: 'LS Soluções' } }),
-}));
-
-const renderModal = (onClose = () => {}, withRoute = false) =>
+const renderModal = (onClose = () => {}) =>
   render(
-    <MemoryRouter initialEntries={['/']}>
-      {withRoute ? (
-        <Routes>
-          <Route path="/" element={<AboutModal open onClose={onClose} />} />
-          <Route path="/treinamento" element={<div>Página de treinamento</div>} />
-        </Routes>
-      ) : (
-        <AboutModal open onClose={onClose} />
-      )}
+    <MemoryRouter>
+      <AboutModal open onClose={onClose} />
     </MemoryRouter>
   );
 
@@ -38,7 +27,7 @@ describe('AboutModal', () => {
     renderModal();
 
     expect(screen.getByText('DeeperIA')).toBeInTheDocument();
-    expect(screen.getAllByText(APP_VERSION_LABEL).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(APP_VERSION_LABEL)).toBeInTheDocument();
   });
 
   it('closes on Escape and on backdrop click', () => {
@@ -61,25 +50,11 @@ describe('AboutModal', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('exposes the own-password action and expands the form on demand', () => {
-    renderModal();
+  it('não tem chip de usuário nem troca de senha (ficam no painel/perfil)', () => {
+    const { container } = renderModal();
 
-    const toggle = screen.getByRole('button', { name: /Alterar senha/i });
-    expect(toggle).toBeInTheDocument();
-
-    // Formulario de troca de senha aparece ao clicar
-    expect(screen.queryByLabelText('Nova senha')).not.toBeInTheDocument();
-    fireEvent.click(toggle);
-    expect(screen.getByLabelText('Nova senha')).toBeInTheDocument();
-    expect(screen.getByLabelText('Confirmar nova senha')).toBeInTheDocument();
-  });
-
-  it('leva ao portal de treinamento pelo chip do usuario', () => {
-    const onClose = vi.fn();
-    renderModal(onClose, true);
-
-    fireEvent.click(screen.getByLabelText('Treinamento'));
-    expect(onClose).toHaveBeenCalled();
-    expect(screen.getByText('Página de treinamento')).toBeInTheDocument();
+    expect(container.querySelector('.about-user-chip')).toBeNull();
+    expect(screen.queryByText('Alterar senha')).toBeNull();
+    expect(screen.queryByLabelText('Nova senha')).toBeNull();
   });
 });
