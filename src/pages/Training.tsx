@@ -5,7 +5,7 @@ import { SkeletonLine } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import ErrorMessage from '@/components/ErrorMessage';
 import type { TrainingVideo } from '@/types';
-import { filterVideos, groupByTopic } from './training/filter';
+import { filterVideos, groupByTopic } from '@/lib/training-filter';
 import { useTrainingVideos } from './training/useTrainingVideos';
 import { TrainingHero, TrainingRows } from './training/TrainingRows';
 import { VideoCard } from './training/VideoCard';

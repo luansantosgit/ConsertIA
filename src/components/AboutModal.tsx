@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { KeyRound, X } from 'lucide-react';
+import { GraduationCap, KeyRound, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { APP_VERSION_LABEL } from '@/lib/version';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuthStore } from '@/stores/auth.store';
 import { PushSetupRow } from './PushSetupRow';
 import { ChangePasswordForm } from './ChangePasswordForm';
 
@@ -13,7 +15,10 @@ interface AboutModalProps {
 /** Modal "Sobre": identidade do app, versão atual e acesso rápido à senha. */
 export const AboutModal: React.FC<AboutModalProps> = ({ open, onClose }) => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const initial = (user?.name || 'A').charAt(0).toUpperCase();
 
   useEffect(() => {
     if (!open) return;
@@ -56,6 +61,23 @@ export const AboutModal: React.FC<AboutModalProps> = ({ open, onClose }) => {
           <strong className="about-name">DeeperIA</strong>
           <p className="about-description">{t('CRM + IA para assistência técnica')}</p>
           <span className="badge badge-primary about-version">{APP_VERSION_LABEL}</span>
+          {/* Chip do usuário: atalho para o portal de treinamento */}
+          <button
+            type="button"
+            className="about-user-chip"
+            onClick={() => {
+              onClose();
+              navigate('/treinamento');
+            }}
+            aria-label={t('Treinamento')}
+          >
+            <span className="about-user-avatar">{initial}</span>
+            <span className="about-user-info">
+              <span className="about-user-name">{user?.name}</span>
+              <span className="about-user-version">{APP_VERSION_LABEL}</span>
+            </span>
+            <GraduationCap size={16} className="about-user-icon" />
+          </button>
           <PushSetupRow />
           <div className="about-row">
             <div className="about-row-info">

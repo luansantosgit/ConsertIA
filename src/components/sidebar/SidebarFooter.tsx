@@ -1,5 +1,6 @@
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { GraduationCap, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useTranslation } from '@/hooks/useTranslation';
 import { APP_VERSION_LABEL } from '@/lib/version';
@@ -12,6 +13,7 @@ interface SidebarFooterProps {
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed }) => {
   const { user, logout } = useAuthStore();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const initial = (user?.name || 'A').charAt(0).toUpperCase();
 
   return (
@@ -26,9 +28,12 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed }) => {
         <LogOut size={18} />
         {!collapsed && <span className="sidebar-item-label">{t('Sair')}</span>}
       </button>
-      <div
-        className="sidebar-user"
-        title={`${user?.name}\n${user?.tenantName}\n${APP_VERSION_LABEL}`}
+      <button
+        type="button"
+        className="sidebar-user sidebar-user-link"
+        onClick={() => navigate('/treinamento')}
+        title={`${user?.name}\n${user?.tenantName}\n${APP_VERSION_LABEL}\n${t('Treinamento')}`}
+        aria-label={t('Treinamento')}
       >
         <div className="sidebar-user-btn">{initial}</div>
         {collapsed ? (
@@ -36,10 +41,13 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed }) => {
         ) : (
           <div className="sidebar-user-info">
             <span className="sidebar-user-name">{user?.name}</span>
-            <span className="sidebar-version">{APP_VERSION_LABEL}</span>
+            <span className="sidebar-version" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <GraduationCap size={12} />
+              {APP_VERSION_LABEL}
+            </span>
           </div>
         )}
-      </div>
+      </button>
     </div>
   );
 };

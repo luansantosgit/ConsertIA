@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterVideos, groupByTopic, normalizeText } from '../filter';
+import { filterVideos, groupByTopic, normalizeText } from '../training-filter';
 import type { TrainingVideo } from '@/types';
 
 const video = (id: string, title: string, topic: string, description = ''): TrainingVideo => ({

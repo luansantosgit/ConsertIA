@@ -70,4 +70,11 @@ export class TrainingVideoRepository {
       .eq('id', id);
     if (error) throw error;
   }
+
+  /** Reordena (drag & drop): atualiza o sort_order dos vídeos movidos. */
+  async reorder(items: Array<{ id: string; sort_order: number }>): Promise<void> {
+    await Promise.all(
+      items.map(({ id, sort_order }) => this.update(id, { sort_order })),
+    );
+  }
 }

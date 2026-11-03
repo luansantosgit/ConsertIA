@@ -8,7 +8,6 @@ import {
   SolidFinanceiroIcon,
   SolidAgendaIcon,
   SolidRelatoriosIcon,
-  SolidTreinamentoIcon,
   SolidAgenteIaIcon,
   SolidConfiguracoesIcon,
 } from '@/components/SolidNavIcons';
@@ -41,7 +40,7 @@ export const navItems: NavItem[] = [
   },
   { icon: SolidAgendaIcon, label: 'Agenda', path: '/agenda', perm: 'agenda' },
   { icon: SolidRelatoriosIcon, label: 'Relatórios', path: '/relatorios', perm: 'relatorios' },
-  { icon: SolidTreinamentoIcon, label: 'Treinamento', path: '/treinamento', perm: 'treinamento' },
+  // Treinamento NÃO entra no menu: o acesso fica no chip do usuário (rodapé da sidebar)
   { icon: SolidAgenteIaIcon, label: 'Agente de IA', path: '/agente-ia', perm: 'agente-ia' },
   { icon: SolidConfiguracoesIcon, label: 'Configurações', path: '/configuracoes', perm: 'configuracoes' },
 ];

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { TrainingVideoRepository, type TrainingVideoInput } from '@/repositories/training-video.repository';
 import { removeTrainingFile } from '@/lib/training-upload';
+import { reorderById, sortOrdersFor, sortVideos } from '@/superadmin/training/reorder';
 import type { TrainingVideo } from '@/types';
 
 const repo = new TrainingVideoRepository();
@@ -14,7 +15,7 @@ export function useTraining() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setVideos(await repo.getAll());
+      setVideos(sortVideos(await repo.getAll()));
     } finally {
       setLoading(false);
     }
@@ -50,5 +51,14 @@ export function useTraining() {
     await load();
   };
 
-  return { videos, loading, saving, reload: load, save, remove };
+  /** Reordena por drag & drop: move `fromId` para a posição de `toId`. */
+  const reorder = async (fromId: string, toId: string) => {
+    const next = reorderById(videos, fromId, toId);
+    if (next === videos) return;
+    setVideos(next);
+    await repo.reorder(sortOrdersFor(next));
+    await load();
+  };
+
+  return { videos, loading, saving, reload: load, save, remove, reorder };
 }

@@ -1,57 +1,30 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Edit, Trash2, Plus, RefreshCw, GraduationCap } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search, X, RefreshCw, GraduationCap, Plus } from 'lucide-react';
 import { useTraining } from '@/superadmin/training/useTraining';
 import { TrainingFormModal } from '@/superadmin/training/TrainingFormModal';
+import { TrainingListRow } from '@/superadmin/training/TrainingListRow';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import EmptyState from '@/components/EmptyState';
 import { SkeletonLine } from '@/components/Skeleton';
-import { detectVideoSource, parseYouTubeId, youtubeThumbUrl } from '@/lib/training-video';
+import { filterVideos } from '@/lib/training-filter';
 import type { TrainingVideo } from '@/types';
 
-const Thumb: React.FC<{ video: TrainingVideo }> = ({ video }) => {
-  const id = detectVideoSource(video.url) === 'youtube' ? parseYouTubeId(video.url) : null;
-  return (
-    <div style={{ width: 96, height: 54, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: 'linear-gradient(135deg, var(--primary), #8b5cf6)' }}>
-      {video.thumbnail_url ? (
-        <img src={video.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      ) : id ? (
-        <img src={youtubeThumbUrl(id)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      ) : null}
-    </div>
-  );
-};
-
-const Row: React.FC<{ video: TrainingVideo; onEdit: (v: TrainingVideo) => void; onDelete: (v: TrainingVideo) => void }> =
-({ video, onEdit, onDelete }) => (
-  <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 12 }}>
-    <Thumb video={video} />
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{video.title}</span>
-        <span className="badge badge-secondary">{video.topic}</span>
-        {!video.active && <span className="badge badge-danger">Inativo</span>}
-      </div>
-      <p style={{ margin: '4px 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {video.description || (video.source === 'youtube' ? 'YouTube' : 'Arquivo do Storage')} · ordem {video.sort_order}
-      </p>
-    </div>
-    <div style={{ display: 'flex', gap: 6 }}>
-      <button className="btn btn-ghost btn-sm" onClick={() => onEdit(video)} title="Editar"><Edit size={15} /></button>
-      <button className="btn btn-ghost btn-sm" onClick={() => onDelete(video)} title="Excluir" style={{ color: 'var(--danger)' }}><Trash2 size={15} /></button>
-    </div>
-  </div>
-);
-
-/** Painel superadmin: CRUD dos vídeos do portal de treinamento. */
+/** Painel superadmin: busca, reordenação por drag & drop e CRUD dos vídeos. */
 export const SuperAdminTreinamento: React.FC = () => {
-  const { videos, loading, saving, reload, save, remove } = useTraining();
+  const { videos, loading, saving, reload, save, remove, reorder } = useTraining();
+  const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TrainingVideo | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<TrainingVideo | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   useEffect(() => { reload(); }, [reload]);
+
+  const visible = useMemo(() => filterVideos(videos, search), [videos, search]);
+  const searching = search.trim().length > 0;
 
   const submit = useCallback(async (input: Parameters<typeof save>[0], id?: string, old?: TrainingVideo) => {
     const ok = await save(input, id, old);
@@ -59,7 +32,14 @@ export const SuperAdminTreinamento: React.FC = () => {
     return ok;
   }, [save]);
 
-  const topics = videos.map((v) => v.topic);
+  const handleDrop = async (targetId: string, sourceId: string) => {
+    const source = sourceId || dragId;
+    setDragId(null);
+    setOverId(null);
+    if (!source || source === targetId) return;
+    await reorder(source, targetId);
+    setFeedback('Ordem atualizada ✓');
+  };
 
   const confirmDelete = async () => {
     if (!confirmTarget) return;
@@ -80,7 +60,21 @@ export const SuperAdminTreinamento: React.FC = () => {
           <h2 className="page-title">Treinamento</h2>
           <p className="page-subtitle">Vídeos que todos os usuários veem em /treinamento</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div className="search-wrap" style={{ minWidth: 220 }}>
+            <Search size={15} style={{ flexShrink: 0 }} />
+            <input
+              placeholder="Buscar vídeos..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Buscar vídeos"
+            />
+            {searching && (
+              <button className="btn btn-ghost" aria-label="Limpar busca" onClick={() => setSearch('')} style={{ padding: 4, borderRadius: '50%' }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
           <button className="btn btn-secondary btn-sm" onClick={reload} title="Atualizar">
             <RefreshCw size={14} /> Atualizar
           </button>
@@ -104,13 +98,34 @@ export const SuperAdminTreinamento: React.FC = () => {
           actionLabel="Novo vídeo"
           onAction={() => { setEditing(null); setFormOpen(true); }}
         />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="Nenhum vídeo encontrado"
+          description={`Nada para "${search.trim()}". Tente outro termo.`}
+          actionLabel="Limpar busca"
+          onAction={() => setSearch('')}
+        />
       ) : (
         <>
           <p style={{ margin: '0 0 10px', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            {videos.length} vídeo(s) · {new Set(topics).size} tópico(s)
+            {visible.length} vídeo(s) · {new Set(videos.map((v) => v.topic)).size} tópico(s) · arraste para reordenar
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {videos.map((v) => <Row key={v.id} video={v} onEdit={(video) => { setEditing(video); setFormOpen(true); }} onDelete={setConfirmTarget} />)}
+            {visible.map((v) => (
+              <TrainingListRow
+                key={v.id}
+                video={v}
+                dragging={dragId === v.id}
+                over={overId === v.id && dragId !== v.id}
+                onEdit={(video) => { setEditing(video); setFormOpen(true); }}
+                onDelete={setConfirmTarget}
+                onDragStart={setDragId}
+                onDragEnd={() => { setDragId(null); setOverId(null); }}
+                onDragOver={setOverId}
+                onDrop={handleDrop}
+              />
+            ))}
           </div>
         </>
       )}
@@ -118,7 +133,7 @@ export const SuperAdminTreinamento: React.FC = () => {
       <TrainingFormModal
         isOpen={formOpen}
         video={editing}
-        topics={topics}
+        topics={videos.map((v) => v.topic)}
         onSubmit={submit}
         onClose={() => setFormOpen(false)}
       />
