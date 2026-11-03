@@ -136,6 +136,17 @@ html[data-theme='dark'] {
 
 /* Escopo forçado claro (ex.: wizard público /comece-agora sempre light) */
 .theme-light {
+  /* Sem isso o `color` do body (tema escuro) é herdado pelo wizard e os
+     títulos ficam quase brancos no card branco — ilegíveis no mobile */
+  color: var(--text-primary);
+  /* `color-scheme` escuro faz o UA pintar botões/inputs com `buttontext`
+     (branco) — invisível no card branco do wizard */
+  color-scheme: light;
+  /* A marca é calculada pelo ThemeStore para o tema escuro; no escopo claro
+     voltamos para a marca pura (texto) e o fundo translúcido do tema claro */
+  --primary-text: var(--primary);
+  --primary-light: color-mix(in srgb, var(--primary) 12%, transparent);
+  --primary-ring: color-mix(in srgb, var(--primary) 25%, transparent);
   --sidebar-bg: #ffffff;
   --sidebar-border: #eef0f6;
   --sidebar-icon: #9ca3af;

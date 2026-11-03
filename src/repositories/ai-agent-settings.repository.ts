@@ -25,6 +25,8 @@ const DEFAULTS: AiAgentSettings = {
   respond_in_groups: false,
   openrouter_model: '',
   own_api_key: undefined,
+  // Como o agente se apresenta (Issue #95): amigável por padrão
+  presentation_style: 'amigavel',
   created_at: '',
   updated_at: '',
 };

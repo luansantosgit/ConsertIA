@@ -6,14 +6,18 @@ import { StepWelcome } from './StepWelcome';
 import { StepCompanyData } from './StepCompanyData';
 import { StepPlanChoice } from './StepPlanChoice';
 import { StepWhatsapp } from './StepWhatsapp';
+import { StepAgentSetup } from './StepAgentSetup';
 import { StepPayment } from './StepPayment';
 import { StepSuccess } from './StepSuccess';
 import { SupportBubble } from './SupportBubble';
+import type { AgentSetupConfig } from './onboarding.repository';
 
 const TOKEN_KEY = 'deeperia-onboarding-token';
-type Step = 'welcome' | 'data' | 'plan' | 'whatsapp' | 'payment' | 'success';
+type Step = 'welcome' | 'data' | 'plan' | 'agent' | 'whatsapp' | 'payment' | 'success';
 
-const STEP_ORDER: Step[] = ['welcome', 'data', 'plan', 'whatsapp', 'payment', 'success'];
+/** Ordem das etapas: o lead personaliza o agente ANTES de conectar o WhatsApp */
+const STEP_ORDER: Step[] = ['welcome', 'data', 'plan', 'agent', 'whatsapp', 'payment', 'success'];
+const STEP_LABELS = ['Dados', 'Plano', 'Agente', 'WhatsApp', 'Pagamento'];
 const repo = new OnboardingRepository();
 
 const fmtDateTime = (iso: string | null) => {
@@ -31,6 +35,7 @@ export const OnboardingPage: React.FC = () => {
   const [expiredPayment, setExpiredPayment] = useState(false);
   const [credentials, setCredentials] = useState<OnboardingCredentials | null>(null);
   const [companyName, setCompanyName] = useState('');
+  const [agentConfig, setAgentConfig] = useState<Partial<AgentSetupConfig> | null>(null);
   const [methods, setMethods] = useState<BillingMethod[]>([]);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -70,6 +75,7 @@ export const OnboardingPage: React.FC = () => {
         setToken(saved);
         setCompanyName(res.company_name ?? '');
         setExpiresAt(res.expires_at ?? null);
+        setAgentConfig(res.agent_config ?? null);
         if (res.status === 'paid' && res.credentials) {
           setCredentials(res.credentials);
           setStep('success');
@@ -79,10 +85,12 @@ export const OnboardingPage: React.FC = () => {
           setStep('payment');
         } else if (res.status === 'connected') {
           setPayment(res.payment);
-          setStep('payment');
+          // Sessao antiga (sem a etapa do agente): volta pra etapa do agente
+          setStep(res.agent_configured ? 'payment' : 'agent');
         } else if (res.plan) {
           setPlan(res.plan);
-          setStep('whatsapp');
+          // Agente ja configurado? vai pro WhatsApp; senao personaliza o agente
+          setStep(res.agent_configured ? 'whatsapp' : 'agent');
         } else {
           // Dados enviados, plano ainda não escolhido
           setStep('plan');
@@ -98,7 +106,7 @@ export const OnboardingPage: React.FC = () => {
   const onPlanChosen = async (p: OnboardingPlan, t: string) => {
     await repo.setPlan(t, p.id);
     setPlan(p);
-    setStep('whatsapp');
+    setStep('agent');
   };
 
   const onDataDone = (t: string, sessionExpiresAt?: string) => {
@@ -135,7 +143,7 @@ export const OnboardingPage: React.FC = () => {
       <OnboardingShell>
       {showProgress && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
-          {['Dados', 'Plano', 'WhatsApp', 'Pagamento'].map((label, i) => {
+          {STEP_LABELS.map((label, i) => {
             const idx = i + 1;
             const active = progress >= idx;
             return (
@@ -166,6 +174,14 @@ export const OnboardingPage: React.FC = () => {
           onBack={() => setStep('data')}
         />
       )}
+      {step === 'agent' && token && (
+        <StepAgentSetup
+          token={token}
+          initial={agentConfig ?? undefined}
+          onDone={() => setStep('whatsapp')}
+          onBack={() => setStep('plan')}
+        />
+      )}
       {step === 'whatsapp' && token && (
         <StepWhatsapp
           token={token}
@@ -173,7 +189,7 @@ export const OnboardingPage: React.FC = () => {
             setStep('payment');
             if (wantsSync) startHistorySync(token);
           }}
-          onBack={() => setStep('plan')}
+          onBack={() => setStep('agent')}
         />
       )}
       {step === 'payment' && token && (

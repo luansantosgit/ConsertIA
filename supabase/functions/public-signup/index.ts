@@ -5,6 +5,9 @@
 // Ações (POST { action, token, ... }):
 //   plans          — lista planos ativos
 //   start          — cria tenant (inativo) + sessão com dados reais
+//   set_plan       — escolhe o plano
+//   set_agent      — etapa "Configure seu agente de IA" (nome, tom,
+//                    saudação, agendamento e OS automáticos)
 //   connect        — cria instância Uazapi (token global) + QR Code
 //   poll_connection— status da conexão WhatsApp
 //   create_payment — cobrança Asaas do plano escolhido
@@ -20,6 +23,7 @@ import {
   purgeExpiredOnboardings,
   type OnboardingSession,
 } from "../_shared/onboarding.ts";
+import { normalizePresentationStyle } from "../_shared/ai-defaults.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -204,6 +208,15 @@ serve(async (req) => {
         payment,
         expires_at: session.expires_at,
         company_name: session.company_name,
+        // Etapa do agente: config ja salva (permite retomar depois)
+        agent_configured: Boolean(session.agent_name),
+        agent_config: {
+          agent_name: session.agent_name ?? "Assistente",
+          agent_presentation: normalizePresentationStyle(session.agent_presentation),
+          agent_greeting: session.agent_greeting !== false,
+          agent_auto_schedule: session.agent_auto_schedule !== false,
+          agent_auto_os: session.agent_auto_os !== false,
+        },
         credentials: session.status === "paid"
           ? { email: session.email, temp_password: session.temp_password }
           : null,
@@ -326,6 +339,20 @@ serve(async (req) => {
         await admin.from("tenants").update({ plan_id: plan.id }).eq("id", session.tenant_id);
       }
       return json({ plan: { id: plan.id, name: plan.name, price: Number(plan.price) } });
+    }
+
+    // ── Etapa "Configure seu agente de IA" (após conectar o WhatsApp) ──
+    if (action === "set_agent") {
+      const agentName = String(body.agent_name ?? "").trim().slice(0, 40) || "Assistente";
+      const patch = {
+        agent_name: agentName,
+        agent_presentation: normalizePresentationStyle(body.agent_presentation),
+        agent_greeting: body.agent_greeting !== false,
+        agent_auto_schedule: body.agent_auto_schedule !== false,
+        agent_auto_os: body.agent_auto_os !== false,
+      };
+      await admin.from("onboarding_sessions").update(patch).eq("id", session.id);
+      return json({ ok: true, agent_config: patch });
     }
 
     // ── Conectar WhatsApp (instância com token global) ──

@@ -25,6 +25,18 @@ export interface OnboardingCredentials {
 
 export type BillingMethod = 'PIX' | 'BOLETO' | 'CREDIT_CARD';
 
+/** Como o agente se apresenta (Issue #95). */
+export type AgentPresentation = 'amigavel' | 'formal' | 'tecnico' | 'proximo';
+
+/** Config do agente escolhida na etapa "Configure seu agente de IA". */
+export interface AgentSetupConfig {
+  agent_name: string;
+  agent_presentation: AgentPresentation;
+  agent_greeting: boolean;
+  agent_auto_schedule: boolean;
+  agent_auto_os: boolean;
+}
+
 // invoke não devolve corpo em erro HTTP; lê do error.context
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('public-signup', { body });
@@ -66,6 +78,11 @@ export class OnboardingRepository {
     return call<{ qr_code: string | null }>({ action: 'connect', token });
   }
 
+  /** Etapa "Configure seu agente de IA" (nome, tom e automações). */
+  setAgent(token: string, config: AgentSetupConfig) {
+    return call<{ ok: boolean }>({ action: 'set_agent', token, ...config });
+  }
+
   pollConnection(token: string) {
     return call<{ connected: boolean }>({ action: 'poll_connection', token });
   }
@@ -101,6 +118,8 @@ export class OnboardingRepository {
       payment: OnboardingPayment | null;
       expires_at: string;
       company_name: string;
+      agent_configured?: boolean;
+      agent_config?: AgentSetupConfig;
       credentials: OnboardingCredentials | null;
     }>({ action: 'status', token });
   }

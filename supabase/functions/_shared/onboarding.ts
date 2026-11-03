@@ -35,6 +35,12 @@ export interface OnboardingSession {
   status: string;
   temp_password: string | null;
   expires_at: string;
+  // Config do agente escolhida na etapa "Configure seu agente de IA"
+  agent_name?: string | null;
+  agent_presentation?: string | null;
+  agent_greeting?: boolean | null;
+  agent_auto_schedule?: boolean | null;
+  agent_auto_os?: boolean | null;
 }
 
 // Planos padrão da IA para o agente responder de imediato
@@ -105,7 +111,13 @@ export async function finalizeOnboarding(
   }
 
   // 3. IA pronta para responder no canal conectado
-  await ensureAiDefaults(admin, session.tenant_id);
+  await ensureAiDefaults(admin, session.tenant_id, {
+    agent_name: session.agent_name,
+    agent_presentation: session.agent_presentation,
+    agent_greeting: session.agent_greeting,
+    agent_auto_schedule: session.agent_auto_schedule,
+    agent_auto_os: session.agent_auto_os,
+  });
   if (session.connection_id) {
     await admin
       .from("connections")

@@ -369,9 +369,14 @@ export interface AiAgentSettings {
   respond_in_groups: boolean;
   openrouter_model: string;
   own_api_key?: string;
+  /** Como o agente se apresenta (Issue #95) */
+  presentation_style?: AgentPresentationStyle;
   created_at: string;
   updated_at: string;
 }
+
+/** Estilos de apresentação do agente (Issue #95). */
+export type AgentPresentationStyle = 'amigavel' | 'formal' | 'tecnico' | 'proximo';
 
 export interface AiQuoteSettings {
   id: string;
