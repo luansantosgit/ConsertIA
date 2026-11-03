@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { AgentPresentationStyle } from '@/lib/agent-presentation';
 
 export interface OnboardingPlan {
   id: string;
@@ -6,6 +7,8 @@ export interface OnboardingPlan {
   price: number;
   features: string[];
   featured: boolean;
+  /** Cota de tokens de IA do plano (0 = ilimitado) — Issue #98 */
+  ai_token_limit?: number;
 }
 
 export interface OnboardingPayment {
@@ -25,8 +28,8 @@ export interface OnboardingCredentials {
 
 export type BillingMethod = 'PIX' | 'BOLETO' | 'CREDIT_CARD';
 
-/** Como o agente se apresenta (Issue #95). */
-export type AgentPresentation = 'amigavel' | 'formal' | 'tecnico' | 'proximo';
+/** Como o agente se apresenta (fonte única: @/lib/agent-presentation). */
+export type AgentPresentation = AgentPresentationStyle;
 
 /** Config do agente escolhida na etapa "Configure seu agente de IA". */
 export interface AgentSetupConfig {

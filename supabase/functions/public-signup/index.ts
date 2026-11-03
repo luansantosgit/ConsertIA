@@ -158,7 +158,7 @@ serve(async (req) => {
     if (action === "plans") {
       const { data } = await admin
         .from("plans")
-        .select("id, name, price, features, featured")
+        .select("id, name, price, features, featured, ai_token_limit")
         .eq("active", true)
         .order("price", { ascending: true });
       // Formas de pagamento do wizard: configuracao propria do wizard,

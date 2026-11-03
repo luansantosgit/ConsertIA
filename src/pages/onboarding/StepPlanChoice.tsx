@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { OnboardingRepository, type OnboardingPlan, type BillingMethod } from './onboarding.repository';
 import { fmtBRL } from './masks';
 
 const repo = new OnboardingRepository();
+
+/** Texto de features que fala de tokens sai da lista: a cota real
+ *  (plans.ai_token_limit) é exibida em destaque (Issue #98). */
+const withoutTokenCopy = (features: string[]) =>
+  features.filter(f => !/token/i.test(f));
+
+const quotaLabel = (plan: OnboardingPlan): string => {
+  const limit = plan.ai_token_limit;
+  if (limit === undefined) return '';
+  if (limit <= 0) return 'Tokens de IA ilimitados';
+  return `${limit.toLocaleString('pt-BR')} tokens de IA/mês`;
+};
 
 export const StepPlanChoice: React.FC<{
   token: string;
@@ -52,8 +64,8 @@ export const StepPlanChoice: React.FC<{
             }}
             className="card"
             style={{
-              textAlign: 'left', cursor: 'pointer', padding: 18,
-              display: 'flex', flexDirection: 'column', gap: 10,
+              textAlign: 'left', cursor: 'pointer', padding: 14,
+              display: 'flex', flexDirection: 'column', gap: 8,
               borderColor: plan.featured ? 'var(--primary-text)' : 'var(--border)',
               borderWidth: plan.featured ? 1.5 : 1,
               background: plan.featured ? 'var(--primary-light)' : '#fff',
@@ -72,11 +84,23 @@ export const StepPlanChoice: React.FC<{
               {fmtBRL(plan.price)}
               <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-muted)' }}>/mês</span>
             </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {plan.features.slice(0, 5).map((f: string) => (
-                <li key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  <Check size={14} color="var(--primary-text)" style={{ flexShrink: 0, marginTop: 2 }} />
-                  {f}
+            {quotaLabel(plan) && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)',
+              }}>
+                <Sparkles size={13} color="var(--primary-text)" style={{ flexShrink: 0 }} />
+                {quotaLabel(plan)}
+              </div>
+            )}
+            <ul style={{
+              listStyle: 'none', padding: 0, margin: 0,
+              display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '4px 10px',
+            }}>
+              {withoutTokenCopy(plan.features).slice(0, 6).map((f: string) => (
+                <li key={f} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                  <Check size={13} color="var(--primary-text)" style={{ flexShrink: 0, marginTop: 3 }} />
+                  <span style={{ minWidth: 0 }}>{f}</span>
                 </li>
               ))}
             </ul>

@@ -15,6 +15,7 @@ import { IntegrationsTab } from './IntegrationsTab';
 import { TokenQuotaAlert } from './TokenQuotaAlert';
 import { LogsTab } from './LogsTab';
 import { useTranslation } from '@/hooks/useTranslation';
+import { DEFAULT_AGENT_PRESENTATION } from '@/lib/agent-presentation';
 
 const NAV: NavItem[] = [
   { key: 'personalidade', label: 'Personalidade', icon: Sparkles },
@@ -102,7 +103,9 @@ export const AiSettings: React.FC = () => {
             <ConfigTab
               agentName={h.agent?.agent_name ?? ''}
               agentDesc={h.agentDesc}
-              onSave={(agentName, agentDesc) => h.savePersonality(agentName, agentDesc)}
+              presentationStyle={h.agent?.presentation_style ?? DEFAULT_AGENT_PRESENTATION}
+              onSave={(agentName, agentDesc, presentationStyle) =>
+                h.savePersonality(agentName, agentDesc, presentationStyle)}
               saving={h.saving}
               saved={h.saved}
             />

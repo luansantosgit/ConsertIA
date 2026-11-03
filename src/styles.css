@@ -1617,7 +1617,7 @@ tbody td { padding: 13px 16px; font-size: 0.875rem; color: var(--text-primary); 
 @media (max-width: 480px) {
   .onb-shell { padding: 12px; align-items: flex-start; }
 
-  .onb-card { padding: 20px 16px; border-radius: 16px; }
+  .onb-card { padding: 16px 14px; border-radius: 16px; }
 
   .onb-hero-icon {
     width: 56px;

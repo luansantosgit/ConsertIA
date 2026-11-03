@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
-import { OnboardingRepository, type AgentPresentation, type AgentSetupConfig } from './onboarding.repository';
+import { OnboardingRepository, type AgentSetupConfig } from './onboarding.repository';
+import { AGENT_PRESENTATIONS, type AgentPresentationStyle } from '@/lib/agent-presentation';
 
 const repo = new OnboardingRepository();
-
-const PRESENTATIONS: { id: AgentPresentation; label: string; hint: string }[] = [
-  { id: 'amigavel', label: 'Amigável', hint: 'simpática e acolhedora, como um colega que gosta de ajudar' },
-  { id: 'formal', label: 'Formal', hint: 'cordial e profissional, tratando o cliente por você' },
-  { id: 'tecnico', label: 'Técnica', hint: 'objetiva e clara, focada em resolver o problema' },
-  { id: 'proximo', label: 'Próxima', hint: 'direta e sem enrolação, como uma conversa de balcão' },
-];
 
 const AUTOMATIONS: {
   key: 'agent_greeting' | 'agent_auto_schedule' | 'agent_auto_os';
@@ -19,17 +13,17 @@ const AUTOMATIONS: {
   {
     key: 'agent_greeting',
     label: 'Recepcionar com "bom dia, boa tarde ou boa noite"',
-    hint: 'O agente cumprimenta o cliente conforme o horário do dia.',
+    hint: 'Cumprimenta o cliente conforme o horário do dia.',
   },
   {
     key: 'agent_auto_schedule',
     label: 'Agendar appointments automaticamente',
-    hint: 'O agente fecha a visita na agenda assim que o cliente confirma a data.',
+    hint: 'Fecha a visita na agenda quando o cliente confirma a data.',
   },
   {
     key: 'agent_auto_os',
     label: 'Gerar orçamentos e OS automaticamente',
-    hint: 'O agente abre a ordem de serviço depois do orçamento aprovado.',
+    hint: 'Abre a ordem de serviço depois do orçamento aprovado.',
   },
 ];
 
@@ -37,6 +31,9 @@ const AUTOMATIONS: {
  * Etapa "Configure seu agente de IA" do wizard: o lead personaliza o
  * agente antes de pagar. As escolhas vao para a sessao de onboarding e
  * sao aplicadas no ai_agent_settings quando o cadastro e finalizado.
+ *
+ * Layout compacto (Issue #96): estilos em 2 colunas e blocos enxutos
+ * para a etapa caber na tela do mobile sem scroll.
  */
 export const StepAgentSetup: React.FC<{
   token: string;
@@ -45,7 +42,7 @@ export const StepAgentSetup: React.FC<{
   onBack: () => void;
 }> = ({ token, initial, onDone, onBack }) => {
   const [name, setName] = useState(initial?.agent_name ?? 'Assistente');
-  const [presentation, setPresentation] = useState<AgentPresentation>(
+  const [presentation, setPresentation] = useState<AgentPresentationStyle>(
     initial?.agent_presentation ?? 'amigavel',
   );
   const [automations, setAutomations] = useState<Record<string, boolean>>({
@@ -79,19 +76,22 @@ export const StepAgentSetup: React.FC<{
   };
 
   return (
-    <div>
-      <h2 style={{ fontSize: '1.375rem', fontWeight: 700, margin: '0 0 6px' }}>
-        Configure seu agente de IA
-      </h2>
-      <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', margin: '0 0 20px' }}>
-        Dê um toque pessoal: seu agente vai atender seus clientes no WhatsApp com essa cara.
-      </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 2px' }}>
+          Configure seu agente de IA
+        </h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
+          Dê um toque pessoal no seu agente.
+        </p>
+      </div>
 
       <div className="form-group">
         <label className="form-label" htmlFor="agent-name">Nome do agente</label>
         <input
           id="agent-name"
           className="input"
+          style={{ padding: '8px 12px' }}
           value={name}
           maxLength={40}
           placeholder="Ex.: Ana, Assistente Virtual"
@@ -101,8 +101,8 @@ export const StepAgentSetup: React.FC<{
 
       <div className="form-group">
         <span className="form-label">Como ela vai se apresentar</span>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
-          {PRESENTATIONS.map(option => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+          {AGENT_PRESENTATIONS.map(option => {
             const selected = presentation === option.id;
             return (
               <button
@@ -112,18 +112,20 @@ export const StepAgentSetup: React.FC<{
                 aria-pressed={selected}
                 className="card"
                 style={{
-                  textAlign: 'left', cursor: 'pointer', padding: 14,
-                  display: 'flex', flexDirection: 'column', gap: 6,
+                  textAlign: 'left', cursor: 'pointer', padding: '8px 10px',
+                  display: 'flex', flexDirection: 'column', gap: 2,
                   borderColor: selected ? 'var(--primary-text)' : 'var(--border)',
                   borderWidth: selected ? 1.5 : 1,
                   background: selected ? 'var(--primary-light)' : '#fff',
                 }}
               >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.9375rem' }}>
-                  {selected && <Check size={14} color="var(--primary-text)" />}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 700, fontSize: '0.8125rem' }}>
+                  {selected && <Check size={12} color="var(--primary-text)" />}
                   {option.label}
                 </span>
-                <span style={{ fontSize: '0.8125rem', color: selected ? 'var(--text-secondary)' : 'var(--text-muted)' }}>{option.hint}</span>
+                <span style={{ fontSize: '0.6875rem', lineHeight: 1.35, color: selected ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                  {option.hint}
+                </span>
               </button>
             );
           })}
@@ -132,13 +134,13 @@ export const StepAgentSetup: React.FC<{
 
       <div className="form-group">
         <span className="form-label">O que o agente faz sozinho</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {AUTOMATIONS.map(item => (
             <label
               key={item.key}
               style={{
-                display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px',
-                border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer',
+                display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 10px',
+                border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer',
                 background: 'var(--bg-secondary, transparent)',
               }}
             >
@@ -146,11 +148,11 @@ export const StepAgentSetup: React.FC<{
                 type="checkbox"
                 checked={!!automations[item.key]}
                 onChange={() => toggle(item.key)}
-                style={{ marginTop: 3, width: 16, height: 16, accentColor: 'var(--primary-text)' }}
+                style={{ marginTop: 2, width: 15, height: 15, accentColor: 'var(--primary-text)' }}
               />
               <span>
-                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600 }}>{item.label}</span>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.hint}</span>
+                <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600 }}>{item.label}</span>
+                <span style={{ display: 'block', fontSize: '0.6875rem', lineHeight: 1.35, color: 'var(--text-muted)' }}>{item.hint}</span>
               </span>
             </label>
           ))}
@@ -158,12 +160,12 @@ export const StepAgentSetup: React.FC<{
       </div>
 
       {error && (
-        <p style={{ color: 'var(--danger)', fontSize: '0.8125rem', margin: '0 0 12px' }} role="alert">{error}</p>
+        <p style={{ color: 'var(--danger)', fontSize: '0.8125rem', margin: 0 }} role="alert">{error}</p>
       )}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 10 }}>
         <button className="btn btn-ghost" onClick={onBack} disabled={saving}>Voltar</button>
-        <button className="btn btn-primary" onClick={save} disabled={saving}>
+        <button className="btn btn-primary" style={{ flex: 1 }} onClick={save} disabled={saving}>
           {saving ? 'Salvando...' : 'Salvar e continuar'}
         </button>
       </div>

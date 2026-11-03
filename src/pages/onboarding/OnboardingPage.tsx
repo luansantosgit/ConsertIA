@@ -142,7 +142,7 @@ export const OnboardingPage: React.FC = () => {
     <>
       <OnboardingShell>
       {showProgress && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           {STEP_LABELS.map((label, i) => {
             const idx = i + 1;
             const active = progress >= idx;
