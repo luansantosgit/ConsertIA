@@ -1,11 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Plus, ChevronDown, PanelLeftClose, PanelLeftOpen, AlertTriangle, Bot, Sun, Moon } from 'lucide-react';
+import React from 'react';
+import { Plus, PanelLeftClose, PanelLeftOpen, AlertTriangle, Bot, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useModeStore } from '@/stores/mode.store';
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSubscriptionAlert } from '@/stores/subscription.store';
 import { useAiQuotaAlert } from '@/stores/ai-quota.store';
+import { LanguageSwitcher } from './header/LanguageSwitcher';
+import { TutorialHint } from './header/TutorialHint';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -26,39 +28,19 @@ const pageMeta: Record<string, { title: string; addLabel: string; subtitle?: str
   '/agente-ia':     { title: 'Agente de IA',       addLabel: ''                  },
 };
 
-const LANGS = [
-  { code: 'pt-BR', flag: '🇧🇷', label: 'PT' },
-  { code: 'en',    flag: '🇺🇸', label: 'EN' },
-  { code: 'es',    flag: '🇪🇸', label: 'ES' },
-] as const;
-
 export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggleCollapse }) => {
   const { user } = useAuthStore();
   const location = useLocation();
-  const { language, changeLanguage, t } = useTranslation();
+  const { t } = useTranslation();
   const { hasOverdue } = useSubscriptionAlert();
   const { tokensPaused } = useAiQuotaAlert();
   const { mode, toggleMode } = useModeStore();
-  const [langOpen, setLangOpen] = useState(false);
-  const langRef = useRef<HTMLDivElement>(null);
 
   const meta = pageMeta[location.pathname] ?? { title: location.pathname.replace('/', ''), addLabel: '' };
   const initial = (user?.name || 'A').charAt(0).toUpperCase();
-  const currentLang = LANGS.find(l => l.code === language) ?? LANGS[0];
   // No chat o balão flutuante cobre o input: o alerta sobe para o header
   const showSubscriptionAlert = location.pathname.startsWith('/atendimento') && hasOverdue;
   const showTokensAlert = location.pathname.startsWith('/atendimento') && tokensPaused;
-
-  // Fecha dropdown ao clicar fora
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (langRef.current && !langRef.current.contains(e.target as Node)) {
-        setLangOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   return (
     <header className="header">
@@ -146,68 +128,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, collapsed, onToggle
         </button>
 
         {/* Language switcher */}
-        <div ref={langRef} style={{ position: 'relative' }}>
-          <button
-            className="header-icon-btn"
-            id="lang-switcher-btn"
-            onClick={() => setLangOpen(v => !v)}
-            aria-label="Trocar idioma"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '6px 10px', borderRadius: 8,
-              width: 'auto', fontSize: '0.8125rem', fontWeight: 600,
-              border: '1px solid var(--border)',
-              background: langOpen ? 'var(--input-bg)' : 'transparent',
-            }}
-          >
-            <span style={{ fontSize: '1rem', lineHeight: 1 }}>{currentLang.flag}</span>
-            <span>{currentLang.label}</span>
-            <ChevronDown
-              size={13}
-              style={{ transition: 'transform 0.15s', transform: langOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-            />
-          </button>
+        <LanguageSwitcher />
 
-          {/* Dropdown */}
-          {langOpen && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-              background: 'var(--card-bg)', border: '1px solid var(--border)',
-              borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-              minWidth: 140, overflow: 'hidden', zIndex: 200,
-              animation: 'slideUp 0.15s ease',
-            }}>
-              {LANGS.map(lang => (
-                <button
-                  key={lang.code}
-                  id={`lang-${lang.code}`}
-                  onClick={() => { changeLanguage(lang.code); setLangOpen(false); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    width: '100%', padding: '10px 14px',
-                    border: 'none', background: language === lang.code ? 'var(--primary-light)' : 'transparent',
-                    cursor: 'pointer', fontFamily: 'inherit',
-                    fontSize: '0.875rem', fontWeight: language === lang.code ? 600 : 400,
-                    color: language === lang.code ? 'var(--primary-text)' : 'var(--text-primary)',
-                    textAlign: 'left', transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = 'var(--hover-bg)'; }}
-                  onMouseLeave={e => { if (language !== lang.code) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                >
-                  <span style={{ fontSize: '1.125rem' }}>{lang.flag}</span>
-                  <span>
-                    {lang.code === 'pt-BR' && 'Português (BR)'}
-                    {lang.code === 'en'    && 'English'}
-                    {lang.code === 'es'    && 'Español'}
-                  </span>
-                  {language === lang.code && (
-                    <span style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }} />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Atalho do tutorial (só aparece com conteúdo publicado) */}
+        <TutorialHint />
 
         {/* User avatar */}
         <div

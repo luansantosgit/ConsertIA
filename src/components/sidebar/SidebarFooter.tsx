@@ -1,6 +1,5 @@
 import React from 'react';
-import { GraduationCap, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useTranslation } from '@/hooks/useTranslation';
 import { APP_VERSION_LABEL } from '@/lib/version';
@@ -13,7 +12,6 @@ interface SidebarFooterProps {
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed }) => {
   const { user, logout } = useAuthStore();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const initial = (user?.name || 'A').charAt(0).toUpperCase();
 
   return (
@@ -28,12 +26,11 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed }) => {
         <LogOut size={18} />
         {!collapsed && <span className="sidebar-item-label">{t('Sair')}</span>}
       </button>
-      <button
-        type="button"
-        className="sidebar-user sidebar-user-link"
-        onClick={() => navigate('/treinamento')}
-        title={`${user?.name}\n${user?.tenantName}\n${APP_VERSION_LABEL}\n${t('Treinamento')}`}
-        aria-label={t('Treinamento')}
+      {/* Chip do usuário (identidade + versão). O atalho do tutorial fica
+          no header, ao lado do avatar. */}
+      <div
+        className="sidebar-user"
+        title={`${user?.name}\n${user?.tenantName}\n${APP_VERSION_LABEL}`}
       >
         <div className="sidebar-user-btn">{initial}</div>
         {collapsed ? (
@@ -43,12 +40,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed }) => {
             <span className="sidebar-user-name">{user?.name}</span>
             <span className="sidebar-version-row">
               <span className="sidebar-version">{APP_VERSION_LABEL}</span>
-              <span className="sidebar-user-divider" aria-hidden="true" />
-              <GraduationCap size={14} className="sidebar-user-icon" />
             </span>
           </div>
         )}
-      </button>
+      </div>
     </div>
   );
 };

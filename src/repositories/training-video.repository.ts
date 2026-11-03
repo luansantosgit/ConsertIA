@@ -31,6 +31,19 @@ export class TrainingVideoRepository {
     return data as TrainingVideo[];
   }
 
+  /**
+   * Existe conteúdo publicado? Usado para exibir (ou não) o ícone de
+   * tutorial no header — sem vídeo ativo o atalho fica oculto.
+   */
+  async hasContent(): Promise<boolean> {
+    const { count, error } = await supabase
+      .from(this.tableName)
+      .select('id', { count: 'exact', head: true })
+      .eq('active', true);
+    if (error) return false;
+    return (count ?? 0) > 0;
+  }
+
   /** Lista completa para o painel do superadmin. */
   async getAll(): Promise<TrainingVideo[]> {
     const { data, error } = await supabase
