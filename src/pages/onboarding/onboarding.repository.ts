@@ -51,8 +51,11 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
         Object.assign(payload, await ctx.json());
       } catch { /* mantém fallback */ }
     }
-    const err = new Error(String(payload.error ?? 'request_failed')) as Error & { code?: string };
-    err.code = String(payload.error ?? 'request_failed');
+    const code = String(payload.error ?? 'request_failed');
+    const err = new Error(code) as Error & { code?: string; description?: string };
+    err.code = code;
+    // Descrição legível do backend (ex.: mensagens do Asaas) para a UI
+    if (payload.description) err.description = String(payload.description);
     throw err;
   }
   return data as T;
@@ -121,6 +124,8 @@ export class OnboardingRepository {
       payment: OnboardingPayment | null;
       expires_at: string;
       company_name: string;
+      /** Formas liberadas (retomada da etapa de pagamento após refresh). */
+      enabled_methods?: BillingMethod[];
       agent_configured?: boolean;
       agent_config?: AgentSetupConfig;
       credentials: OnboardingCredentials | null;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { QrCode, FileText, CreditCard, AlertTriangle, ExternalLink, RefreshCw, X } from 'lucide-react';
+import { QrCode, FileText, CreditCard, AlertTriangle, ExternalLink, RefreshCw, RotateCcw, UserCog, X } from 'lucide-react';
 import { OnboardingRepository, type OnboardingPayment, type OnboardingCredentials, type BillingMethod } from './onboarding.repository';
 import { fmtBRL } from './masks';
 
@@ -10,6 +10,17 @@ const ALL_METHODS: Record<BillingMethod, { label: string; icon: React.ComponentT
   PIX: { label: 'Pix', icon: QrCode, hint: 'Aprovação imediata' },
   BOLETO: { label: 'Boleto', icon: FileText, hint: 'Até 2 dias úteis' },
   CREDIT_CARD: { label: 'Cartão', icon: CreditCard, hint: 'Aprovação imediata' },
+};
+
+const METHODS_DISABLED = 'Escolha outra forma de pagamento.';
+
+/** Mensagem acionável por código de erro da cobrança. */
+const PAYMENT_ERRORS: Record<string, string> = {
+  connect_whatsapp_first: 'Conecte seu WhatsApp antes de ativar a assinatura.',
+  asaas_not_configured: 'Pagamento indisponível no momento. Acione o suporte pelo botão do WhatsApp.',
+  asaas_error: 'Falha na cobrança na Asaas. Tente novamente ou acione o suporte.',
+  method_not_enabled: 'Esta forma de pagamento não está liberada. ' + METHODS_DISABLED,
+  missing_cpf_cnpj: 'Sua ficha ficou sem o CPF/CNPJ usado na fatura. Revise seus dados para gerar o Pix.',
 };
 
 const fmtDateTime = (iso: string | null | undefined) => {
@@ -27,9 +38,11 @@ export const StepPayment: React.FC<{
   expiresAt?: string | null;
   onPaid: (credentials: OnboardingCredentials) => void;
   onRequestLeave?: () => void;
+  /** Volver à etapa de dados p/ completar a ficha (ex.: falta CPF/CNPJ). */
+  onReviseData?: () => void;
 }> = ({
   token, amount, payment: initialPayment, expiredFromStart,
-  methods, expiresAt, onPaid, onRequestLeave,
+  methods, expiresAt, onPaid, onRequestLeave, onReviseData,
 }) => {
   const [payment, setPayment] = useState<OnboardingPayment | null>(initialPayment);
   const [pixImage, setPixImage] = useState<string | null>(null);
@@ -37,6 +50,10 @@ export const StepPayment: React.FC<{
   const [seconds, setSeconds] = useState(FIVE_MIN);
   const [expired, setExpired] = useState(!!expiredFromStart);
   const [copied, setCopied] = useState(false);
+  // Estado de erro: nunca deixe o clique ficar "mudo" — mensagem + retry
+  const [errCode, setErrCode] = useState<string | null>(null);
+  const [errDescription, setErrDescription] = useState<string | null>(null);
+  const [lastMethod, setLastMethod] = useState<BillingMethod | null>(null);
   const pollRef = useRef<number | null>(null);
   const expireRef = useRef<number | null>(null);
 
@@ -64,15 +81,27 @@ export const StepPayment: React.FC<{
   const choose = async (method: string) => {
     if (loading) return;
     setLoading(true);
+    setErrCode(null);
+    setErrDescription(null);
+    setLastMethod(method as BillingMethod);
     try {
       const res = await repo.createPayment(token, method);
       setPayment(res.payment);
       if (res.pix_encoded_image) setPixImage(res.pix_encoded_image);
       startPolling();
-    } catch { /* methods enabled guard */ } finally {
+    } catch (err) {
+      const e = err as Error & { code?: string; description?: string };
+      setErrCode(e.code ?? 'request_failed');
+      setErrDescription(e.description ?? null);
+    } finally {
       setLoading(false);
     }
   };
+
+  const retry = () => { if (lastMethod) choose(lastMethod); };
+  const errMessage = PAYMENT_ERRORS[errCode ?? ''] ?? 'Não foi possível gerar a cobrança. Tente novamente.';
+  // Campo do backend tem prioridade (ex.: descrição real do Asaas)
+  const effectiveErrMessage = errCode === 'asaas_error' && errDescription ? errDescription : errMessage;
 
   // Countdown de 5 min → desconecta o canal
   useEffect(() => {
@@ -166,6 +195,30 @@ export const StepPayment: React.FC<{
             <strong> {fmtDateTime(expiresAt) || 'completar 24 horas'}</strong> — após esse prazo
             sua empresa será excluída automaticamente do sistema.
           </p>
+        </div>
+      )}
+
+      {errCode && !payment && (
+        <div style={{
+          display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14,
+          background: '#fef2f2', border: '1.5px solid var(--danger)', borderRadius: 12, marginBottom: 18,
+        }}>
+          <AlertTriangle size={20} color="var(--danger)" style={{ flexShrink: 0 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+              <strong>Não foi possível gerar a cobrança.</strong> {effectiveErrMessage}
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-secondary btn-sm" onClick={retry} disabled={loading}>
+                <RotateCcw size={14} /> Tentar novamente
+              </button>
+              {errCode === 'missing_cpf_cnpj' && onReviseData && (
+                <button className="btn btn-primary btn-sm" onClick={onReviseData}>
+                  <UserCog size={14} /> Revisar meus dados
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

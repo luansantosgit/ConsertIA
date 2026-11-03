@@ -133,6 +133,20 @@ async function asaas(cfg: { token: string; env: string }, path: string, init?: R
   return body;
 }
 
+/** Descrição legível do erro devolvido pelo Asaas (body.errors[]). */
+function asaasErrorDescription(err: {
+  status?: number;
+  body?: { errors?: Array<{ description?: string }> };
+}): string {
+  return (err?.body?.errors ?? []).map((e) => e?.description).filter(Boolean).join(" | ");
+}
+
+/** Formas de pagamento liberadas no wizard (próprias; fallback: globais). */
+async function wizardMethods(admin: any): Promise<string[]> {
+  const cfg = await getAsaas(admin);
+  return cfg.onboardingMethods.length > 0 ? cfg.onboardingMethods : cfg.methods;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -163,11 +177,7 @@ serve(async (req) => {
         .order("price", { ascending: true });
       // Formas de pagamento do wizard: configuracao propria do wizard,
       // com fallback para as formas globais da assinatura
-      const asaasCfg = await getAsaas(admin);
-      const wizardMethods = asaasCfg.onboardingMethods.length > 0
-        ? asaasCfg.onboardingMethods
-        : asaasCfg.methods;
-      return json({ plans: data ?? [], enabled_methods: wizardMethods });
+      return json({ plans: data ?? [], enabled_methods: await wizardMethods(admin) });
     }
 
     // ── WhatsApp de suporte (público) ── alimenta o balão do wizard;
@@ -208,6 +218,9 @@ serve(async (req) => {
         payment,
         expires_at: session.expires_at,
         company_name: session.company_name,
+        // Formas liberadas (mesma regra do plans) — para retomar a etapa
+        // de pagamento com a lista correta após refresh
+        enabled_methods: await wizardMethods(admin),
         // Etapa do agente: config ja salva (permite retomar depois)
         agent_configured: Boolean(session.agent_name),
         agent_config: {
@@ -242,17 +255,45 @@ serve(async (req) => {
       if (whatsapp.length < 10 || whatsapp.length > 13) return json({ error: "invalid_whatsapp" }, 400);
       if (!validCpfCnpj(cpfCnpj)) return json({ error: "invalid_cpf_cnpj" }, 400);
 
-      // Idempotente: sessão ativa do mesmo e-mail → retoma
+      // Idempotente: sessão ativa do mesmo e-mail → retoma ATUALIZANDO os dados.
+      // Sessões antigas/incompletas (ex.: sem CPF) são consertadas aqui — o
+      // pagamento Pix exige cpfCnpj no Asaas, então sem dado a cobrança falha.
       const { data: existing } = await admin
         .from("onboarding_sessions")
-        .select("token, status")
+        .select("id, token, tenant_id")
         .eq("email", email)
         .neq("status", "paid")
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (existing) return json({ token: existing.token, resumed: true });
+      if (existing) {
+        const dataPatch = {
+          lead_name: leadName,
+          company_name: companyName,
+          email,
+          phone,
+          whatsapp,
+          cpf_cnpj: cpfCnpj,
+          address,
+        };
+        await admin.from("onboarding_sessions").update(dataPatch).eq("id", existing.id);
+        if (existing.tenant_id) {
+          await admin.from("tenants").update({
+            name: companyName,
+            admin_email: email,
+          }).eq("id", existing.tenant_id);
+          // Dados reais da empresa nos campos usados pela IA
+          await admin.from("tenant_settings").update({
+            company_name: companyName,
+            cnpj: cpfCnpj,
+            phone,
+            whatsapp,
+            address,
+          }).eq("tenant_id", existing.tenant_id);
+        }
+        return json({ token: existing.token, resumed: true });
+      }
 
       // E-mail já usado em tenant existente → não duplica
       const { data: usedEmail } = await admin
@@ -553,10 +594,17 @@ serve(async (req) => {
       if (!asaasCfg.token) return json({ error: "asaas_not_configured" }, 400);
       const billingType = String(body.billing_type ?? "PIX");
       // Wizard usa as formas próprias do onboarding (fallback: globais)
-      const wizardMethods = asaasCfg.onboardingMethods.length > 0
-        ? asaasCfg.onboardingMethods
-        : asaasCfg.methods;
-      if (!wizardMethods.includes(billingType)) return json({ error: "method_not_enabled" }, 403);
+      const methods = await wizardMethods(admin);
+      if (!methods.includes(billingType)) return json({ error: "method_not_enabled" }, 403);
+
+      // CPF/CNPJ é obrigatório na Asaas para criar a cobrança — sem ele
+      // retornar um erro acionável (o lead revê os dados) em vez de 500 mudo.
+      if (!digits(session.cpf_cnpj)) {
+        return json({
+          error: "missing_cpf_cnpj",
+          description: "Sua ficha ficou sem o CPF/CNPJ usado na fatura. Revise seus dados para gerar o Pix.",
+        }, 400);
+      }
 
       const { data: plan } = await admin
         .from("plans")
@@ -659,8 +707,11 @@ serve(async (req) => {
       try {
         const qr = await asaas(asaasCfg, `/payments/${session.asaas_payment_id}/pixQrCode`);
         return json({ encoded_image: qr.encodedImage ?? null, payload: qr.payload ?? null });
-      } catch {
-        return json({ error: "pix_unavailable" }, 400);
+      } catch (err) {
+        return json({
+          error: "pix_unavailable",
+          description: asaasErrorDescription(err) || "QR Code indisponível — tente novamente em instantes.",
+        }, 400);
       }
     }
 
@@ -728,6 +779,15 @@ serve(async (req) => {
 
     return json({ error: "invalid_action" }, 400);
   } catch (err) {
+    // Erro Asaas ({ status, body.errors }): devolve 400/4xx com a descrição
+    // legível — não deixa virar "500 internal_error" silencioso.
+    const asaasErr = err as { status?: number; body?: { errors?: Array<{ description?: string }> } };
+    if (asaasErr?.body?.errors?.length) {
+      return json({
+        error: "asaas_error",
+        description: asaasErrorDescription(asaasErr) || "Falha na cobrança. Tente outro meio de pagamento.",
+      }, asaasErr.status ?? 400);
+    }
     return json({ error: (err as Error)?.message ?? "internal_error" }, 500);
   }
 });

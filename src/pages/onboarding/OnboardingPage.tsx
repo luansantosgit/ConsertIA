@@ -76,6 +76,10 @@ export const OnboardingPage: React.FC = () => {
         setCompanyName(res.company_name ?? '');
         setExpiresAt(res.expires_at ?? null);
         setAgentConfig(res.agent_config ?? null);
+        // Retomada completa: plano e formas liberadas também são restaurados
+        // (sem isso o pagamento volta com "Valor do plano" e toda forma habilitada)
+        if (res.plan) setPlan(res.plan);
+        if (res.enabled_methods?.length) setMethods(res.enabled_methods);
         if (res.status === 'paid' && res.credentials) {
           setCredentials(res.credentials);
           setStep('success');
@@ -88,7 +92,6 @@ export const OnboardingPage: React.FC = () => {
           // Sessao antiga (sem a etapa do agente): volta pra etapa do agente
           setStep(res.agent_configured ? 'payment' : 'agent');
         } else if (res.plan) {
-          setPlan(res.plan);
           // Agente ja configurado? vai pro WhatsApp; senao personaliza o agente
           setStep(res.agent_configured ? 'whatsapp' : 'agent');
         } else {
@@ -202,6 +205,7 @@ export const OnboardingPage: React.FC = () => {
           expiresAt={expiresAt}
           onPaid={onPaid}
           onRequestLeave={() => setShowLeaveModal(true)}
+          onReviseData={() => setStep('data')}
         />
       )}
       {step === 'success' && credentials && (
