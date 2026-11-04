@@ -14,7 +14,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onOpen }) => (
     onClick={() => onOpen(video)}
     style={{
       width: 218, flexShrink: 0, padding: 0, overflow: 'hidden', cursor: 'pointer',
-      textAlign: 'left', border: '1px solid var(--border)', background: 'var(--card-bg, var(--bg-secondary, #fff))',
+      textAlign: 'left', border: '1px solid var(--border)', background: 'var(--card-bg)',
       transition: 'transform 0.15s, border-color 0.15s',
     }}
     onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}

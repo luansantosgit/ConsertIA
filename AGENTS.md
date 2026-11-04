@@ -141,6 +141,7 @@ Every interface element MUST have:
 - **Badges e inputs**: `badge badge-*`, `input`, `select`, `textarea`, `search-wrap`
 - **Componentes**: reutilizar `ConfirmModal`, `EmptyState`, `ErrorMessage`, `Skeleton*`, modais com `modal-overlay`/`modal`/`modal-header`/`modal-body`/`modal-footer`
 - **Cores e espaçamentos**: variáveis CSS (`var(--primary)`, `var(--border)`, `var(--text-muted)`, `var(--danger)`) — nunca hex hardcoded quando a variável existe
+- **Tokens de superfície (modo dark)**: usar `var(--bg-secondary)` (light `#f8fafc` / dark `#1a1c24`) para zebra de tabela, caixa de destaque e opção selecionada. **NUNCA** escrever fallback claro inline (`var(--bg-secondary, #f8fafc)`) — o fallback vira branco no dark (issue #104). Status coloridos: `--success-bg`/`--success`/`--success-text`, `--danger-bg`, `--info-bg`/`--info-text` (nunca `#f0fdf4`, `#dbeafe` etc. fixos). Contexto intencionalmente claro (QR Code Pix/WhatsApp, botão sobre imagem do hero, wizard público `.theme-light`, checklist público) é a única exceção.
 - **Fluxos**: exclusões usam `ConfirmModal`; listas com filtro usam pills `btn-sm btn-pill`; operações em massa seguem o padrão de seleção com checkbox (ver `Financial.tsx` como referência)
 
 Se um novo padrão for inevitável, primeiro verificar `src/styles.css` e os componentes existentes; se realmente não existir, criar UMA vez em `styles.css`/componente compartilhado e usar dali em diante.

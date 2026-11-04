@@ -76,7 +76,7 @@ export const QuickReplyPicker: React.FC<{
       >
         <div style={{
           width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-          background: '#dbeafe', color: '#1d4ed8',
+          background: 'var(--info-bg)', color: 'var(--info-text)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <FileText size={15} />

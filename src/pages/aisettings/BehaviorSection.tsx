@@ -17,7 +17,7 @@ function Toggle({ label, description, checked, onChange }: {
     <label style={{
       display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px',
       border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer',
-      background: 'var(--bg-secondary, transparent)',
+      background: 'var(--bg-secondary)',
     }}>
       <input
         type="checkbox"

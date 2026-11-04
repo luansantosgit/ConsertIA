@@ -113,7 +113,7 @@ export const QuickReplyEditor: React.FC<{
               {parts.map((part, idx) => (
                 <div key={idx} style={{
                   display: 'flex', flexDirection: 'column', gap: 6,
-                  padding: 10, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary, #f8fafc)',
+                  padding: 10, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-secondary)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <GripVertical size={14} color="var(--text-muted)" />

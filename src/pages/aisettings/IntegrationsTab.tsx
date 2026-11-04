@@ -122,7 +122,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           {usesPlatformToken ? (
             <p style={{
               fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0,
-              padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary, #f5f5f5)',
+              padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
             }}>
               {t('Sua empresa usa o token central da plataforma, gerenciado pelo administrador. Não é necessário configurar nada aqui.')}
@@ -159,7 +159,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         {/* Consumo — global (com limite) ou próprio (sem limite, com custo e saldo) */}
         {!usesPlatformToken ? (
           <div style={{
-            padding: '12px 16px', borderRadius: 10, background: 'var(--bg-secondary, #f8fafc)',
+            padding: '12px 16px', borderRadius: 10, background: 'var(--bg-secondary)',
             border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -188,7 +188,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           <div>
             <label className="form-label">{t('Consumo de tokens este mês (token da plataforma)')}</label>
             <div style={{
-              height: 10, borderRadius: 99, background: 'var(--bg-secondary, #e5e7eb)',
+              height: 10, borderRadius: 99, background: 'var(--progress-track)',
               overflow: 'hidden', border: '1px solid var(--border)',
             }}>
               <div style={{

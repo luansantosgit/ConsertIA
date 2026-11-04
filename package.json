@@ -1,7 +1,7 @@
 {
   "name": "tech-assistant-crm",
   "private": true,
-  "version": "1.0.124",
+  "version": "1.0.125",
   "type": "module",
   "scripts": {
     "dev": "vite",

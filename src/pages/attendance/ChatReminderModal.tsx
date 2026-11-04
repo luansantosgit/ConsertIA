@@ -98,7 +98,7 @@ export const ChatReminderModal: React.FC<{
             <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Fechar"><X size={16} /></button>
           </div>
           <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ padding: '10px 12px', background: 'var(--bg-secondary, #f8fafc)', borderRadius: 10 }}>
+            <div style={{ padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 10 }}>
               <p style={{ fontWeight: 700, fontSize: '0.8125rem', margin: 0 }}>{conversation.contactName}</p>
               <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
                 {conversation.contact_phone}

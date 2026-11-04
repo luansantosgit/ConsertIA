@@ -70,7 +70,7 @@ export const BudgetItemsSection: React.FC<{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '8px 12px',
                 borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none',
-                background: idx % 2 === 0 ? 'transparent' : 'var(--bg-secondary, #f8fafc)',
+                background: idx % 2 === 0 ? 'transparent' : 'var(--bg-secondary)',
               }}
             >
               <span style={{ flex: 1, fontSize: '0.8125rem', color: 'var(--text-primary)' }}>

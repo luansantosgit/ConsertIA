@@ -141,7 +141,7 @@ export const StepAgentSetup: React.FC<{
               style={{
                 display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 10px',
                 border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer',
-                background: 'var(--bg-secondary, transparent)',
+                background: 'var(--bg-secondary)',
               }}
             >
               <input
