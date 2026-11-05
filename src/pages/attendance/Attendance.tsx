@@ -97,7 +97,6 @@ export const Attendance: React.FC = () => {
             onOpenOSModal={() => m.setIsOSModalOpen(true)}
             onViewPdfOS={m.setViewingPdfOS}
             onSendOSCardToChat={m.handleSendOSCardToChat}
-            onSetInputText={m.setInputText}
             onClose={() => m.setIsRightPanelOpen(false)}
             onDelete={() => m.setConfirmDeleteConv({ isOpen: true, convId: m.selected!.id, convName: m.selected!.contactName })}
           />

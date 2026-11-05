@@ -461,6 +461,9 @@ export const resources = {
       'Ativar modo claro': 'Ativar modo claro',
       'Ativar modo escuro': 'Ativar modo escuro',
 
+      // Echo — resposta enviada pelo celular do atendente (Issue #105)
+      'Enviado pelo aparelho': 'Enviado pelo aparelho',
+
       // Nova conversa — busca ao vivo (Issue #85)
       'Número ou nome do cliente': 'Número ou nome do cliente',
       'Digite um contato salvo ou um número novo para começar a conversar': 'Digite um contato salvo ou um número novo para começar a conversar',
@@ -941,6 +944,9 @@ export const resources = {
       'Ativar modo claro': 'Enable light mode',
       'Ativar modo escuro': 'Enable dark mode',
 
+      // Echo — message sent from the attendant's phone (Issue #105)
+      'Enviado pelo aparelho': 'Sent from device',
+
       // New conversation — live search (Issue #85)
       'Número ou nome do cliente': 'Customer number or name',
       'Digite um contato salvo ou um número novo para começar a conversar': 'Type a saved contact or a new number to start chatting',
@@ -1420,6 +1426,9 @@ export const resources = {
       'Buscar na conversa': 'Buscar en la conversación',
       'Ativar modo claro': 'Activar modo claro',
       'Ativar modo escuro': 'Activar modo oscuro',
+
+      // Echo — mensaje enviada desde el teléfono del atendente (Issue #105)
+      'Enviado pelo aparelho': 'Enviado desde el dispositivo',
 
       // Nueva conversación — búsqueda en vivo (Issue #85)
       'Número ou nome do cliente': 'Número o nombre del cliente',

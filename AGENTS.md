@@ -207,7 +207,32 @@ Toda interface nova deve considerar os estados necessários quando aplicável:
 - **Browser → PWA**: `OpenAppGate` (montado no App root) — o app standalone grava `deeperia:installed` (WebAPK compartilha storage com o Chrome no Android); aberto pelo browser em celular, faz UMA tentativa de navegar in-scope (Android abre o WebAPK via intent filters) e, se permanecer, mostra tela "Abrir pelo app instalado" com proposta de continuar no navegador. iOS não permite detectar o PWA instalado — sem redirect lá.
 - **Teste ponta a ponta**: PWA instalado → login → permitir notificações → enviar mensagem de lead → deve aparecer preview na barra + contador no ícone. Sem device, smoke interno: POST em `send-push-notification` com Bearer service_role = `{"ok":true,"sent":N}`.
 
-### 3.3 Portal de Treinamento (`/treinamento`)
+### 3.3 Echo — resposta enviada pelo APARELHO (WhatsApp)
+
+- **Problema**: o webhook `uazapi-webhook` ignorava **todo** `fromMe: true`. Quando o
+  atendente respondia pelo **celular**, a mensagem nunca aparecia no chat do sistema.
+- **Discriminador (fonte única)**: a Uazapi envia `message.wasSentByApi` **somente** quando
+  a mensagem foi enviada pela API (docs.uazapi.com/webhook/messages). Então:
+  - `fromMe: false` → **inbound** (lead)
+  - `fromMe: true` + `wasSentByApi: true` → enviada pela **API** (o sistema já gravou) →
+    **descartar** (dedupe pelo índice único `uq_messages_wa_id`)
+  - `fromMe: true` **sem** `wasSentByApi` → enviada pelo **APARELHO** ("echo") → **entra no chat**
+- **Classificação**: `supabase/functions/_shared/message-origin.ts` → `classifyMessageOrigin()`
+  (função pura, testada em `src/lib/__tests__/message-origin.test.ts`). O webhook consome
+  esse helper — **nunca** reimplementar a regra de origem inline.
+- **Gravação**: `messages.sent_from_device = true` (migration
+  `20261105120000_message_sent_from_device.sql`) + `direction: 'outbound'`,
+  `sender_type: 'attendant'`, `read: true`.
+- **Regras do eco**: NÃO conta como não lida (`p_count_unread: false`), NÃO gera push,
+  NÃO dispara a IA (é mensagem de saída do atendente) e NÃO gera badge no ícone.
+- **Frontend**: `Message.sent_from_device` → `ChatMessage.sentFromDevice` (`toChatMessage`) →
+  rótulo **"Enviado pelo aparelho"** (ícone de celular) no `MessageBubble`, mesmo padrão do
+  "Lembrete". i18n pt/en/es.
+- **Realtime**: `useAttendance.ts` libera o outbound **só** quando `sent_from_device === true`
+  (antes, todo outbound que não fosse da IA era ignorado no canal).
+- **Deploy**: `supabase functions deploy uazapi-webhook --no-verify-jwt` (obrigatório).
+
+### 3.4 Portal de Treinamento (`/treinamento`)
 
 - **Página**: `/treinamento` — portal de vídeos estilo Netflix (hero em destaque + linhas/carrossel por tópico + busca por título/descrição/tópico + player em modal). Aberta a **TODOS os cargos**: a rota fica **fora** do `RequirePermission` e `canAccess()` faz `if (key === 'treinamento') return true;`.
 - **Acesso pelo ícone no header (sem item de menu)**: "Treinamento" **NÃO** aparece no menu da sidebar. O atalho é o **ícone de chapéu no header**, ao lado do avatar (`src/components/header/TutorialHint.tsx`, `#header-training-btn`) → `/treinamento`. O chip da sidebar (`SidebarFooter`) mostra só avatar + nome + versão — **não** é mais link.

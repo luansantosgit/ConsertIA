@@ -332,7 +332,11 @@ export function useAttendance() {
           (payload) => {
             const msg = payload.new as Message;
             const isAiMessage = msg.direction === 'outbound' && msg.sender_type === 'ai';
-            if (msg.direction === 'outbound' && !isAiMessage) return;
+            // Echo (issue #105): mensagem respondida pelo celular do atendente.
+            // É outbound, mas precisa entrar ao vivo no chat com o rótulo
+            // "Enviado pelo aparelho" — por isso não é filtrada aqui.
+            const isDeviceEcho = msg.direction === 'outbound' && msg.sent_from_device === true;
+            if (msg.direction === 'outbound' && !isAiMessage && !isDeviceEcho) return;
           const chatMsg = toChatMessage(msg);
           const activeId = selectedIdRef.current;
 
@@ -352,7 +356,7 @@ export function useAttendance() {
             });
           }
 
-          if (msg.conversation_id === activeId || isAiMessage) {
+          if (msg.conversation_id === activeId || isAiMessage || isDeviceEcho) {
             setChatMessages(prev => {
               const list = (prev[msg.conversation_id] || []).filter(m =>
                 !(isAiMessage && m.id === `optimistic-claim-${msg.conversation_id}`)

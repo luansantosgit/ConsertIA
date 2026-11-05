@@ -34,7 +34,6 @@ export const MobileClientSheet: React.FC<MobileLayoutConfig> = ({ m }) => {
           onOpenOSModal={() => m.setIsOSModalOpen(true)}
           onViewPdfOS={m.setViewingPdfOS}
           onSendOSCardToChat={m.handleSendOSCardToChat}
-          onSetInputText={m.setInputText}
           onClose={close}
           onDelete={() => m.setConfirmDeleteConv({ isOpen: true, convId: selected.id, convName: selected.contactName })}
         />

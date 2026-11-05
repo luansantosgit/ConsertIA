@@ -176,6 +176,8 @@ export interface Message {
   connection_id?: string;
   hybrid_provider?: HybridProvider;
   sender_type?: MessageSenderType | 'reminder';
+  /** Echo (issue #105): mensagem respondida pelo celular do atendente */
+  sent_from_device?: boolean;
   created_at: string;
 }
 

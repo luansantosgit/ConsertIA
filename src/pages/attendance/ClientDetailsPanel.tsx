@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit3, Trash2, Check, X, Zap } from 'lucide-react';
+import { Edit3, Trash2, Check, X } from 'lucide-react';
 import type { OSRow } from '@/components/OSModal';
 import type { ConvRow } from './types';
 import { ClientProfile } from './ClientProfile';
@@ -18,7 +18,6 @@ interface ClientDetailsPanelProps {
   onOpenOSModal: () => void;
   onViewPdfOS: (os: OSRow) => void;
   onSendOSCardToChat: (os: OSRow) => void;
-  onSetInputText: (text: string) => void;
   onClose: () => void;
   onDelete?: () => void;
 }
@@ -35,7 +34,6 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
   onOpenOSModal,
   onViewPdfOS,
   onSendOSCardToChat,
-  onSetInputText,
   onClose,
   onDelete,
 }) => {
@@ -154,39 +152,6 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
         onViewPdfOS={onViewPdfOS}
         onSendOSCardToChat={onSendOSCardToChat}
       />
-
-      <div style={{ background: 'var(--hover-bg)', borderRadius: 10, padding: '12px' }}>
-        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
-          Ações Rápidas de IA
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {[
-            'Gerar orçamento automático',
-            'Notificar cliente via WhatsApp',
-            'Marcar OS como urgente'
-          ].map(action => (
-            <button
-              key={action}
-              onClick={() => onSetInputText(action)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: '0.75rem',
-                padding: '6px 10px',
-                borderRadius: 8,
-                border: '1px solid var(--primary-ring)',
-                background: 'var(--card-bg)',
-                cursor: 'pointer',
-                color: 'var(--primary-text)',
-                textAlign: 'left'
-              }}
-            >
-              <Zap size={11} />{action}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
