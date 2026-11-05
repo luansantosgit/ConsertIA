@@ -205,7 +205,7 @@ export const Schedule: React.FC = () => {
   return (
     <div className="page">
       {/* Tabs: Agenda de Serviços | Lembretes Agendados */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'var(--bg-secondary, #f1f5f9)', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'var(--bg-secondary)', borderRadius: 10, padding: 4 }}>
         {([
           { key: 'agenda' as const, label: 'Agenda de Serviços', icon: Calendar },
           { key: 'reminders' as const, label: 'Lembretes Agendados', icon: Bell },

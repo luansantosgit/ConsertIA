@@ -2,14 +2,20 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth.store';
 import type { AiAgentSettings } from '@/types';
 
+/**
+ * Defaults de um tenant NOVO (ainda sem linha em ai_agent_settings).
+ * O agente nasce ATIVO e perguntando o nome do lead — e o modelo fica
+ * em branco para o select usar o padrao liberado pelo administrador
+ * (sem o aviso de "modelo fora da lista liberada").
+ */
 const DEFAULTS: AiAgentSettings = {
   id: '',
   tenant_id: '',
   agent_name: 'Assistente',
   greeting_enabled: true,
-  ask_name_enabled: false,
+  ask_name_enabled: true,
   typing_simulation: true,
-  active: false,
+  active: true,
   post_handoff_behavior: 'continue',
   handoff_message: 'Um instante, nossos atendentes vão te chamar em breve!',
   transfer_message: 'Um dos especialistas da nossa equipe vai te atender em breve!',
@@ -17,8 +23,10 @@ const DEFAULTS: AiAgentSettings = {
   auto_os_enabled: true,
   auto_schedule_enabled: true,
   respond_in_groups: false,
-  openrouter_model: 'openai/gpt-4o-mini',
+  openrouter_model: '',
   own_api_key: undefined,
+  // Como o agente se apresenta (Issue #95): amigável por padrão
+  presentation_style: 'amigavel',
   created_at: '',
   updated_at: '',
 };

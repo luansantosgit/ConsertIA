@@ -38,7 +38,10 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
     ? OPENROUTER_MODELS.filter(m => allowedModels.includes(m.id))
     : OPENROUTER_MODELS;
   const effectiveDefault = defaultModel && allowedModels.includes(defaultModel) ? defaultModel : allowedModels[0];
-  const isDefaultChoice = restricted && agent?.openrouter_model === effectiveDefault;
+  // Sem modelo salvo (tenant novo) usa o padrao do administrador — e nao
+  // dispara o aviso de "modelo fora da lista liberada".
+  const currentModel = agent?.openrouter_model || effectiveDefault || '';
+  const isDefaultChoice = restricted && currentModel === effectiveDefault;
 
   const revealKey = () => {
     const next = !showKey;
@@ -92,7 +95,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           <label className="form-label">{t('Modelo principal')}</label>
           <select
             className="select"
-            value={agent.openrouter_model}
+            value={currentModel}
             onChange={e => onSave({ openrouter_model: e.target.value })}
           >
             {visibleModels.map(model => (
@@ -107,7 +110,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
               {t('Modelo padrão definido pelo administrador — altere se preferir.')}
             </p>
           )}
-          {restricted && !visibleModels.some(m => m.id === agent.openrouter_model) && effectiveDefault && (
+          {restricted && currentModel && !visibleModels.some(m => m.id === currentModel) && effectiveDefault && (
             <p style={{ fontSize: '0.6875rem', color: 'var(--warning, #b45309)', margin: '4px 0 0' }}>
               {t('Seu modelo atual não está na lista liberada; o padrão do administrador será usado.')}
             </p>
@@ -119,7 +122,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           {usesPlatformToken ? (
             <p style={{
               fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0,
-              padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary, #f5f5f5)',
+              padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
             }}>
               {t('Sua empresa usa o token central da plataforma, gerenciado pelo administrador. Não é necessário configurar nada aqui.')}
@@ -156,7 +159,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         {/* Consumo — global (com limite) ou próprio (sem limite, com custo e saldo) */}
         {!usesPlatformToken ? (
           <div style={{
-            padding: '12px 16px', borderRadius: 10, background: 'var(--bg-secondary, #f8fafc)',
+            padding: '12px 16px', borderRadius: 10, background: 'var(--bg-secondary)',
             border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -185,7 +188,7 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
           <div>
             <label className="form-label">{t('Consumo de tokens este mês (token da plataforma)')}</label>
             <div style={{
-              height: 10, borderRadius: 99, background: 'var(--bg-secondary, #e5e7eb)',
+              height: 10, borderRadius: 99, background: 'var(--progress-track)',
               overflow: 'hidden', border: '1px solid var(--border)',
             }}>
               <div style={{

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { User, Bot, Bell } from 'lucide-react';
+import { User, Bot, Bell, Smartphone } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { OSRow } from '@/components/OSModal';
 import type { ChatMessage, ChatMediaType } from './types';
 import { mediaLabel } from './types';
@@ -44,6 +45,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState('');
+  const { t } = useTranslation();
   const isCustomer = msg.from === 'customer';
   const isMedia = !!msg.mediaType && msg.mediaType !== undefined;
   const showText = !msg.mediaType || (msg.text && msg.text !== mediaLabel(msg.mediaType as ChatMediaType));
@@ -131,6 +133,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
               <Bell size={12} color="var(--warning-text)" />
               <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--warning-text)' }}>Lembrete</span>
+            </div>
+          )}
+          {/* Echo (issue #105): mensagem respondida pelo celular do atendente */}
+          {msg.sentFromDevice && !msg.deleted && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+              <Smartphone
+                size={12}
+                color={msg.from === 'attendant' ? 'rgba(255,255,255,0.85)' : 'var(--text-secondary)'}
+              />
+              <span style={{
+                fontSize: '0.6875rem',
+                fontWeight: 700,
+                color: msg.from === 'attendant' ? 'rgba(255,255,255,0.85)' : 'var(--text-secondary)',
+              }}>
+                {t('Enviado pelo aparelho')}
+              </span>
             </div>
           )}
 

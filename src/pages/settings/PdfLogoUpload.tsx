@@ -109,7 +109,7 @@ export const PdfLogoUpload: React.FC = () => {
             border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             overflow: 'hidden', flexShrink: 0,
-            background: 'var(--bg-secondary, #f8fafc)',
+            background: 'var(--bg-secondary)',
           }}>
             <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Sem logo</span>
           </div>

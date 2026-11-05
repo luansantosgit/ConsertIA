@@ -6,13 +6,18 @@ import { StepWelcome } from './StepWelcome';
 import { StepCompanyData } from './StepCompanyData';
 import { StepPlanChoice } from './StepPlanChoice';
 import { StepWhatsapp } from './StepWhatsapp';
+import { StepAgentSetup } from './StepAgentSetup';
 import { StepPayment } from './StepPayment';
 import { StepSuccess } from './StepSuccess';
+import { SupportBubble } from './SupportBubble';
+import type { AgentSetupConfig } from './onboarding.repository';
 
 const TOKEN_KEY = 'deeperia-onboarding-token';
-type Step = 'welcome' | 'data' | 'plan' | 'whatsapp' | 'payment' | 'success';
+type Step = 'welcome' | 'data' | 'plan' | 'agent' | 'whatsapp' | 'payment' | 'success';
 
-const STEP_ORDER: Step[] = ['welcome', 'data', 'plan', 'whatsapp', 'payment', 'success'];
+/** Ordem das etapas: o lead personaliza o agente ANTES de conectar o WhatsApp */
+const STEP_ORDER: Step[] = ['welcome', 'data', 'plan', 'agent', 'whatsapp', 'payment', 'success'];
+const STEP_LABELS = ['Dados', 'Plano', 'Agente', 'WhatsApp', 'Pagamento'];
 const repo = new OnboardingRepository();
 
 const fmtDateTime = (iso: string | null) => {
@@ -30,6 +35,7 @@ export const OnboardingPage: React.FC = () => {
   const [expiredPayment, setExpiredPayment] = useState(false);
   const [credentials, setCredentials] = useState<OnboardingCredentials | null>(null);
   const [companyName, setCompanyName] = useState('');
+  const [agentConfig, setAgentConfig] = useState<Partial<AgentSetupConfig> | null>(null);
   const [methods, setMethods] = useState<BillingMethod[]>([]);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -69,6 +75,11 @@ export const OnboardingPage: React.FC = () => {
         setToken(saved);
         setCompanyName(res.company_name ?? '');
         setExpiresAt(res.expires_at ?? null);
+        setAgentConfig(res.agent_config ?? null);
+        // Retomada completa: plano e formas liberadas também são restaurados
+        // (sem isso o pagamento volta com "Valor do plano" e toda forma habilitada)
+        if (res.plan) setPlan(res.plan);
+        if (res.enabled_methods?.length) setMethods(res.enabled_methods);
         if (res.status === 'paid' && res.credentials) {
           setCredentials(res.credentials);
           setStep('success');
@@ -78,10 +89,11 @@ export const OnboardingPage: React.FC = () => {
           setStep('payment');
         } else if (res.status === 'connected') {
           setPayment(res.payment);
-          setStep('payment');
+          // Sessao antiga (sem a etapa do agente): volta pra etapa do agente
+          setStep(res.agent_configured ? 'payment' : 'agent');
         } else if (res.plan) {
-          setPlan(res.plan);
-          setStep('whatsapp');
+          // Agente ja configurado? vai pro WhatsApp; senao personaliza o agente
+          setStep(res.agent_configured ? 'whatsapp' : 'agent');
         } else {
           // Dados enviados, plano ainda não escolhido
           setStep('plan');
@@ -97,7 +109,7 @@ export const OnboardingPage: React.FC = () => {
   const onPlanChosen = async (p: OnboardingPlan, t: string) => {
     await repo.setPlan(t, p.id);
     setPlan(p);
-    setStep('whatsapp');
+    setStep('agent');
   };
 
   const onDataDone = (t: string, sessionExpiresAt?: string) => {
@@ -130,10 +142,11 @@ export const OnboardingPage: React.FC = () => {
   }
 
   return (
-    <OnboardingShell>
+    <>
+      <OnboardingShell>
       {showProgress && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
-          {['Dados', 'Plano', 'WhatsApp', 'Pagamento'].map((label, i) => {
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+          {STEP_LABELS.map((label, i) => {
             const idx = i + 1;
             const active = progress >= idx;
             return (
@@ -164,6 +177,14 @@ export const OnboardingPage: React.FC = () => {
           onBack={() => setStep('data')}
         />
       )}
+      {step === 'agent' && token && (
+        <StepAgentSetup
+          token={token}
+          initial={agentConfig ?? undefined}
+          onDone={() => setStep('whatsapp')}
+          onBack={() => setStep('plan')}
+        />
+      )}
       {step === 'whatsapp' && token && (
         <StepWhatsapp
           token={token}
@@ -171,7 +192,7 @@ export const OnboardingPage: React.FC = () => {
             setStep('payment');
             if (wantsSync) startHistorySync(token);
           }}
-          onBack={() => setStep('plan')}
+          onBack={() => setStep('agent')}
         />
       )}
       {step === 'payment' && token && (
@@ -184,6 +205,7 @@ export const OnboardingPage: React.FC = () => {
           expiresAt={expiresAt}
           onPaid={onPaid}
           onRequestLeave={() => setShowLeaveModal(true)}
+          onReviseData={() => setStep('data')}
         />
       )}
       {step === 'success' && credentials && (
@@ -208,18 +230,16 @@ export const OnboardingPage: React.FC = () => {
       />
 
       <HistorySyncOverlay state={syncState} progress={syncProgress} message={syncMessage} />
-    </OnboardingShell>
+      </OnboardingShell>
+      {/* Suporte WhatsApp: fixo em tela, cobre todos os estágios (step atual) */}
+      <SupportBubble step={step} />
+    </>
   );
 };
 
 const OnboardingShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="theme-light" style={{
-    minHeight: '100vh',
-    background: 'linear-gradient(160deg, #eef2ff 0%, #f8fafc 45%, #eef2ff 100%)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 24,
-  }}>
-    <div className="card" style={{ maxWidth: 480, width: '100%', padding: 32, borderRadius: 20, boxShadow: '0 24px 64px rgba(79, 70, 229, 0.10)' }}>
+  <div className="theme-light onb-shell">
+    <div className="card onb-card">
       {children}
     </div>
   </div>

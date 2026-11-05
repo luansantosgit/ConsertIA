@@ -26,6 +26,8 @@ export function canAccess(
   if (!user) return false;
   if (user.role === 'admin' || user.role === 'superadmin') return true;
   if (key === 'configuracoes') return false;
+  // Treinamento: portal livre para TODOS os cargos (conteúdo educativo)
+  if (key === 'treinamento') return true;
   // Sessão persistida antes da feature: não bloqueia até o próximo login
   if (!Array.isArray(user.permissions)) return true;
   return user.permissions.includes(key);

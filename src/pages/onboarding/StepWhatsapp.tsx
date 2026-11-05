@@ -107,12 +107,7 @@ export const StepWhatsapp: React.FC<{
             <Smartphone size={16} /> Abra o WhatsApp → Aparelhos conectados → Escanear
           </p>
 
-          <div style={{
-            width: 260, height: 260, margin: '0 auto 16px', borderRadius: 16,
-            border: '1px solid var(--border)', background: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative', overflow: 'hidden',
-          }}>
+          <div className="onb-qr">
             {loading && <div className="skeleton" style={{ width: '100%', height: '100%' }} />}
             {!loading && qr && (
               <img

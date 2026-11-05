@@ -79,14 +79,14 @@ export const ReminderListModal: React.FC<{
                   <div key={rem.id} style={{
                     display: 'flex', alignItems: 'flex-start', gap: 10,
                     padding: 10, borderRadius: 10,
-                    border: `1px solid ${isSent ? '#bbf7d0' : 'var(--border)'}`,
-                    background: isSent ? '#f0fdf4' : 'var(--bg-secondary, #f8fafc)',
+                    border: `1px solid ${isSent ? 'var(--success)' : 'var(--border)'}`,
+                    background: isSent ? 'var(--success-bg)' : 'var(--bg-secondary)',
                   }}>
                     <div style={{
                       width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: isSent ? '#ecfdf5' : 'var(--primary-light)',
-                      color: isSent ? '#16a34a' : 'var(--primary)',
+                      background: isSent ? 'var(--success-bg)' : 'var(--primary-light)',
+                      color: isSent ? 'var(--success-text)' : 'var(--primary)',
                     }}>
                       {isSent ? <CheckCircle2 size={14} /> : <Clock size={14} />}
                     </div>

@@ -5,11 +5,29 @@ import { Header } from './Header';
 import { SubscriptionAlert } from './SubscriptionAlert';
 import { AiQuotaAlert } from './AiQuotaAlert';
 import { useSubscriptionAlert } from '@/stores/subscription.store';
+import { useAuthStore } from '@/stores/auth.store';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { useMobileChatViewport } from '@/hooks/useMobileChatViewport';
+import { canAccess } from '@/lib/permissions';
+import { usePushBadge } from '@/hooks/usePushBadge';
+import { PushPermissionGate } from './PushPermissionGate';
+
+// Rotas permitidas no modo mobile (chat-only): o chat em si e a página
+// de pagamento da assinatura (bloqueio de carência continua funcionando).
+const MOBILE_ALLOWED = ['/atendimento', '/assinatura', '/treinamento', '/perfil'];
 
 export const TenantLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { user } = useAuthStore();
+  const isMobile = useIsMobile();
+  // Mobile = só chat, MAS apenas para quem tem permissão de atendimento;
+  // sem permissão, mantém a navegação padrão (desktop responsivo).
+  const mobileChatOnly = isMobile && canAccess(user, 'atendimento');
+  // Teclado virtual: mantém o shell colado na área visível (header fixo,
+  // input subindo acima do teclado e voltando ao fechar)
+  useMobileChatViewport(mobileChatOnly);
   const showFloatingFooter = !location.pathname.startsWith('/atendimento');
 
   // Carência expirada: o sistema só abre na página de Assinatura.
@@ -22,6 +40,31 @@ export const TenantLayout: React.FC = () => {
     return () => clearInterval(id);
   }, [check]);
   const subscriptionBlocked = checked && blocked && location.pathname !== '/assinatura';
+
+  // Badge do ícone do app (contador de conversas nao lidas, estilo WhatsApp)
+  const { refresh: refreshBadge } = usePushBadge();
+  // Atualiza o badge ao navegar (marcar conversa como lida zerou o count)
+  React.useEffect(() => { void refreshBadge(); }, [location.pathname, refreshBadge]);
+
+  /* ── Modo mobile (Issue #85): WhatsApp-like, chat apenas ── */
+  if (mobileChatOnly) {
+    if (!MOBILE_ALLOWED.includes(location.pathname)) {
+      return <Navigate to="/atendimento" replace />;
+    }
+    return (
+      <div className="app-layout m-app-shell">
+        <main className="m-main">
+          {subscriptionBlocked ? <Navigate to="/assinatura" replace /> : <Outlet />}
+        </main>
+        {location.pathname === '/assinatura' && (
+          <div className="m-credits">Feito com carinho por Grupo LS Soluções ❤</div>
+        )}
+        <SubscriptionAlert />
+        <AiQuotaAlert />
+        <PushPermissionGate />
+      </div>
+    );
+  }
 
   return (
     <div className="app-layout">
@@ -49,11 +92,11 @@ export const TenantLayout: React.FC = () => {
             transform: 'translateX(-50%)',
             padding: '4px 16px',
             borderRadius: 999,
-            background: 'rgba(248, 250, 252, 0.8)',
+            background: 'var(--bg-secondary)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
             border: '1px solid var(--border)',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+            boxShadow: 'var(--card-shadow)',
             fontSize: '0.6875rem',
             color: 'var(--text-muted)',
             whiteSpace: 'nowrap',
@@ -61,12 +104,13 @@ export const TenantLayout: React.FC = () => {
             pointerEvents: 'none',
             userSelect: 'none',
           }}
-        >
-          Feito com carinho por Grupo LS Soluções ❤
-        </div>
+          >
+            Feito com carinho por Grupo LS Soluções ❤
+          </div>
         )}
         <SubscriptionAlert />
         <AiQuotaAlert />
+        <PushPermissionGate />
       </div>
     </div>
   );

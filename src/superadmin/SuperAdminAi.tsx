@@ -39,7 +39,7 @@ export const SuperAdminAi: React.FC = () => {
       if (cfg.data) {
         setToken(cfg.data.openrouter_token ?? '');
         setMode(cfg.data.distribution_mode ?? 'selected');
-        setGlobalAllowed(((cfg.data.allowed_models ?? []) as string[]).filter((m: any) => typeof m === 'string'));
+        setGlobalAllowed(((cfg.data.allowed_models ?? []) as string[]).filter((m) => typeof m === 'string'));
         setGlobalDefault((cfg.data.default_model ?? '') as string);
         setTranscriptionModel((cfg.data.transcription_model ?? 'google/gemini-3.1-flash-lite') as string);
       }
@@ -296,7 +296,7 @@ export const SuperAdminAi: React.FC = () => {
                   <strong style={{ fontSize: '0.875rem' }}>{tenant.name}</strong>
                   <span className="badge badge-secondary" style={{ marginLeft: 8 }}>{planName}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                    <div style={{ flex: 1, height: 6, borderRadius: 99, background: 'var(--bg-secondary, #e5e7eb)' }}>
+                    <div style={{ flex: 1, height: 6, borderRadius: 99, background: 'var(--progress-track)' }}>
                       <div style={{
                         width: `${percent}%`, height: '100%', borderRadius: 99,
                         background: percent >= 90 ? 'var(--danger)' : 'var(--primary)',

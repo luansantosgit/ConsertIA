@@ -7,6 +7,7 @@ import { AiLogRepository } from '@/repositories/ai-log.repository';
 import { AiConfigRepository } from '@/repositories/ai-config.repository';
 import type { Section, AiLog } from './types';
 import type { AiAgentSettings, AiQuoteSettings, AiDiagnosisSettings, AiPreQuoteTemplate } from '@/types';
+import type { AgentPresentationStyle } from '@/lib/agent-presentation';
 
 const agentRepo = new AiAgentSettingsRepository();
 const quoteRepo = new AiQuoteSettingsRepository();
@@ -129,10 +130,18 @@ export function useAiSettings() {
     } catch { /* silencioso */ }
   }, []);
 
-  const savePersonality = useCallback(async (agentName: string, systemPrompt: string) => {
+  const savePersonality = useCallback(async (
+    agentName: string,
+    systemPrompt: string,
+    presentationStyle: AgentPresentationStyle,
+  ) => {
     setSaving(true);
     try {
-      const updated = await agentRepo.save({ agent_name: agentName });
+      // Nome + estilo de apresentação (persona) do agente (Issue #97)
+      const updated = await agentRepo.save({
+        agent_name: agentName,
+        presentation_style: presentationStyle,
+      });
       setAgent(updated);
       const active = await aiConfigRepo.getActive().catch(() => null);
       if (active) {

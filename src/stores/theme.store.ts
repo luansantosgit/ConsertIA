@@ -97,7 +97,7 @@ function applyCSS(theme: Omit<TenantTheme, 'tenantId'>, systemName: string) {
     const initial = (systemName || 'D').charAt(0).toUpperCase();
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
       <rect width='32' height='32' rx='8' fill='${encodeURIComponent(theme.primaryColor)}'/>
-      <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' 
+      <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle'
         font-family='Inter,sans-serif' font-size='18' font-weight='700' fill='white'>
         ${initial}
       </text>
@@ -105,6 +105,16 @@ function applyCSS(theme: Omit<TenantTheme, 'tenantId'>, systemName: string) {
     link.type = 'image/svg+xml';
     link.href = `data:image/svg+xml,${svg.replace(/\n\s*/g, ' ')}`;
   }
+
+  // Barra do navegador mobile (PWA) acompanha a marca: primária no claro,
+  // fundo do header no escuro — mesmo comportamento visual do app.
+  let themeColor = document.querySelector("meta[name='theme-color']") as HTMLMetaElement | null;
+  if (!themeColor) {
+    themeColor = document.createElement('meta');
+    themeColor.name = 'theme-color';
+    document.head.appendChild(themeColor);
+  }
+  themeColor.setAttribute('content', isDark ? '#13141a' : theme.primaryColor);
 }
 
 export const useThemeStore = create<ThemeState>()(

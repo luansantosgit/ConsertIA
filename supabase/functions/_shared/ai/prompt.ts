@@ -28,6 +28,20 @@ function businessHoursText(ctx: AgentContext): string {
 - Só agende dentro do expediente; pedido fora → proponha o próximo horário válido.`;
 }
 
+/** Tom do agente conforme o estilo escolhido na etapa do wizard (Issue #95). */
+function presentationTone(style: string | null | undefined): string {
+  switch (String(style ?? '').trim().toLowerCase()) {
+    case 'formal':
+      return 'formal e cortês, tratando o cliente por você, sem gírias e sem emojis exagerados';
+    case 'tecnico':
+      return 'técnico e objetivo, explicando o serviço com clareza e sem rodeios';
+    case 'proximo':
+      return 'direto e próximo, como uma conversa rápida de balcão, sem enrolação';
+    default:
+      return 'simpático e profissional, como um colega que gosta de ajudar';
+  }
+}
+
 function companyInfoText(ctx: AgentContext): string {
   const addr = ctx.companyAddress?.trim();
   const phone = ctx.companyPhone?.trim();
@@ -182,6 +196,7 @@ export function buildSystemPrompt(ctx: AgentContext): string {
 - Período: "${ctx.period}". Use SEMPRE a saudação exata: "${greetingPhrase(ctx)}!".
 ${ctx.isFirstContact
   ? `- PRIMEIRO contato (você AINDA NÃO se apresentou nesta conversa): "${greetingPhrase(ctx)}! 😊 Eu sou ${ctx.agent.agent_name}, assistente de suporte da ${ctx.companyName}." — e siga naturalmente a conversa.
+- Apresente-se com tom ${presentationTone(ctx.agent.presentation_style)}.
 - Problema na 1ª msg: NÃO pule a recepção — saúde e continue ciente do problema, com empatia.`
   : `- VOCÊ JÁ ATENDEU ESTA CONVERSA (saudação/apresentação já foi feita em mensagens anteriores): NUNCA repita "Eu sou ${ctx.agent.agent_name}..." nem "que bom ter você de volta". Continue o papo direto no assunto — no máximo um cumprimento curto ("${greetingPhrase(ctx)}! 😊") se retomar após uma pausa longa.`}
 ${nameRule}`
@@ -193,7 +208,7 @@ ${nameRule}`;
 
 # Formato
 - Mensagens curtas como um HUMANO, máx. ~3 linhas. DIVIDA a resposta em várias mensagens separadas por uma linha contendo apenas ---
-- Tom simpático e profissional, emojis com moderação (😊 🔧 ✅). Nunca linguagem robótica ("Como posso auxiliá-lo hoje?").
+- Tom ${presentationTone(ctx.agent.presentation_style)}. Emojis com moderação (😊 🔧 ✅). Nunca linguagem robótica ("Como posso auxiliá-lo hoje?").
 
 # Data e hora
 ${dateContext(ctx.timezone)}

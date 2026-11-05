@@ -10,6 +10,7 @@ function mockAgent(overrides: Partial<AgentSettings> = {}): AgentSettings {
     handoff_message: 'msg', transfer_message: 'msg', uncovered_transfer: true,
     auto_os_enabled: true, auto_schedule_enabled: true, respond_in_groups: false,
     openrouter_model: 'openai/gpt-4o-mini', own_api_key: null,
+    presentation_style: 'amigavel',
     ...overrides,
   };
 }
@@ -176,6 +177,39 @@ describe('buildSystemPrompt (roteiro do especialista)', () => {
     const prompt = buildSystemPrompt(mockCtx());
     expect(prompt).toContain('---');
     expect(prompt).toContain('DIVIDA a resposta');
+  });
+
+  /**
+   * Issue #95: o estilo escolhido no wizard ("como ela vai se apresentar")
+   * precisa mudar o tom real do agente — nao pode ser decorativo.
+   */
+  it('o estilo de apresentacao do wizard muda o tom do prompt', () => {
+    const formal = buildSystemPrompt(mockCtx({
+      agent: { ...mockAgent(), presentation_style: 'formal' },
+    }));
+    expect(formal).toContain('formal e cortês');
+
+    const tecnico = buildSystemPrompt(mockCtx({
+      agent: { ...mockAgent(), presentation_style: 'tecnico' },
+    }));
+    expect(tecnico).toContain('técnico e objetivo');
+
+    const proximo = buildSystemPrompt(mockCtx({
+      agent: { ...mockAgent(), presentation_style: 'proximo' },
+    }));
+    expect(proximo).toContain('direto e próximo');
+
+    const amigavel = buildSystemPrompt(mockCtx({
+      agent: { ...mockAgent(), presentation_style: 'amigavel' },
+    }));
+    expect(amigavel).toContain('simpático e profissional');
+  });
+
+  it('sem estilo definido, usa o tom amigavel padrao', () => {
+    const prompt = buildSystemPrompt(mockCtx({
+      agent: { ...mockAgent(), presentation_style: undefined },
+    }));
+    expect(prompt).toContain('simpático e profissional');
   });
 });
 

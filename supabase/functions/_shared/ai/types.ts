@@ -17,6 +17,8 @@ export interface AgentSettings {
   respond_in_groups: boolean;
   openrouter_model: string;
   own_api_key: string | null;
+  /** Como o agente se apresenta (Issue #95): amigavel | formal | tecnico | proximo */
+  presentation_style?: string;
 }
 
 export interface QuoteSettings {

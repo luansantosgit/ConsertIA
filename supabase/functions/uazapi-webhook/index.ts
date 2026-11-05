@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendPush } from "../_shared/notify.ts";
+import { classifyMessageOrigin } from "../_shared/message-origin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,11 +91,17 @@ serve(async (req) => {
       const messages = Array.isArray(msgData) ? msgData : msgData ? [msgData] : [];
 
       for (const msg of messages) {
-        // fromMe: em evento normal a mensagem já existe (foi enviada pelo app).
-        // Em history (importação), mensagens do atendente também entram —
-        // sem isso o histórico importado ficaria pela metade.
-        if (msg.fromMe === true && !isHistoryEvent) continue;
-        const isFromMe = msg.fromMe === true;
+        // ── Echo (issue #105) ──────────────────────────────────────────
+        // A Uazapi informa a origem no campo `wasSentByApi`:
+        //   • wasSentByApi = true  → enviada pela API (o sistema já gravou)
+        //   • fromMe sem wasSentByApi → enviada PELO APARELHO (echo)
+        // O histórico importado entra sempre (mensagens do atendente também).
+        const { isFromMe, isDeviceEcho, shouldSkip } = classifyMessageOrigin({
+          fromMe: msg.fromMe,
+          wasSentByApi: msg.wasSentByApi,
+          isHistoryEvent,
+        });
+        if (shouldSkip) continue;
 
         // Dados do chat podem vir no body, em data ou dentro da propria mensagem
         const chatData: any =
@@ -282,12 +290,29 @@ serve(async (req) => {
           }
 
           conversation = newConv;
-        } else if (avatarUrl && avatarUrl !== conversation.contact_avatar) {
-          // Atualiza avatar do lead apenas se mudou (evita update por mensagem)
-          await supabase
-            .from("conversations")
-            .update({ contact_avatar: avatarUrl })
-            .eq("id", conversation.id);
+        } else {
+          // Atualiza avatar do lead apenas se mudou (evita update por mensagem).
+          // Conversas abertas só com o número (sem nome salvo — ex: iniciadas pelo
+          // atendente no modal "Nova Conversa") ganham o nome do perfil do
+          // WhatsApp do lead na primeira resposta.
+          const updates: Record<string, string | null> = {};
+          if (avatarUrl && avatarUrl !== conversation.contact_avatar) {
+            updates.contact_avatar = avatarUrl;
+          }
+          if (!conversation.contact_name) {
+            const providerName = isGroup
+              ? (chatData?.name || senderName || null)
+              : (isFromMe ? (chatData?.name || null) : (senderName || chatData?.name || null));
+            if (providerName && providerName !== phone) {
+              updates.contact_name = providerName;
+            }
+          }
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from("conversations")
+              .update(updates)
+              .eq("id", conversation.id);
+          }
         }
 
         if (msg.messageType === "reaction" || msg.reaction) {
@@ -337,8 +362,11 @@ serve(async (req) => {
           content: content,
           direction: isFromMe ? "outbound" : "inbound",
           sender_type: isFromMe ? "attendant" : "customer",
-          // Histórico importado já nasce lido — não gera badge de não-lida
-          read: isHistoryEvent ? true : false,
+          // Echo (issue #105): mensagem respondida pelo celular do atendente
+          sent_from_device: isDeviceEcho,
+          // Histórico importado e mensagens do aparelho já nascem lidas —
+          // não geram badge de não-lida
+          read: isHistoryEvent || isFromMe ? true : false,
           status: "delivered",
           wa_message_id: waMessageId,
           wa_chat_id: chatId,
@@ -355,24 +383,54 @@ serve(async (req) => {
           continue;
         }
 
-        console.log(`[webhook] Mensagem inserida: waId=${waMessageId} phone=${phone} type=${rawType}${isHistoryEvent ? " (histórico)" : ""}`);
+        console.log(`[webhook] Mensagem inserida: waId=${waMessageId} phone=${phone} type=${rawType}${isHistoryEvent ? " (histórico)" : ""}${isDeviceEcho ? " (eco do aparelho)" : ""}`);
 
         // Update único e atômico: não lidas + last_message (se mais recente).
-        // Histórico importado não incrementa não-lidas.
+        // Histórico importado NÃO incrementa não-lidas.
+        // Echo do aparelho também NÃO — é mensagem de saída do atendente.
         const { error: bumpError } = await supabase.rpc("bump_conversation", {
           p_conv_id: conversation.id,
           p_last_at: timestamp,
           p_last_message: content ? content.substring(0, 100) : null,
-          p_count_unread: !isHistoryEvent,
+          p_count_unread: !isHistoryEvent && !isDeviceEcho,
         });
 
         if (bumpError) console.error(`[webhook] Erro ao atualizar conversa:`, bumpError.message);
+
+        // Push notification para os dispositivos da tenant (app fechado):
+        // só mensagens reais de lead (não histórico, não fromMe).
+        // O canal só conhece o contrato de notificação (_shared/notify.ts) —
+        // VAPID, criptografia e subscriptions vivem no serviço de push.
+        if (!isHistoryEvent && !isFromMe) {
+          const preview = content
+            ? content.substring(0, 100)
+            : mediaType === "image" ? "📷 Foto"
+            : mediaType === "video" ? "🎥 Vídeo"
+            : mediaType === "audio" ? "🎙️ Áudio"
+            : mediaType === "document" ? "📄 Documento"
+            : "Nova mensagem";
+          const contactTitle = conversation.contact_name || senderName || phone;
+          const pushTrigger = sendPush({
+            tenantId: conversation.tenant_id,
+            title: contactTitle,
+            body: preview,
+            kind: "message",
+            conversationId: conversation.id,
+            url: "/atendimento",
+          });
+          if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+            EdgeRuntime.waitUntil(pushTrigger);
+          } else {
+            void pushTrigger;
+          }
+        }
 
         // Dispara o agente de IA com debounce por conversa: mensagens em rajada
         // (ex.: "segunda mesmo" + "Kkk" com 1s de diferença) geram UMA única
         // resposta, sempre com todo o conteúdo novo já inserido.
         // Mensagens de histórico (antigas) NUNCA disparam IA.
-        if (aiEnabled && !isGroup && !isHistoryEvent) {
+        // Mensagens enviadas pelo APARELHO também não — o atendente já respondeu.
+        if (aiEnabled && !isGroup && !isHistoryEvent && !isFromMe) {
           const triggerToken = crypto.randomUUID();
           await supabase
             .from("conversations")

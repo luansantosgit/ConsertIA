@@ -20,22 +20,39 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
 
   if (profileError || !profile) return null;
 
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('name')
-    .eq('id', profile.tenant_id)
-    .single();
+  // Superadmin nao pertence a um tenant: `.eq('id', null)` vira
+  // `id=eq.null` e o PostgREST responde 400.
+  let tenantName = '';
+  if (profile.tenant_id) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('name')
+      .eq('id', profile.tenant_id)
+      .single();
+    tenantName = tenant?.name ?? '';
+  }
 
   return {
     ...profile,
     avatar: profile.avatar_url,
-    tenant_name: tenant?.name ?? '',
+    tenant_name: tenantName,
   };
 }
 
 export interface TenantUserBrief {
   id: string;
   name: string;
+}
+
+/**
+ * Atualiza o nome do próprio usuário.
+ * Usa a RPC `update_my_profile` (SECURITY DEFINER) porque a escrita em
+ * `users` é restrita ao admin do tenant — o usuário comum não passa pela
+ * policy, mas a função altera apenas o próprio nome.
+ */
+export async function updateMyProfileName(name: string): Promise<void> {
+  const { error } = await supabase.rpc('update_my_profile', { p_name: name });
+  if (error) throw new Error(error.message);
 }
 
 export async function fetchTenantUsers(tenantId: string): Promise<TenantUserBrief[]> {

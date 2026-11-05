@@ -176,6 +176,8 @@ export interface Message {
   connection_id?: string;
   hybrid_provider?: HybridProvider;
   sender_type?: MessageSenderType | 'reminder';
+  /** Echo (issue #105): mensagem respondida pelo celular do atendente */
+  sent_from_device?: boolean;
   created_at: string;
 }
 
@@ -288,6 +290,23 @@ export interface Plan {
   updated_at: string;
 }
 
+export type TrainingVideoSource = 'storage' | 'youtube';
+
+/** Vídeo do portal de treinamento (conteúdo global da plataforma). */
+export interface TrainingVideo {
+  id: string;
+  title: string;
+  description: string;
+  topic: string;
+  source: TrainingVideoSource;
+  url: string;
+  thumbnail_url: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface TenantSettings {
   id: string;
   tenant_id: string;
@@ -369,9 +388,14 @@ export interface AiAgentSettings {
   respond_in_groups: boolean;
   openrouter_model: string;
   own_api_key?: string;
+  /** Como o agente se apresenta (Issue #95) */
+  presentation_style?: AgentPresentationStyle;
   created_at: string;
   updated_at: string;
 }
+
+/** Estilos de apresentação do agente (Issue #95). */
+export type AgentPresentationStyle = 'amigavel' | 'formal' | 'tecnico' | 'proximo';
 
 export interface AiQuoteSettings {
   id: string;
@@ -616,3 +640,12 @@ export interface WaCallsCanCallResult {
 // EXTENSOES PARA CONVERSATION E MESSAGE
 // (merged nas interfaces principais acima)
 // ============================================================
+
+export interface PushSubscription {
+  id: string;
+  tenant_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+}

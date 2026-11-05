@@ -17,6 +17,8 @@ export interface ChatMessage {
   replyTo?: string;
   mediaType?: ChatMediaType;
   mediaUrl?: string;
+  /** Echo (issue #105): mensagem enviada pelo celular do atendente */
+  sentFromDevice?: boolean;
   osCard?: {
     osId: string;
     equipment: string;
@@ -85,6 +87,7 @@ export function toChatMessage(msg: Message): ChatMessage {
     osCard: msg.os_card as ChatMessage['osCard'],
     mediaType,
     mediaUrl,
+    sentFromDevice: msg.sent_from_device === true,
   };
 }
 

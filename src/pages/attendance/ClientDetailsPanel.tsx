@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit3, Trash2, Check, X, Zap } from 'lucide-react';
+import { Edit3, Trash2, Check, X } from 'lucide-react';
 import type { OSRow } from '@/components/OSModal';
 import type { ConvRow } from './types';
 import { ClientProfile } from './ClientProfile';
@@ -11,13 +11,13 @@ interface ClientDetailsPanelProps {
   currentClientOSList: OSRow[];
   isEditingClient: boolean;
   editForm: { contactName: string; contact_phone: string; deviceInfo: string; notes: string };
+  variant?: 'desktop' | 'mobile';
   onStartEdit: () => void;
   onSaveClient: () => void;
   onEditFormChange: (form: { contactName: string; contact_phone: string; deviceInfo: string; notes: string }) => void;
   onOpenOSModal: () => void;
   onViewPdfOS: (os: OSRow) => void;
   onSendOSCardToChat: (os: OSRow) => void;
-  onSetInputText: (text: string) => void;
   onClose: () => void;
   onDelete?: () => void;
 }
@@ -27,20 +27,21 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
   currentClientOSList,
   isEditingClient,
   editForm,
+  variant = 'desktop',
   onStartEdit,
   onSaveClient,
   onEditFormChange,
   onOpenOSModal,
   onViewPdfOS,
   onSendOSCardToChat,
-  onSetInputText,
   onClose,
   onDelete,
 }) => {
+  const isMobile = variant === 'mobile';
   return (
     <div style={{
-      width: 330,
-      borderLeft: '1px solid var(--border)',
+      width: isMobile ? '100%' : 330,
+      borderLeft: isMobile ? 'none' : '1px solid var(--border)',
       padding: '16px',
       display: 'flex',
       flexDirection: 'column',
@@ -48,7 +49,7 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
       overflowY: 'auto',
       background: 'var(--card-bg)',
       flexShrink: 0,
-      animation: 'fadeIn 0.15s ease'
+      animation: isMobile ? 'none' : 'fadeIn 0.15s ease'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h4 style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Detalhes</h4>
@@ -151,39 +152,6 @@ export const ClientDetailsPanel: React.FC<ClientDetailsPanelProps> = ({
         onViewPdfOS={onViewPdfOS}
         onSendOSCardToChat={onSendOSCardToChat}
       />
-
-      <div style={{ background: 'var(--hover-bg)', borderRadius: 10, padding: '12px' }}>
-        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
-          Ações Rápidas de IA
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {[
-            'Gerar orçamento automático',
-            'Notificar cliente via WhatsApp',
-            'Marcar OS como urgente'
-          ].map(action => (
-            <button
-              key={action}
-              onClick={() => onSetInputText(action)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: '0.75rem',
-                padding: '6px 10px',
-                borderRadius: 8,
-                border: '1px solid var(--primary-ring)',
-                background: 'var(--card-bg)',
-                cursor: 'pointer',
-                color: 'var(--primary-text)',
-                textAlign: 'left'
-              }}
-            >
-              <Zap size={11} />{action}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

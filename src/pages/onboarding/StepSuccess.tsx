@@ -40,7 +40,7 @@ export const StepSuccess: React.FC<{
   const Field: React.FC<{ label: string; value: string; copyKey: string; secret?: boolean }> = ({ label, value, copyKey, secret }) => (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-      padding: '12px 14px', background: 'var(--bg-secondary, #f8fafc)',
+      padding: '12px 14px', background: 'var(--bg-secondary)',
       border: '1px solid var(--border)', borderRadius: 10,
     }}>
       <div style={{ minWidth: 0 }}>
@@ -96,7 +96,7 @@ export const StepSuccess: React.FC<{
         </p>
       )}
 
-      <button className="btn btn-primary" onClick={enter} disabled={entering} style={{ fontSize: '1rem', padding: '14px 32px', borderRadius: 12 }}>
+      <button className="btn btn-primary onb-cta" onClick={enter} disabled={entering}>
         <LogIn size={18} /> {entering ? 'Entrando...' : 'Acessar meu painel'}
       </button>
       <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', margin: '10px 0 0' }}>

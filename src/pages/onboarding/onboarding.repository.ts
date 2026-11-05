@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { AgentPresentationStyle } from '@/lib/agent-presentation';
 
 export interface OnboardingPlan {
   id: string;
@@ -6,6 +7,8 @@ export interface OnboardingPlan {
   price: number;
   features: string[];
   featured: boolean;
+  /** Cota de tokens de IA do plano (0 = ilimitado) — Issue #98 */
+  ai_token_limit?: number;
 }
 
 export interface OnboardingPayment {
@@ -25,6 +28,18 @@ export interface OnboardingCredentials {
 
 export type BillingMethod = 'PIX' | 'BOLETO' | 'CREDIT_CARD';
 
+/** Como o agente se apresenta (fonte única: @/lib/agent-presentation). */
+export type AgentPresentation = AgentPresentationStyle;
+
+/** Config do agente escolhida na etapa "Configure seu agente de IA". */
+export interface AgentSetupConfig {
+  agent_name: string;
+  agent_presentation: AgentPresentation;
+  agent_greeting: boolean;
+  agent_auto_schedule: boolean;
+  agent_auto_os: boolean;
+}
+
 // invoke não devolve corpo em erro HTTP; lê do error.context
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('public-signup', { body });
@@ -36,8 +51,11 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
         Object.assign(payload, await ctx.json());
       } catch { /* mantém fallback */ }
     }
-    const err = new Error(String(payload.error ?? 'request_failed')) as Error & { code?: string };
-    err.code = String(payload.error ?? 'request_failed');
+    const code = String(payload.error ?? 'request_failed');
+    const err = new Error(code) as Error & { code?: string; description?: string };
+    err.code = code;
+    // Descrição legível do backend (ex.: mensagens do Asaas) para a UI
+    if (payload.description) err.description = String(payload.description);
     throw err;
   }
   return data as T;
@@ -64,6 +82,11 @@ export class OnboardingRepository {
 
   connect(token: string) {
     return call<{ qr_code: string | null }>({ action: 'connect', token });
+  }
+
+  /** Etapa "Configure seu agente de IA" (nome, tom e automações). */
+  setAgent(token: string, config: AgentSetupConfig) {
+    return call<{ ok: boolean }>({ action: 'set_agent', token, ...config });
   }
 
   pollConnection(token: string) {
@@ -101,6 +124,10 @@ export class OnboardingRepository {
       payment: OnboardingPayment | null;
       expires_at: string;
       company_name: string;
+      /** Formas liberadas (retomada da etapa de pagamento após refresh). */
+      enabled_methods?: BillingMethod[];
+      agent_configured?: boolean;
+      agent_config?: AgentSetupConfig;
       credentials: OnboardingCredentials | null;
     }>({ action: 'status', token });
   }

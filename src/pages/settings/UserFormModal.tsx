@@ -4,28 +4,8 @@ import { ASSIGNABLE_MODULES, type ModuleKey } from '@/lib/permissions';
 import { TenantUserRepository, type TenantUser } from '@/repositories/tenant-user.repository';
 import { useAuthStore } from '@/stores/auth.store';
 import { useTranslation } from '@/hooks/useTranslation';
-
-const ROLE_OPTIONS = [
-  { value: 'admin', label: 'Administrador' },
-  { value: 'manager', label: 'Gerente' },
-  { value: 'technician', label: 'Técnico' },
-  { value: 'attendant', label: 'Atendente' },
-];
-
-function errorToMessage(err: Error & { code?: string; maxUsers?: number }): string {
-  switch (err.code) {
-    case 'limit_reached':
-      return `Limite de usuários do plano atingido (${err.maxUsers ?? 0}). Faça upgrade para adicionar mais.`;
-    case 'email_exists':
-      return 'Este e-mail já está cadastrado.';
-    case 'weak_password':
-      return 'A senha deve ter pelo menos 6 caracteres.';
-    case 'invalid_data':
-      return 'Preencha nome e um e-mail válido.';
-    default:
-      return 'Erro ao salvar usuário. Tente novamente.';
-  }
-}
+import { UserPasswordSection } from './UserPasswordSection';
+import { ROLE_OPTIONS, errorToMessage } from './userFormErrors';
 
 export const UserFormModal: React.FC<{
   open: boolean;
@@ -44,6 +24,9 @@ export const UserFormModal: React.FC<{
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const repo = new TenantUserRepository();
+
+  const isSelf = editing?.id === user?.id;
+  const isCallerAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   useEffect(() => {
     if (!open) return;
@@ -191,6 +174,13 @@ export const UserFormModal: React.FC<{
                 {active ? `● ${t('Ativo')}` : `● ${t('Inativo')}`}
               </button>
             </div>
+          )}
+          {editing && (isSelf || isCallerAdmin) && (
+            <UserPasswordSection
+              user={editing}
+              isSelf={isSelf}
+              onError={setError}
+            />
           )}
           {error && (
             <p style={{ fontSize: '0.8125rem', color: 'var(--danger)', margin: 0 }}>{error}</p>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { AlertTriangle, Download, FileText, Loader2 } from 'lucide-react';
 import type { ChatMessage, ChatMediaType } from './types';
 import { mediaLabel } from './types';
 
@@ -24,6 +24,31 @@ export const MediaContent: React.FC<MediaContentProps> = ({ msg, onFetchMedia })
   };
 
   if (!msg.mediaUrl) {
+    // Mídia que falhou no envio: não oferece "Baixar mídia" (não há nada
+    // para baixar). O motivo detalhado aparece no texto da mensagem.
+    if (msg.status === 'error' && msg.from === 'attendant') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            borderRadius: 10,
+            padding: '10px 14px',
+            maxWidth: 260,
+          }}
+        >
+          <AlertTriangle size={18} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Falha ao enviar mídia</span>
+            <span style={{ fontSize: '0.6875rem', opacity: 0.8 }}>Veja o motivo abaixo</span>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div
         style={{

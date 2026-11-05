@@ -13,9 +13,38 @@ export const resources = {
       'Financeiro': 'Financeiro',
       'Agenda': 'Agenda',
       'Relatórios': 'Relatórios',
+      'Treinamento': 'Treinamento',
+      'Tem alguma dúvida? Acesse o tutorial': 'Tem alguma dúvida? Acesse o tutorial',
       'Agente de IA': 'Agente de IA',
       'Configurações': 'Configurações',
       'Sair': 'Sair',
+      
+      // Treinamento (portal /treinamento)
+      'Aprenda a usar a plataforma com vídeos curtos': 'Aprenda a usar a plataforma com vídeos curtos',
+      'Buscar treinamentos...': 'Buscar treinamentos...',
+      'Limpar busca': 'Limpar busca',
+      'Em destaque': 'Em destaque',
+      'Assistir': 'Assistir',
+      'Ver anteriores': 'Ver anteriores',
+      'Ver próximos': 'Ver próximos',
+      'Nenhum treinamento disponível': 'Nenhum treinamento disponível',
+      'Os vídeos aparecem aqui quando o administrador publica treinamentos.': 'Os vídeos aparecem aqui quando o administrador publica treinamentos.',
+      'Nenhum resultado para a busca': 'Nenhum resultado para a busca',
+      'Tente outro termo ou veja por tópico.': 'Tente outro termo ou veja por tópico.',
+      'Erro ao carregar treinamentos': 'Erro ao carregar treinamentos',
+      
+      // Perfil (dados do usuário + senha de acesso)
+      'Perfil': 'Perfil',
+      'Dados do perfil': 'Dados do perfil',
+      'Seus dados e sua senha de acesso': 'Seus dados e sua senha de acesso',
+      'E-mail': 'E-mail',
+      'Cargo': 'Cargo',
+      'Senha de acesso': 'Senha de acesso',
+      'Salvar perfil': 'Salvar perfil',
+      'Perfil atualizado ✓': 'Perfil atualizado ✓',
+      'O e-mail de acesso é gerenciado pelo administrador da empresa.': 'O e-mail de acesso é gerenciado pelo administrador da empresa.',
+      'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.': 'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.',
+      'Não foi possível salvar o perfil.': 'Não foi possível salvar o perfil.',
       
       // Ações
       'Nova OS': 'Nova OS',
@@ -33,6 +62,15 @@ export const resources = {
       'Filtrar': 'Filtrar',
       'Exportar': 'Exportar',
       'Importar': 'Importar',
+      'Fechar': 'Fechar',
+      'Alterar senha': 'Alterar senha',
+      'Nova senha': 'Nova senha',
+      'Confirmar nova senha': 'Confirmar nova senha',
+      'Minha senha': 'Minha senha',
+      'Senha do usuário': 'Senha do usuário',
+      'Renovar senha': 'Renovar senha',
+      'Trocar a senha do seu acesso': 'Trocar a senha do seu acesso',
+      'Defina uma nova senha para o seu acesso': 'Defina uma nova senha para o seu acesso',
       
       // Status
       'Ativo': 'Ativo',
@@ -210,6 +248,14 @@ export const resources = {
       'Idioma principal': 'Idioma principal',
       'Descrição / contexto do agente': 'Descrição / contexto do agente',
       'Esse texto é usado como instrução base para o modelo de linguagem.': 'Esse texto é usado como instrução base para o modelo de linguagem.',
+      'Como o agente se apresenta': 'Como o agente se apresenta',
+      'Define o tom da conversa com o cliente. O roteiro de atendimento (triagem, orçamento, agenda e transferência) continua o mesmo.': 'Define o tom da conversa com o cliente. O roteiro de atendimento (triagem, orçamento, agenda e transferência) continua o mesmo.',
+      'Técnica': 'Técnica',
+      'Próxima': 'Próxima',
+      'simpática e acolhedora': 'simpática e acolhedora',
+      'cordial e profissional': 'cordial e profissional',
+      'objetiva e clara': 'objetiva e clara',
+      'direta e sem enrolação': 'direta e sem enrolação',
       'Tom de voz': 'Tom de voz',
       'Formal': 'Formal',
       'Amigável': 'Amigável',
@@ -403,6 +449,40 @@ export const resources = {
       'Telefone é obrigatório para iniciar o chat': 'Telefone é obrigatório para iniciar o chat',
       'Erro ao iniciar chat': 'Erro ao iniciar chat',
       'Olá! Como podemos te ajudar?': 'Olá! Como podemos te ajudar?',
+
+      // Modo mobile — chat-only estilo WhatsApp (Issue #85)
+      'Instalar app': 'Instalar app',
+      'Voltar': 'Voltar',
+      'Mais opções': 'Mais opções',
+      'Detalhes do cliente': 'Detalhes do cliente',
+      'Abrir OS': 'Abrir OS',
+      'Fechar busca': 'Fechar busca',
+      'Buscar na conversa': 'Buscar na conversa',
+      'Ativar modo claro': 'Ativar modo claro',
+      'Ativar modo escuro': 'Ativar modo escuro',
+
+      // Echo — resposta enviada pelo celular do atendente (Issue #105)
+      'Enviado pelo aparelho': 'Enviado pelo aparelho',
+
+      // Nova conversa — busca ao vivo (Issue #85)
+      'Número ou nome do cliente': 'Número ou nome do cliente',
+      'Digite um contato salvo ou um número novo para começar a conversar': 'Digite um contato salvo ou um número novo para começar a conversar',
+      'Digite um número válido com DDD': 'Digite um número válido com DDD',
+
+      // PWA — balão de instalação (Issue #85)
+      'Instale o DeeperIA': 'Instale o DeeperIA',
+      'Acesse o chat direto da tela inicial do celular': 'Acesse o chat direto da tela inicial do celular',
+      'Dispensar': 'Dispensar',
+      'Como instalar': 'Como instalar',
+      'Toque no botão': 'Toque no botão',
+      'Toque no menu': 'Toque no menu',
+      'do navegador': 'do navegador',
+      'Escolha': 'Escolha',
+      'Adicionar à Tela de Início': 'Adicionar à Tela de Início',
+      'Toque em': 'Toque em',
+      'Instalar aplicativo': 'Instalar aplicativo',
+      'Confirme a instalação': 'Confirme a instalação',
+      'Entendi': 'Entendi',
     }
   },
   'en': {
@@ -416,9 +496,38 @@ export const resources = {
       'Financeiro': 'Financial',
       'Agenda': 'Schedule',
       'Relatórios': 'Reports',
+      'Treinamento': 'Training',
+      'Tem alguma dúvida? Acesse o tutorial': 'Any questions? Open the tutorial',
       'Agente de IA': 'AI Agent',
       'Configurações': 'Settings',
       'Sair': 'Logout',
+      
+      // Training (/treinamento portal)
+      'Aprenda a usar a plataforma com vídeos curtos': 'Learn how to use the platform with short videos',
+      'Buscar treinamentos...': 'Search tutorials...',
+      'Limpar busca': 'Clear search',
+      'Em destaque': 'Featured',
+      'Assistir': 'Watch',
+      'Ver anteriores': 'See previous',
+      'Ver próximos': 'See more',
+      'Nenhum treinamento disponível': 'No training available',
+      'Os vídeos aparecem aqui quando o administrador publica treinamentos.': 'Videos appear here once the administrator publishes tutorials.',
+      'Nenhum resultado para a busca': 'No results found',
+      'Tente outro termo ou veja por tópico.': 'Try another term or browse by topic.',
+      'Erro ao carregar treinamentos': 'Failed to load training videos',
+      
+      // Profile (user data + access password)
+      'Perfil': 'Profile',
+      'Dados do perfil': 'Profile details',
+      'Seus dados e sua senha de acesso': 'Your details and access password',
+      'E-mail': 'E-mail',
+      'Cargo': 'Role',
+      'Senha de acesso': 'Access password',
+      'Salvar perfil': 'Save profile',
+      'Perfil atualizado ✓': 'Profile updated ✓',
+      'O e-mail de acesso é gerenciado pelo administrador da empresa.': 'The access e-mail is managed by the company admin.',
+      'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.': 'Use at least 6 characters. After saving, log in with the new password.',
+      'Não foi possível salvar o perfil.': 'Could not save the profile.',
       
       // Actions
       'Nova OS': 'New Order',
@@ -436,6 +545,15 @@ export const resources = {
       'Filtrar': 'Filter',
       'Exportar': 'Export',
       'Importar': 'Import',
+      'Fechar': 'Close',
+      'Alterar senha': 'Change password',
+      'Nova senha': 'New password',
+      'Confirmar nova senha': 'Confirm new password',
+      'Minha senha': 'My password',
+      'Senha do usuário': 'User password',
+      'Renovar senha': 'Renew password',
+      'Trocar a senha do seu acesso': 'Change your access password',
+      'Defina uma nova senha para o seu acesso': 'Set a new password for your access',
       
       // Status
       'Ativo': 'Active',
@@ -613,6 +731,14 @@ export const resources = {
       'Idioma principal': 'Primary language',
       'Descrição / contexto do agente': 'Agent description / context',
       'Esse texto é usado como instrução base para o modelo de linguagem.': 'This text is used as the base prompt for the language model.',
+      'Como o agente se apresenta': 'How the agent introduces itself',
+      'Define o tom da conversa com o cliente. O roteiro de atendimento (triagem, orçamento, agenda e transferência) continua o mesmo.': 'Sets the tone of the conversation with the client. The service flow (triage, quote, scheduling and handover) stays the same.',
+      'Técnica': 'Technical',
+      'Próxima': 'Friendly & direct',
+      'simpática e acolhedora': 'friendly and welcoming',
+      'cordial e profissional': 'polite and professional',
+      'objetiva e clara': 'objective and clear',
+      'direta e sem enrolação': 'direct and to the point',
       'Tom de voz': 'Tone of voice',
       'Formal': 'Formal',
       'Amigável': 'Friendly',
@@ -806,6 +932,40 @@ export const resources = {
       'Telefone é obrigatório para iniciar o chat': 'Phone is required to start chat',
       'Erro ao iniciar chat': 'Error starting chat',
       'Olá! Como podemos te ajudar?': 'Hello! How can we help you?',
+
+      // Mobile mode — chat-only WhatsApp-style (Issue #85)
+      'Instalar app': 'Install app',
+      'Voltar': 'Back',
+      'Mais opções': 'More options',
+      'Detalhes do cliente': 'Customer details',
+      'Abrir OS': 'Open work order',
+      'Fechar busca': 'Close search',
+      'Buscar na conversa': 'Search in conversation',
+      'Ativar modo claro': 'Enable light mode',
+      'Ativar modo escuro': 'Enable dark mode',
+
+      // Echo — message sent from the attendant's phone (Issue #105)
+      'Enviado pelo aparelho': 'Sent from device',
+
+      // New conversation — live search (Issue #85)
+      'Número ou nome do cliente': 'Customer number or name',
+      'Digite um contato salvo ou um número novo para começar a conversar': 'Type a saved contact or a new number to start chatting',
+      'Digite um número válido com DDD': 'Enter a valid number with area code',
+
+      // PWA — install banner (Issue #85)
+      'Instale o DeeperIA': 'Install DeeperIA',
+      'Acesse o chat direto da tela inicial do celular': 'Open the chat straight from your phone home screen',
+      'Dispensar': 'Dismiss',
+      'Como instalar': 'How to install',
+      'Toque no botão': 'Tap the',
+      'Toque no menu': 'Tap the',
+      'do navegador': 'browser menu',
+      'Escolha': 'Choose',
+      'Adicionar à Tela de Início': 'Add to Home Screen',
+      'Toque em': 'Tap',
+      'Instalar aplicativo': 'Install app',
+      'Confirme a instalação': 'Confirm the installation',
+      'Entendi': 'Got it',
     }
   },
   'es': {
@@ -819,9 +979,38 @@ export const resources = {
       'Financeiro': 'Financiero',
       'Agenda': 'Agenda',
       'Relatórios': 'Informes',
+      'Treinamento': 'Capacitación',
+      'Tem alguma dúvida? Acesse o tutorial': '¿Alguna duda? Accede a la capacitación',
       'Agente de IA': 'Agente de IA',
       'Configurações': 'Configuraciones',
       'Sair': 'Cerrar Sesión',
+      
+      // Capacitación (portal /treinamento)
+      'Aprenda a usar a plataforma com vídeos curtos': 'Aprende a usar la plataforma con videos cortos',
+      'Buscar treinamentos...': 'Buscar capacitaciones...',
+      'Limpar busca': 'Limpiar búsqueda',
+      'Em destaque': 'Destacado',
+      'Assistir': 'Ver',
+      'Ver anteriores': 'Ver anteriores',
+      'Ver próximos': 'Ver más',
+      'Nenhum treinamento disponível': 'Ninguna capacitación disponible',
+      'Os vídeos aparecem aqui quando o administrador publica treinamentos.': 'Los videos aparecen aquí cuando el administrador publica capacitaciones.',
+      'Nenhum resultado para a busca': 'Ningún resultado de búsqueda',
+      'Tente outro termo ou veja por tópico.': 'Prueba otro término o mira por tema.',
+      'Erro ao carregar treinamentos': 'Error al cargar capacitaciones',
+      
+      // Perfil (datos del usuario + contraseña de acceso)
+      'Perfil': 'Perfil',
+      'Dados do perfil': 'Datos del perfil',
+      'Seus dados e sua senha de acesso': 'Tus datos y tu contraseña de acceso',
+      'E-mail': 'Correo electrónico',
+      'Cargo': 'Cargo',
+      'Senha de acesso': 'Contraseña de acceso',
+      'Salvar perfil': 'Guardar perfil',
+      'Perfil atualizado ✓': 'Perfil actualizado ✓',
+      'O e-mail de acesso é gerenciado pelo administrador da empresa.': 'El correo de acceso lo gestiona el administrador de la empresa.',
+      'Use pelo menos 6 caracteres. Depois de salvar, entre com a nova senha.': 'Usa al menos 6 caracteres. Después de guardar, entra con la nueva contraseña.',
+      'Não foi possível salvar o perfil.': 'No se pudo guardar el perfil.',
       
       // Acciones
       'Nova OS': 'Nueva OS',
@@ -839,6 +1028,15 @@ export const resources = {
       'Filtrar': 'Filtrar',
       'Exportar': 'Exportar',
       'Importar': 'Importar',
+      'Fechar': 'Cerrar',
+      'Alterar senha': 'Cambiar contraseña',
+      'Nova senha': 'Nueva contraseña',
+      'Confirmar nova senha': 'Confirmar nueva contraseña',
+      'Minha senha': 'Mi contraseña',
+      'Senha do usuário': 'Contraseña del usuario',
+      'Renovar senha': 'Renovar contraseña',
+      'Trocar a senha do seu acesso': 'Cambiar la contraseña de tu acceso',
+      'Defina uma nova senha para o seu acesso': 'Define una nueva contraseña para tu acceso',
       
       // Estados
       'Ativo': 'Activo',
@@ -1016,6 +1214,14 @@ export const resources = {
       'Idioma principal': 'Idioma principal',
       'Descrição / contexto do agente': 'Descripción / contexto del agente',
       'Esse texto é usado como instrução base para o modelo de linguagem.': 'Este texto se utiliza como instrucción base para el modelo de lenguaje.',
+      'Como o agente se apresenta': 'Cómo se presenta el agente',
+      'Define o tom da conversa com o cliente. O roteiro de atendimento (triagem, orçamento, agenda e transferência) continua o mesmo.': 'Define el tono de la conversación con el cliente. El flujo de atención (triaje, presupuesto, agenda y transferencia) se mantiene igual.',
+      'Técnica': 'Técnica',
+      'Próxima': 'Próxima',
+      'simpática e acolhedora': 'simpática y acogedora',
+      'cordial e profissional': 'cortés y profesional',
+      'objetiva e clara': 'objetiva y clara',
+      'direta e sem enrolação': 'directa y sin rodeos',
       'Tom de voz': 'Tono de voz',
       'Formal': 'Formal',
       'Amigável': 'Amigable',
@@ -1209,6 +1415,40 @@ export const resources = {
       'Telefone é obrigatório para iniciar o chat': 'El teléfono es obligatorio para iniciar el chat',
       'Erro ao iniciar chat': 'Error al iniciar chat',
       'Olá! Como podemos te ajudar?': '¡Hola! ¿En qué podemos ayudarte?',
+
+      // Modo móvil — chat estilo WhatsApp (Issue #85)
+      'Instalar app': 'Instalar app',
+      'Voltar': 'Volver',
+      'Mais opções': 'Más opciones',
+      'Detalhes do cliente': 'Detalles del cliente',
+      'Abrir OS': 'Abrir orden',
+      'Fechar busca': 'Cerrar búsqueda',
+      'Buscar na conversa': 'Buscar en la conversación',
+      'Ativar modo claro': 'Activar modo claro',
+      'Ativar modo escuro': 'Activar modo oscuro',
+
+      // Echo — mensaje enviada desde el teléfono del atendente (Issue #105)
+      'Enviado pelo aparelho': 'Enviado desde el dispositivo',
+
+      // Nueva conversación — búsqueda en vivo (Issue #85)
+      'Número ou nome do cliente': 'Número o nombre del cliente',
+      'Digite um contato salvo ou um número novo para começar a conversar': 'Escribe un contacto guardado o un número nuevo para empezar a conversar',
+      'Digite um número válido com DDD': 'Ingresa un número válido con código de área',
+
+      // PWA — globo de instalación (Issue #85)
+      'Instale o DeeperIA': 'Instala DeeperIA',
+      'Acesse o chat direto da tela inicial do celular': 'Abre el chat directo desde la pantalla de inicio',
+      'Dispensar': 'Descartar',
+      'Como instalar': 'Cómo instalar',
+      'Toque no botão': 'Toca el botón',
+      'Toque no menu': 'Toca el menú',
+      'do navegador': 'del navegador',
+      'Escolha': 'Elige',
+      'Adicionar à Tela de Início': 'Añadir a la pantalla de inicio',
+      'Toque em': 'Toca',
+      'Instalar aplicativo': 'Instalar aplicación',
+      'Confirme a instalação': 'Confirma la instalación',
+      'Entendi': 'Entendido',
     }
   }
 } as const;

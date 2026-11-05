@@ -62,6 +62,16 @@ supabase functions deploy uazapi-webhook --no-verify-jwt
 - `api-oficial-send`: `supabase functions deploy api-oficial-send`
 - `ligacoes-auth`: `supabase functions deploy ligacoes-auth`
 - `process-scheduled-messages`: `supabase functions deploy process-scheduled-messages --no-verify-jwt`
+- `superadmin-reset-password`: `supabase functions deploy superadmin-reset-password` — superadmin regera senha do admin de um tenant (service_role; usada no modal "Empresas")
+- `renew-user-password`: `supabase functions deploy renew-user-password` — admin do tenant renova a senha de um usuario da equipe (senha gerada no servidor; admin nao digita a senha de terceiros)
+- `wizard-finalize`: `supabase functions deploy wizard-finalize` — superadmin finaliza wizard manual para empresa não completada (creates usuário, marca como paid, ativa tenant). **ATENÇÃO (v1.0.114)**: ao reutilizar um auth user existente (lead que começou o wizard e desistiu), o realinhamento do `user_metadata.tenant_id`/role é OBRIGATÓRIO (`syncAdminMetadata` em `_shared/admin-users.ts`) — as policies RLS usam esse claim; sem ele o login falha com "Perfil de usuário não encontrado no sistema". A senha exibida no modal sempre vem de `session.temp_password` (persistida ANTES do `finalizeOnboarding`, que exibe esse valor).
+- `public-signup`: wizard /comece-agora — inclui action `support` (pública) que devolve `platform_settings.support_whatsapp` para o balão de suporte
+- **Wizard público — etapa "Configure seu agente de IA" (v1.0.118)**: ordem das etapas = `welcome → data → plan → agent → whatsapp → payment → success` (o lead personaliza o agente **antes** de ler o QR Code). Fluxo: action `set_agent` grava as escolhas em `onboarding_sessions` (`agent_name`, `agent_presentation`, `agent_greeting`, `agent_auto_schedule`, `agent_auto_os`) e `status` devolve `agent_configured`/`agent_config` para retomar no ponto certo. No `finalizeOnboarding`, `ensureAiDefaults(admin, tenantId, config)` aplica as escolhas em `ai_agent_settings` (`agent_name`, `presentation_style`, `greeting_enabled`, `auto_schedule_enabled`, `auto_os_enabled`). `presentation_style` (`amigavel|formal|tecnico|proximo`) é consumida de verdade pelo prompt (`_shared/ai/prompt.ts` → `presentationTone()`).
+- **ATENÇÃO — wizard/login são sempre claros (v1.0.118)**: o escopo `.theme-light` (login + `/comece-agora`) precisa declarar `color: var(--text-primary)`, `color-scheme: light` e as variantes claras da marca (`--primary-text: var(--primary)`, `--primary-light`/`--primary-ring` via `color-mix`). Sem isso o `color` do body (tema escuro) é herdado e os títulos/botões ficam quase brancos no card branco — ilegíveis no mobile.
+- **Persona do agente — fonte única (v1.0.119)**: `src/lib/agent-presentation.ts` guarda as 4 opções de tom (`AGENT_PRESENTATIONS`) e o tipo `AgentPresentationStyle`. Usado pelo **wizard** (`StepAgentSetup`) e pelo **painel** (AI Settings → Personalidade, `ConfigTab`) — nunca criar outra lista paralela. O valor persistido é `ai_agent_settings.presentation_style` (consumido pelo prompt em `_shared/ai/prompt.ts`). O painel grava em `savePersonality(agentName, systemPrompt, presentationStyle)`.
+- **Cota de tokens de IA no wizard (v1.0.119)**: a action `plans` da edge `public-signup` devolve `ai_token_limit` (`plans.ai_token_limit`; `0` = ilimitado, igual ao runtime em `quotaExceeded`). A etapa de planos mostra a cota real e **não** repete o texto de features sobre tokens (marketing pode estar desatualizado). Características do plano em 2 colunas no card (economiza altura no mobile).
+- **Pagamento do wizard — nunca erro mudo (v1.0.120)**: `create_payment` exige `status connected` + `cpf_cnpj` na ficha (Asaas **recusa cobrança sem cpfCnpj** — erro real que virava 500 genérico). A edge traduz falhas da Asaas (`{ status, body.errors }`) em 400 com `description` legível; o `catch` global devolve `asaas_error`, nunca 500 mudo. `StepPayment` renderiza banner de erro + "Tentar novamente" + "Revisar meus dados" (setStep `data`; `start` idempotente por e-mail **ATUALIZA** a sessão/tenant/tenant_settings com os dados reenviados — self-healing para fichas incompletas). Retomada (`status`) devolve `plan` **e** `enabled_methods` (regra única em `wizardMethods(admin)`) e `OnboardingPage` restaura ambos em **todos** os ramos — sem isso, após refresh o pagamento mostra "Valor do plano" e todas as formas (até as desabilitadas → 403). Empresa só aparece **Ativa** na lista de Empresas após confirmar o pagamento (`finalizeOnboarding`); durante o wizard o tenant existe como `Inativo`.
+- **ATENÇÃO — defaults de IA por tenant (v1.0.117)**: SEM linha em `ai_agent_settings` o agente **não roda** (`loadAgentSettings` → `if (!agentRes.data) return null`). Tenant novo (wizard **ou** criado pelo superadmin) deve usar `ensureAiDefaults()` de `_shared/ai-defaults.ts`: cria a row com `active: true`, `ask_name_enabled: true` e `openrouter_model` = modelo liberado (`resolveDefaultModel` espelha o `resolveEffectiveModel` do runtime). Defaults do banco e migration `20261102210000_ai_agent_defaults.sql` mantêm o mesmo comportamento. "Lista liberada" = `platform_ai_config.allowed_models` (modo `all`) ou `tenant_ai_entitlements.allowed_models` (modo `selected`) — **não** é a cota de tokens do plano (`plans.ai_token_limit`).
 
 ### How to Add a New Repository
 
@@ -131,6 +141,7 @@ Every interface element MUST have:
 - **Badges e inputs**: `badge badge-*`, `input`, `select`, `textarea`, `search-wrap`
 - **Componentes**: reutilizar `ConfirmModal`, `EmptyState`, `ErrorMessage`, `Skeleton*`, modais com `modal-overlay`/`modal`/`modal-header`/`modal-body`/`modal-footer`
 - **Cores e espaçamentos**: variáveis CSS (`var(--primary)`, `var(--border)`, `var(--text-muted)`, `var(--danger)`) — nunca hex hardcoded quando a variável existe
+- **Tokens de superfície (modo dark)**: usar `var(--bg-secondary)` (light `#f8fafc` / dark `#1a1c24`) para zebra de tabela, caixa de destaque e opção selecionada. **NUNCA** escrever fallback claro inline (`var(--bg-secondary, #f8fafc)`) — o fallback vira branco no dark (issue #104). Status coloridos: `--success-bg`/`--success`/`--success-text`, `--danger-bg`, `--info-bg`/`--info-text` (nunca `#f0fdf4`, `#dbeafe` etc. fixos). Contexto intencionalmente claro (QR Code Pix/WhatsApp, botão sobre imagem do hero, wizard público `.theme-light`, checklist público) é a única exceção.
 - **Fluxos**: exclusões usam `ConfirmModal`; listas com filtro usam pills `btn-sm btn-pill`; operações em massa seguem o padrão de seleção com checkbox (ver `Financial.tsx` como referência)
 
 Se um novo padrão for inevitável, primeiro verificar `src/styles.css` e os componentes existentes; se realmente não existir, criar UMA vez em `styles.css`/componente compartilhado e usar dali em diante.
@@ -166,6 +177,77 @@ Toda interface nova deve considerar os estados necessários quando aplicável:
 - Toasts: slide in da direita, fade out após 3s
 - Skeletons: animação de pulso contínuo
 - Transições de página: fade suave (150-200ms)
+
+### 3.2 Push Notifications (Web Push — canal-agnóstico)
+
+**Arquitetura.** O serviço de push é INDEPENDENTE de canal — WhatsApp, Agenda, OS, Ligações, Asaas etc. consomem o MESMO contrato sem conhecer VAPID, criptografia ou subscriptions:
+
+```
+[Qualquer canal] --sendPush(PushPayload)--> supabase/functions/_shared/notify.ts
+     --> edge function send-push-notification (service_role only)
+     --> _shared/push.ts (RFC 8291 aes128gcm + JWT VAPID ES256, Web Crypto nativo do Deno)
+     --> cada subscription em push_subscriptions
+     --> public/sw.js (handlers push/notificationclick)
+```
+
+- **Contrato** (`supabase/functions/_shared/notify.ts`): `sendPush({ tenantId, title, body, kind?, conversationId?, url?, data? })` fire-and-forget. `kind` ∈ `message | appointment | os | billing | custom`.
+- **Banner quando o painel recebe a mensagem (v1.0.115)**: push FCM só cobre o app 100% fechado. Com o painel vivo em background, o realtime (INSERT em `messages` → `useAttendance`) chama `notifyIncomingMessage()` (`src/lib/local-notify.ts`) = mesma notificação, sem servidor. Dedupe (push server × notificação local) via recibos em IndexedDB (`src/lib/push-receipts.ts` + implementação inline no `sw.js` — mesmos db/store/schema, manter em sincronia). O SW **suprime** o banner de `kind: message` quando existe janela visível (usuário já está vendo) e a página só notifica com `document.hidden`. Outbound (respostas da equipe) não notifica.
+- **Novo canal só precisa importar `sendPush` e chamar com o payload** — nada de fetch manual, secrets ou crypto.
+- **REGRAS DE PRODUTO**: push APENAS em celular com PWA INSTALADO (`isPushAvailable()` = mobile UA + standalone). Desktop e browser mobile não pedem permissão nem recebem badge. `lib/push.ts` centraliza isso — SEMPRE usar `isPushAvailable()`, nunca `isPushSupported()` direto na UI.
+- **Ativação/desativação pelo usuário**: toggle "Notificações" no modal Sobre (⋮ no mobile) — `PushSetupRow`; ativa = `subscribePush` (grava flag `deeperia:push-enabled`), desativa = `disablePush` (unsubscribe local + delete no banco via `save-push-subscription` com `{ remove: true, endpoint }`). Permissão negada: instrução para liberar nas configurações.
+- **Toggle = estado REAL, não máscara**: o switch da UI deriva de `isPushActive()` (permissão do navegador **concedida** + subscription ativa no service worker), nunca só da flag `deeperia:push-enabled`. Se o SO revogar a permissão, o toggle volta a desligado e avisa. `isPushEnabledByUser()` é apenas a *intenção* do usuário (usada pelo `PushPermissionGate`).
+- **Rotação da chave VAPID**: `subscribePush` compara `subscription.options.applicationServerKey` com a chave atual; se different, faz `unsubscribe()` antes de assinar de novo (a subscription antiga nunca receberia push).
+- **Chaves VAPID**: públicas via `.env` (`VITE_VAPID_PUBLIC_KEY`, injetada no bundle pelo `vite.config.ts/js` via `loadEnv` — fallback local) OU em runtime via edge function `push-config` (POST simples, o cliente chama quando a global de build está vazia — resolve produção hospedada sem env, ex.: Vercel sem `.env`). Privada server-side nos secrets do Supabase (`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Para gerar: `npx web-push generate-vapid-keys` (rotação = regenerar + gravar no `.env` + `supabase secrets set` — SEM deploy extra no front).
+- **Deploy**: `send-push-notification`, `save-push-subscription` e `push-config` com deploy normal; `uazapi-webhook` SEMPRE com `--no-verify-jwt` (regra acima).
+- **ATENÇÃO — `supabase.functions.invoke()`**: recebe o **NOME** da função (`'push-config'`), nunca o path (`'/functions/v1/push-config'`). O path duplica o prefixo e a chamada volta **404 "Requested function was not found"**.
+- **Tabela**: `push_subscriptions` (tabela `endpoint` unique, RLS por tenant) — migration `20261030120000_create_push_subscriptions.sql`. RLS corrigido em `20261102190000_fix_push_subscriptions_rls.sql` (claims do `user_metadata`, não top-level do JWT — ver `20260929150000_fix_users_rls.sql`).
+- **ATENÇÃO — HKDF do payload (RFC 8291)**: em `_shared/push.ts` a ordem dos argumentos é `hkdf(ikm, salt, info, len)`. A RFC pede `CEK = HKDF(salt, IKM, cek_info, 16)` e `NONCE = HKDF(salt, IKM, nonce_info, 12)` — ou seja, a chamada é `hkdf(ikm, salt, ...)`. Inverter os dois deixa o tag AES-GCM inválido: o FCM aceita com **HTTP 201** (não valida o payload) e o **navegador descarta a notificação silenciosamente**. Teste de regressão em `src/lib/__tests__/push-crypto.test.ts` (decifra com uma implementação independente).
+- **Badge do ícone do app**: `navigator.setAppBadge(n)`/`clearAppBadge()` via `src/lib/push.ts` + `usePushBadge` (montado no `TenantLayout`). **Contador compartilhado SW↔página (v1.0.116)**: o unread real que a página recalcula é gravado em IndexedDB (`deeperia-push` v2, store `badge` — `src/lib/badge-counter.ts` + implementação inline no `sw.js`, manter schema em sincronia); o SW lê esse valor a cada push com banner, soma +1 (cap 99) e chama `setAppBadge` com o app FECHADO. Página também reassenta no evento `deeperia:unread-changed` (disparado pelo realtime inbound no `useAttendance`) e no `visibilitychange → visible`. Casos de supressão/dedupe não incrementam.
+- **Pedir permissão**: `PushPermissionGate` — modal único por instalação (localStorage), 2,5s após load, só quando `permission === 'default'` e apenas em PWA mobile.
+- **Browser → PWA**: `OpenAppGate` (montado no App root) — o app standalone grava `deeperia:installed` (WebAPK compartilha storage com o Chrome no Android); aberto pelo browser em celular, faz UMA tentativa de navegar in-scope (Android abre o WebAPK via intent filters) e, se permanecer, mostra tela "Abrir pelo app instalado" com proposta de continuar no navegador. iOS não permite detectar o PWA instalado — sem redirect lá.
+- **Teste ponta a ponta**: PWA instalado → login → permitir notificações → enviar mensagem de lead → deve aparecer preview na barra + contador no ícone. Sem device, smoke interno: POST em `send-push-notification` com Bearer service_role = `{"ok":true,"sent":N}`.
+
+### 3.3 Echo — resposta enviada pelo APARELHO (WhatsApp)
+
+- **Problema**: o webhook `uazapi-webhook` ignorava **todo** `fromMe: true`. Quando o
+  atendente respondia pelo **celular**, a mensagem nunca aparecia no chat do sistema.
+- **Discriminador (fonte única)**: a Uazapi envia `message.wasSentByApi` **somente** quando
+  a mensagem foi enviada pela API (docs.uazapi.com/webhook/messages). Então:
+  - `fromMe: false` → **inbound** (lead)
+  - `fromMe: true` + `wasSentByApi: true` → enviada pela **API** (o sistema já gravou) →
+    **descartar** (dedupe pelo índice único `uq_messages_wa_id`)
+  - `fromMe: true` **sem** `wasSentByApi` → enviada pelo **APARELHO** ("echo") → **entra no chat**
+- **Classificação**: `supabase/functions/_shared/message-origin.ts` → `classifyMessageOrigin()`
+  (função pura, testada em `src/lib/__tests__/message-origin.test.ts`). O webhook consome
+  esse helper — **nunca** reimplementar a regra de origem inline.
+- **Gravação**: `messages.sent_from_device = true` (migration
+  `20261105120000_message_sent_from_device.sql`) + `direction: 'outbound'`,
+  `sender_type: 'attendant'`, `read: true`.
+- **Regras do eco**: NÃO conta como não lida (`p_count_unread: false`), NÃO gera push,
+  NÃO dispara a IA (é mensagem de saída do atendente) e NÃO gera badge no ícone.
+- **Frontend**: `Message.sent_from_device` → `ChatMessage.sentFromDevice` (`toChatMessage`) →
+  rótulo **"Enviado pelo aparelho"** (ícone de celular) no `MessageBubble`, mesmo padrão do
+  "Lembrete". i18n pt/en/es.
+- **Realtime**: `useAttendance.ts` libera o outbound **só** quando `sent_from_device === true`
+  (antes, todo outbound que não fosse da IA era ignorado no canal).
+- **Deploy**: `supabase functions deploy uazapi-webhook --no-verify-jwt` (obrigatório).
+
+### 3.4 Portal de Treinamento (`/treinamento`)
+
+- **Página**: `/treinamento` — portal de vídeos estilo Netflix (hero em destaque + linhas/carrossel por tópico + busca por título/descrição/tópico + player em modal). Aberta a **TODOS os cargos**: a rota fica **fora** do `RequirePermission` e `canAccess()` faz `if (key === 'treinamento') return true;`.
+- **Acesso pelo ícone no header (sem item de menu)**: "Treinamento" **NÃO** aparece no menu da sidebar. O atalho é o **ícone de chapéu no header**, ao lado do avatar (`src/components/header/TutorialHint.tsx`, `#header-training-btn`) → `/treinamento`. O chip da sidebar (`SidebarFooter`) mostra só avatar + nome + versão — **não** é mais link.
+- **Ícone condicional ao conteúdo**: o ícone (e o balão) só aparecem se houver **vídeo ativo publicado** no portal (`TrainingVideoRepository.hasContent()` — `count` com `head: true`). Sem conteúdo → nenhum ícone no header.
+- **Balão de dica do tutorial (issue #103)**: após **5s parado na MESMA página** (o timer reinicia a cada navegação — `useTutorialHint`, `TUTORIAL_HINT_DELAY_MS`) aparece um balão flutuante "Tem alguma dúvida? Acesse o tutorial". Ele **só mostra enquanto o usuário nunca acessou o tutorial**: o flag `deeperia:training-seen` (localStorage) é gravado ao abrir `/treinamento` ou clicar no ícone e o balão não volta mais.
+- **Cores do tutorial (não reaproveitar `--primary` cru)**: tokens próprios em `src/styles.css` — `--tutorial-accent` (ícone do header; **clareado no dark** `#818cf8` para não sumir no fundo) e `--tutorial-hint-bg`/`--tutorial-hint-shadow` (balão indigo fixo nos dois temas, texto branco, para não se misturar ao light/dark).
+- **Modal "Sobre" (mobile)**: contém apenas identidade do app + versão + toggle de notificações. **NÃO** tem chip de usuário nem troca de senha — o perfil do usuário é a tela `/perfil`.
+- **Perfil do usuário (`/perfil`)**: rota tenant liberada a qualquer cargo (fora do `RequirePermission`) com nome editável + e-mail/cargo/empresa somente leitura + troca da senha de login (`ChangePasswordForm`). Entrada no mobile pelo item "Perfil" do menu ⋮ (`MobileChatList`); no desktop, pela URL. **RLS**: escrita em `users` é restrita ao admin do tenant, então o nome é gravado pela RPC `update_my_profile` (SECURITY DEFINER, migration `20261103150000_update_my_profile.sql`) — ela altera **apenas** o próprio nome, sem abrir brecha para role/tenant_id. E-mail de login é gerenciado pelo admin da empresa (só leitura).
+- **Painel do superadmin**: `/superadmin/treinamento` — CRUD completo (título, tópico com datalist, descrição, YouTube **ou** upload, thumbnail, sort_order, ativo) + **busca** (reaproveita `filterVideos` de `src/lib/training-filter.ts`) + **reordenação por arrastar e soltar** (`src/superadmin/training/reorder.ts`: `reorderById`/`sortOrdersFor`; o `drop` lê o id de origem do `dataTransfer`, não do estado). Exclusão sempre via `ConfirmModal`.
+- **Tabelas**: `training_videos` é **GLOBAL** (sem `tenant_id`, à la `plans`) — title, description, topic, source (`storage|youtube`), url, thumbnail_url, sort_order, active. Migration `20261103130000_training_videos.sql`. RLS: SELECT para `authenticated`, escrita **só superadmin** (claim em `auth.jwt() -> 'user_metadata' ->> 'role'`).
+- **Storage**: bucket `training-videos` (público, 1 GB, vídeos em `videos/`, thumbs em `thumbs/`); escrita só superadmin, leitura pública.
+- **Fonte única de helpers**: `src/lib/training-video.ts` (`parseYouTubeId`, `detectVideoSource`, `youtubeEmbedUrl`, `youtubeThumbUrl`) — nunca duplicar regex de YouTube em outro arquivo.
+- **Upload com progresso**: `src/lib/training-upload.ts` faz POST manual via XHR (o `upload` do supabase-js não expõe progresso). Remoção de arquivo é melhor-esforço (`removeTrainingFile`).
+- **Painel do superadmin**: `/superadmin/treinamento` — CRUD completo (título, tópico com datalist, descrição, YouTube **ou** upload, thumbnail, sort_order, ativo). Exclusão sempre via `ConfirmModal`.
+- **Estados**: loading (skeleton), vazio (com CTA), erro com retry, hover/focus; chaves i18n pt/en/es em `src/i18n/config.ts`.
 
 ### 3. Code Quality and Observability
 
@@ -228,6 +310,25 @@ VITE_SUPABASE_URL=https://sknimzjwpdbcuutxbycq.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 ```
 
+### 7. Versionamento — OBRIGATÓRIO
+
+A versão do app fica em `package.json` e é injetada no bundle pelo Vite
+(`define.__APP_VERSION__`), exposta em `src/lib/version.ts`
+(`APP_VERSION` e `APP_VERSION_LABEL`).
+
+**Todo commit que altere o sistema DEVE subir a versão de patch antes do commit:**
+
+```bash
+npm run version:bump   # 1.0.100 -> 1.0.101
+```
+
+Regras:
+- Nunca commitar mudança de código sem o bump de versão
+- A mensagem do commit termina com a versão: `fix: ... (v1.0.101)`
+- A versão atual aparece na sidebar (desktop, ao lado do usuário) e em **⋮ → Sobre** (mobile)
+- Mudanças incompatíveis sobem minor/major manualmente: `npm version minor --no-git-tag-version`
+- A versão inicial do sistema é **1.0.100**
+
 ---
 
 ## Quick Reference
@@ -251,6 +352,11 @@ npx tsc --noEmit
 ### Build
 ```bash
 npm run build
+```
+
+### Bump de versão (obrigatório antes de cada commit)
+```bash
+npm run version:bump
 ```
 
 ### Deploy Uazapi Webhook (Edge Function)

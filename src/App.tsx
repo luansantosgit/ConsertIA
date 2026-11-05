@@ -3,8 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
 import { canAccess, firstAllowedPath } from '@/lib/permissions';
+import { isChunkLoadError, recoverChunkError } from '@/lib/chunk-recovery';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AiImportSession } from '@/components/AiImportSession';
+import { OpenAppGate } from '@/components/OpenAppGate';
 
 // Tenant (eager — layout crítico)
 import { TenantLogin } from '@/pages/TenantLogin';
@@ -23,6 +25,7 @@ import { SuperAdminAi } from '@/superadmin/SuperAdminAi';
 import { SuperAdminLeads } from '@/superadmin/SuperAdminLeads';
 import { SuperAdminSettings } from '@/superadmin/SuperAdminSettings';
 import { SuperAdminWizard } from '@/superadmin/SuperAdminWizard';
+import { SuperAdminTreinamento } from '@/superadmin/SuperAdminTreinamento';
 
 import './i18n/config';
 import './styles.css';
@@ -32,23 +35,12 @@ import './styles.css';
  * Após deploy na Vercel, o index.html cacheado no browser referencia
  * chunks antigos (hash diferente) que retornam 404 → "Failed to fetch
  * dynamically imported module". Recarrega a página para pegar o novo
- * build, com guarda de 1 reload/min para evitar loop.
+ * build (ver `src/lib/chunk-recovery.ts`).
  */
-const CHUNK_ERR = 'Failed to fetch dynamically imported module';
-const CHUNK_RELOAD_KEY = 'chunk-reload-ts';
-
 function lazyLoad<T extends React.ComponentType>(factory: () => Promise<{ default: T }>) {
   return lazy(() =>
     factory().catch(err => {
-      const msg = (err as Error)?.message ?? String(err);
-      if (msg.includes(CHUNK_ERR) || msg.includes('Importing a module script failed')) {
-        const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0);
-        const now = Date.now();
-        if (!last || now - last > 60_000) {
-          sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
-          window.location.reload();
-        }
-      }
+      if (isChunkLoadError(err)) recoverChunkError();
       throw err;
     }),
   );
@@ -66,6 +58,8 @@ const AiSettings    = lazyLoad(() => import('@/pages/AiSettings').then(m => ({ d
 const SubscriptionPage = lazyLoad(() => import('@/pages/subscription/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
 const OnboardingPage = lazyLoad(() => import('@/pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const ChecklistPage = lazyLoad(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })));
+const Training = lazyLoad(() => import('@/pages/Training'));
+const Profile = lazyLoad(() => import('@/pages/Profile').then(m => ({ default: m.Profile })));
 
 /* ── Fallback de loading (skeleton) ── */
 const PageLoader: React.FC = () => (
@@ -158,6 +152,8 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <ErrorBoundary>
+      {/* PWA instalado no celular: redireciona o browser de volta ao app */}
+      <OpenAppGate />
       <Routes>
         {/* ── Superadmin ── */}
         <Route
@@ -177,6 +173,7 @@ const App: React.FC = () => {
           <Route path="wizard" element={<SuperAdminWizard />} />
           <Route path="configuracoes" element={<SuperAdminSettings />} />
           <Route path="provedor-ia" element={<SuperAdminAi />} />
+          <Route path="treinamento" element={<SuperAdminTreinamento />} />
         </Route>
 
         {/* ── Tenant ── */}
@@ -200,6 +197,10 @@ const App: React.FC = () => {
           <Route path="relatorios" element={<RequirePermission perm="relatorios"><Suspense fallback={<PageLoader />}><Reports /></Suspense></RequirePermission>} />
           <Route path="configuracoes" element={<RequirePermission perm="configuracoes"><Suspense fallback={<PageLoader />}><Settings /></Suspense></RequirePermission>} />
           <Route path="agente-ia" element={<RequirePermission perm="agente-ia"><Suspense fallback={<PageLoader />}><AiSettings /></Suspense></RequirePermission>} />
+          {/* Treinamento: portal livre para todos os cargos (sem RequirePermission) */}
+          <Route path="treinamento" element={<Suspense fallback={<PageLoader />}><Training /></Suspense>} />
+          {/* Perfil: dados + senha de acesso (qualquer cargo) */}
+          <Route path="perfil" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
         </Route>
 
         {/* ── Checklist público ── */}
